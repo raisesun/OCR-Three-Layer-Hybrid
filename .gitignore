@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test results (in root directory)
+*.log
+optimized_ocr_test_results.json
+pp_chatocr_v4_*.json
+pp_chatocr_v4_*.log
+rule_layer_*_results.json
+rule_layer_*_output.txt
+simple_ocr_test_results.json
+
+# Test cache files
+tests/batch_test_*.json
+tests/batch_test_*.log
+tests/batch_test_*.cache.json
+tests/*.ocr_cache.json
+
+# Archives
+archive/
+
+# Debug scripts (root level only)
+debug_*.py
+batch_test_*.py
+simple_*.py
+manual_*.py
+
+# Root-level test scripts (not in tests/)
+/test_*.py
+
+# Models (too large for GitHub)
+*.gguf
+models/
