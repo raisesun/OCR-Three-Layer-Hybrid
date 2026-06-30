@@ -1,0 +1,1886 @@
+{
+  "evaluated_at": "2026-06-30 10:39:00",
+  "total_images": 132,
+  "total_fields": 929,
+  "overall_accuracy": 94.3,
+  "strict_accuracy": 38.4,
+  "match_stats": {
+    "exact": 356,
+    "normalized": 1,
+    "partial": 36,
+    "missed": 35,
+    "extra": 23,
+    "empty_both": 460,
+    "wrong": 18
+  },
+  "type_accuracy": {
+    "购房合同": {
+      "total": 190,
+      "correct": 165,
+      "accuracy": 86.8
+    },
+    "身份证": {
+      "total": 254,
+      "correct": 254,
+      "accuracy": 100.0
+    },
+    "发票": {
+      "total": 40,
+      "correct": 40,
+      "accuracy": 100.0
+    },
+    "户口本": {
+      "total": 203,
+      "correct": 197,
+      "accuracy": 97.0
+    },
+    "不动产权证书": {
+      "total": 70,
+      "correct": 67,
+      "accuracy": 95.7
+    },
+    "结婚证": {
+      "total": 49,
+      "correct": 47,
+      "accuracy": 95.9
+    },
+    "资金监管协议": {
+      "total": 56,
+      "correct": 46,
+      "accuracy": 82.1
+    },
+    "离婚证": {
+      "total": 6,
+      "correct": 6,
+      "accuracy": 100.0
+    },
+    "离婚协议": {
+      "total": 5,
+      "correct": 5,
+      "accuracy": 100.0
+    },
+    "存量房合同": {
+      "total": 56,
+      "correct": 49,
+      "accuracy": 87.5
+    }
+  },
+  "field_accuracy": {
+    "合同编号": {
+      "total": 36,
+      "exact": 9,
+      "partial": 0,
+      "missed": 6,
+      "wrong": 0,
+      "empty_both": 21,
+      "extra": 0,
+      "accuracy": 83.3
+    },
+    "签订日期": {
+      "total": 36,
+      "exact": 11,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 1,
+      "empty_both": 16,
+      "extra": 8,
+      "accuracy": 97.2
+    },
+    "出卖人": {
+      "total": 36,
+      "exact": 15,
+      "partial": 1,
+      "missed": 5,
+      "wrong": 0,
+      "empty_both": 15,
+      "extra": 0,
+      "accuracy": 86.1
+    },
+    "总价款": {
+      "total": 36,
+      "exact": 0,
+      "partial": 5,
+      "missed": 1,
+      "wrong": 0,
+      "empty_both": 30,
+      "extra": 0,
+      "accuracy": 97.2
+    },
+    "房屋地址": {
+      "total": 46,
+      "exact": 7,
+      "partial": 0,
+      "missed": 2,
+      "wrong": 4,
+      "empty_both": 26,
+      "extra": 7,
+      "accuracy": 87.0
+    },
+    "买受人": {
+      "total": 36,
+      "exact": 12,
+      "partial": 2,
+      "missed": 6,
+      "wrong": 4,
+      "empty_both": 12,
+      "extra": 0,
+      "accuracy": 72.2
+    },
+    "建筑面积": {
+      "total": 46,
+      "exact": 0,
+      "partial": 3,
+      "missed": 1,
+      "wrong": 4,
+      "empty_both": 37,
+      "extra": 1,
+      "accuracy": 89.1
+    },
+    "有效期限": {
+      "total": 31,
+      "exact": 15,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 16,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "公民身份号码": {
+      "total": 60,
+      "exact": 32,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 28,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "住址": {
+      "total": 60,
+      "exact": 6,
+      "partial": 18,
+      "missed": 1,
+      "wrong": 0,
+      "empty_both": 34,
+      "extra": 1,
+      "accuracy": 98.3
+    },
+    "出生": {
+      "total": 31,
+      "exact": 15,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 16,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "姓名": {
+      "total": 60,
+      "exact": 32,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 28,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "民族": {
+      "total": 31,
+      "exact": 15,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 16,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "性别": {
+      "total": 60,
+      "exact": 32,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 28,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "签发机关": {
+      "total": 31,
+      "exact": 15,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 16,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "购买方纳税人识别号": {
+      "total": 5,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "发票号码": {
+      "total": 5,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "价税合计": {
+      "total": 5,
+      "exact": 4,
+      "partial": 1,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "发票代码": {
+      "total": 5,
+      "exact": 0,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 5,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "销售方名称": {
+      "total": 5,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "开票日期": {
+      "total": 5,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "销售方纳税人识别号": {
+      "total": 5,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "购买方名称": {
+      "total": 5,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "户主姓名": {
+      "total": 29,
+      "exact": 11,
+      "partial": 0,
+      "missed": 1,
+      "wrong": 2,
+      "empty_both": 14,
+      "extra": 1,
+      "accuracy": 89.7
+    },
+    "户号": {
+      "total": 29,
+      "exact": 16,
+      "partial": 1,
+      "missed": 0,
+      "wrong": 1,
+      "empty_both": 8,
+      "extra": 3,
+      "accuracy": 96.6
+    },
+    "与户主关系": {
+      "total": 29,
+      "exact": 14,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 1,
+      "empty_both": 12,
+      "extra": 1,
+      "accuracy": 93.1
+    },
+    "共有情况": {
+      "total": 10,
+      "exact": 3,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 7,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "权利人": {
+      "total": 10,
+      "exact": 2,
+      "partial": 1,
+      "missed": 1,
+      "wrong": 0,
+      "empty_both": 6,
+      "extra": 0,
+      "accuracy": 90.0
+    },
+    "不动产单元号": {
+      "total": 10,
+      "exact": 3,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 6,
+      "extra": 1,
+      "accuracy": 100.0
+    },
+    "证书号": {
+      "total": 10,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 5,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "用途": {
+      "total": 10,
+      "exact": 3,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 7,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "女方身份证号": {
+      "total": 7,
+      "exact": 4,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 3,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "女方姓名": {
+      "total": 8,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 3,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "男方姓名": {
+      "total": 8,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 3,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "登记日期": {
+      "total": 9,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 4,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "男方身份证号": {
+      "total": 7,
+      "exact": 3,
+      "partial": 0,
+      "missed": 1,
+      "wrong": 0,
+      "empty_both": 3,
+      "extra": 0,
+      "accuracy": 85.7
+    },
+    "持证人": {
+      "total": 9,
+      "exact": 5,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 4,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "结婚证字号": {
+      "total": 7,
+      "exact": 3,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 1,
+      "empty_both": 3,
+      "extra": 0,
+      "accuracy": 85.7
+    },
+    "监管金额": {
+      "total": 14,
+      "exact": 1,
+      "partial": 2,
+      "missed": 2,
+      "wrong": 0,
+      "empty_both": 9,
+      "extra": 0,
+      "accuracy": 85.7
+    },
+    "卖方": {
+      "total": 14,
+      "exact": 5,
+      "partial": 0,
+      "missed": 3,
+      "wrong": 0,
+      "empty_both": 6,
+      "extra": 0,
+      "accuracy": 78.6
+    },
+    "买方": {
+      "total": 14,
+      "exact": 4,
+      "partial": 1,
+      "missed": 3,
+      "wrong": 0,
+      "empty_both": 6,
+      "extra": 0,
+      "accuracy": 78.6
+    },
+    "监管机构": {
+      "total": 14,
+      "exact": 6,
+      "partial": 0,
+      "missed": 2,
+      "wrong": 0,
+      "empty_both": 6,
+      "extra": 0,
+      "accuracy": 85.7
+    },
+    "离婚证字号": {
+      "total": 2,
+      "exact": 1,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 1,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "子女抚养": {
+      "total": 1,
+      "exact": 0,
+      "partial": 1,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "财产分割约定": {
+      "total": 1,
+      "exact": 1,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    },
+    "离婚日期": {
+      "total": 1,
+      "exact": 1,
+      "partial": 0,
+      "missed": 0,
+      "wrong": 0,
+      "empty_both": 0,
+      "extra": 0,
+      "accuracy": 100.0
+    }
+  },
+  "per_image": [
+    {
+      "filename": "0939d2a8e6e04f7f94494455a3956b3b.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "0d1d47c8d5a34ce5a24372c6845eafdb.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 15,
+      "correct_fields": 15
+    },
+    {
+      "filename": "1913a5d845d848b29fab1b6f2104a30e.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 80.0,
+      "total_fields": 15,
+      "correct_fields": 12
+    },
+    {
+      "filename": "1f0abdaaa52f47c799ae66b3325f1914.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 15,
+      "correct_fields": 15
+    },
+    {
+      "filename": "2f04ef2a8b5244c9b2ff926aa1d0e92b.jpeg",
+      "doc_type": "发票",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "310f98d8c8654cea8b7f3ad4ef2b3d93.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "4312b6fd1e8f45b9afa4aeee9b905997.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "4df3ae74747e4059a54eca0feed85e26.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "a59257a5396448e2b4647d88f994c34b.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "c0929c1839754b1a8530b175bd4e1b1f.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "112d0ae2e5e447b1ad14e03b07c8754b.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "1501d25e386e4b0a89fbb04f4ff0b6ae.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "233a4e9556fd412282539de213165b5d.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "3418882883ff478095435aa96e25a272.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "422181ce00ba4ce2b302e552eebe1aa3.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "5c092cf2d0584ff789c1e7534bd12c0c.jpeg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "5e780636163f458d80ebd67ef01ab74f.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "92758c5c54c443d09fc60590b53c9a26.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "ba5736e0bf8c471a8c767c1ab0736f50.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "c74620642b9a4b508b68ecaf78f905f9.jpeg",
+      "doc_type": "发票",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "e1aa690311fb447eb611a56fe3c9c695.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "e25491d291254874bf854b12515f701f.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "e94761578e4d4417b4edfbf323baaf7d.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "f0d5efcbaebd48aabf3d2e5b01d47d32.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "f20c85db44814a118c4ab1900bb02abd.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "0ae04faa364e4eefa5e834aa8433b0bf.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "2d93d924d09a47d9859504af48c00939.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "424b6459c89847c8af72bf7ad142c715.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "42a7ca8ed34d4b66ba25fb71cee64aa7.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 57.1,
+      "total_fields": 7,
+      "correct_fields": 4
+    },
+    {
+      "filename": "458ac15fa8324d24891e9c51801eee97.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "45b7d7fdc32540cebc72e139ef35c402.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "47e664ca6a2940bfa2df42f7a8697fdd.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "541298bc042444059a186480cd1e2d6d.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "5a992be8af294772aea577ae72af5be5.jpeg",
+      "doc_type": "结婚证",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "76c93d066e3440769b9baca6b6e1abb0.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "7c61d257538e41cab0e1fc7c52993f89.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "85a7f939b8314dc7ac3c3f188cb8a7a6.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "a5ac28a697bc48ef82c5762818fe41f0.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "bcfe7b9b49224c23b8cae9c16d1bc7e4.jpeg",
+      "doc_type": "发票",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "e87c707b407749babd94a410b14c38f5.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "fe8fb42489bb40b6b9c122fb59ae9bd2.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "24a2c50afb574c85b45cecc1c1e87ba8.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "2bebb1f8eca747d68fdfee98b4456be2.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "2f8c2a5386a94be0a813c5f55093fe6e.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "4a40e94e88fe49e7bebc37db3b4b2fb6.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "4e77c40a6075458b841d4d8fcdcc04be.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "5a99c19b869a4de7a42f2d798d5afde7.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "6c053d60633442d9806041734de45e28.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "8b738305b13b4b3e9496ec8b5b19351e.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "da591c8f03ba41589a8f1b0d3dcef1d2.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "f3e68e0f2d274173b8bb6722df2a9726.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "f9f54d9d92c54b1691021974a057db13.jpeg",
+      "doc_type": "发票",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "05b34730a0fc4c3a92303524e4d2db6d.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "4e188e26a0ab44a2941e0a550c0773e3.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "4fd64e0b64ff43c2b5f0878bcece23cd.jpeg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "582d5570fd844e4f8704868b343caaba.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "6f8c1841840c4383b2800e54b64cbd8a.jpeg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "6fbfb73dec55485d804702083bb387af.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "847f325068a44601bf7fa52e44660600.jpeg",
+      "doc_type": "发票",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "dd72b64d118f4687bcdccb4f40e5d0c2.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "f0206a5d40b241e39b11abe375192850.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "f2f3ecb1c46341d29dc5e3669b66cf24.jpeg",
+      "doc_type": "购房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "0029739def79460bb75f4e6fe1312ddf.jpg",
+      "doc_type": "结婚证",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "0bb6e64a8fbe4e958adc8917dd161362.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 75.0,
+      "total_fields": 4,
+      "correct_fields": 3
+    },
+    {
+      "filename": "1311a03c54a743f888f6c7b3530d579b.jpg",
+      "doc_type": "离婚证",
+      "field_accuracy": 100.0,
+      "total_fields": 3,
+      "correct_fields": 3
+    },
+    {
+      "filename": "147d9a19313a4594afb35bffd7e3f2e0.jpg",
+      "doc_type": "离婚证",
+      "field_accuracy": 100.0,
+      "total_fields": 3,
+      "correct_fields": 3
+    },
+    {
+      "filename": "14d2e37ffea549829e392d3cf5613da5.jpg",
+      "doc_type": "离婚协议",
+      "field_accuracy": 100.0,
+      "total_fields": 5,
+      "correct_fields": 5
+    },
+    {
+      "filename": "2cb1d9c6be184ff1a45cec0c5e79ed93.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 75.0,
+      "total_fields": 4,
+      "correct_fields": 3
+    },
+    {
+      "filename": "31758c6e5405483293958a1c3231f034.jpg",
+      "doc_type": "存量房合同",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "343c4ac2c107428e969f7530cd2e9f22.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "388dce9f582f40e4a856ab6a4c5fe58d.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "3d722eb2cd5c4752ba4e09f311d76e9b.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "42b391174c284e53ae5fd611313a1b76.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "4efd9f49d2064231b3b7c6fc3af3f003.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "616f8a1d2f704b56abeddefea635fa7b.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 100.0,
+      "total_fields": 4,
+      "correct_fields": 4
+    },
+    {
+      "filename": "6a8478fed9264eb299bb1a367ea1255c.jpg",
+      "doc_type": "结婚证",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "6c5bcc7f6a704148ba19125c5fb7c7b9.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 50.0,
+      "total_fields": 4,
+      "correct_fields": 2
+    },
+    {
+      "filename": "6e26f2d4212d4d5b9bca7712775be8a8.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "912c6cc841d34fc5955084b22d49cf3f.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "aa3f9394388b4df3bcd28f14e8477c67.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "b43226a68b3c49ed96af40eee28a6f63.jpg",
+      "doc_type": "存量房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "bc201bb5695e4609aeab8bee20507308.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "c9b1abfc84284830a95b4b3c7c62a66f.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "d7d604c8d4374d328274dabae989c673.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 100.0,
+      "total_fields": 4,
+      "correct_fields": 4
+    },
+    {
+      "filename": "e51843e675e44517ab4a6064cc19f885.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "02994d39dccb431690ecfe158f4aafde.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "1246be7d1a54439e9c271e1bccb6af06.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "212a6c910a0b4e2da52ee77c496358a2.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "2bb64043aee84bd7b75587b18ad9575e.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "34522ef156bd4bbc8d72a7924d577136.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "3b9ba8c68af242d9a4751b1b2b3f908b.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "421650c1e8314f49a90392093337be36.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 75.0,
+      "total_fields": 4,
+      "correct_fields": 3
+    },
+    {
+      "filename": "4d9fd39863044a649884db86a1b1ecbf.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "699370a96a974d30a945a652200a37b7.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 75.0,
+      "total_fields": 4,
+      "correct_fields": 3
+    },
+    {
+      "filename": "6b1c5a8b7c824f5cb8d3a55ff1d24ac4.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 100.0,
+      "total_fields": 4,
+      "correct_fields": 4
+    },
+    {
+      "filename": "6dd180bfe0354c249712118c5a9d1dc6.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "7e0b4f0b5d1f44b0b96c191b456e83c5.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "7fa5451d5d35495dac14c38c91ff0ed7.jpg",
+      "doc_type": "存量房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "8234edd054b647f197e9bc91f2f9f2fd.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 50.0,
+      "total_fields": 4,
+      "correct_fields": 2
+    },
+    {
+      "filename": "8739dc3cc4884310b142e01123c26412.jpg",
+      "doc_type": "结婚证",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "8ccc79c95a194b059982d8bc90b9ebec.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "94c306e6440747da97fc149793ce800d.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "b725d47c747d40ef9119190e63939bb1.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "be85b7f36c0945cc82b64b9b22c5b7d6.jpg",
+      "doc_type": "存量房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "c4d77b5ad1ca467cb94ebed3c0f63284.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 100.0,
+      "total_fields": 4,
+      "correct_fields": 4
+    },
+    {
+      "filename": "d19fbc24e993436b997dcc4037273464.jpg",
+      "doc_type": "结婚证",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "dd11f1bcd38e4ceb854805765f66ff9f.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "e3f5ac36e90b4a6d852d4137fdd87463.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "f503b6f07b4e4f71bf9f0a5116bf01c0.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "00616a5442b64f4195e84a6ec0e8cdb5.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "1361187da239423b9851912573e4959e.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "filename": "15afc23c668c48209d61e9e7391239d1.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "2fb6cd4b67014477a635700b9295cbd8.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "32791584c65240a69f4400bb410860ac.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "3bdf0ee145f9421c8353428603ed0eff.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "3f101385b95f452882e655e39d36cb9b.jpg",
+      "doc_type": "结婚证",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "68771b84a9e947589327dded7ae61837.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 50.0,
+      "total_fields": 4,
+      "correct_fields": 2
+    },
+    {
+      "filename": "7372b6f904a4459abacad91f27b3d81e.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "795ef33a6f5b42a5a77899f1f61a637b.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "798dfcc744e64ca6aaed8a394cc0e29d.jpg",
+      "doc_type": "不动产权证书",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "85be6ccfcc144892ad95afade6d96393.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "86ea558a501a4c2a81238d2014cebbe0.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 100.0,
+      "total_fields": 4,
+      "correct_fields": 4
+    },
+    {
+      "filename": "acc2bb83e01641eb915894db7f1596a0.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "aeac0699d51f441cbede14a625d85ff9.jpg",
+      "doc_type": "存量房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "c2fbb28a879f400495d77bf24a1ec662.jpg",
+      "doc_type": "存量房合同",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "dfa1b083dff24ba3a9a863f542c6a8ad.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 100.0,
+      "total_fields": 4,
+      "correct_fields": 4
+    },
+    {
+      "filename": "e161d39b65f042a983069f6344092abc.jpg",
+      "doc_type": "身份证",
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "filename": "e5a49c298a244c8295dbe72194ff493b.jpg",
+      "doc_type": "存量房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "e925d6b865e34000a8084c7b30d890bc.jpg",
+      "doc_type": "户口本",
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "filename": "f3c39dd81d484c889d34fa8e09dde59c.jpg",
+      "doc_type": "存量房合同",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "f8475c3cabff4dab823112bf1fd5e017.jpg",
+      "doc_type": "结婚证",
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "filename": "fcedd757cf4e46bb8332c35d43b48b4a.jpg",
+      "doc_type": "资金监管协议",
+      "field_accuracy": 100.0,
+      "total_fields": 4,
+      "correct_fields": 4
+    }
+  ],
+  "errors": [
+    {
+      "filename": "0939d2a8e6e04f7f94494455a3956b3b.jpeg",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "张玉煊",
+      "actual": "张玉煌",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "1913a5d845d848b29fab1b6f2104a30e.jpeg",
+      "doc_type": "购房合同",
+      "field": "签订日期",
+      "expected": "2024.2.21",
+      "actual": "2093年03月31日",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "1913a5d845d848b29fab1b6f2104a30e.jpeg",
+      "doc_type": "购房合同",
+      "field": "出卖人",
+      "expected": "蚌埠宏翔置业有限公司",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "1913a5d845d848b29fab1b6f2104a30e.jpeg",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "张玉煊",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "a59257a5396448e2b4647d88f994c34b.jpeg",
+      "doc_type": "购房合同",
+      "field": "合同编号",
+      "expected": "202402190050",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "1501d25e386e4b0a89fbb04f4ff0b6ae.jpeg",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "蚌埠市蚌山区解放路东侧、M-H-13(E)路南侧山水拾光小区13幢1单元6层604号",
+      "actual": "于蚌山区解放路东侧、M-H-13(E)路南侧地块的建设用地使用权。该地块【国有土地使用证号】为 皖（2023）蚌埠市不动产权第0118214号，土地使用权面积为103565.22平方米。买受人购买的商品房（以下简称该商品房）所占用的土地用途为 城镇住宅用地，土地使用权终止日期为2093 年03 月31 日。",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "1501d25e386e4b0a89fbb04f4ff0b6ae.jpeg",
+      "doc_type": "购房合同",
+      "field": "建筑面积",
+      "expected": "108.25平方米",
+      "actual": "88.02",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "3418882883ff478095435aa96e25a272.jpeg",
+      "doc_type": "购房合同",
+      "field": "总价款",
+      "expected": "人民币784000元",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "3418882883ff478095435aa96e25a272.jpeg",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "山水拾光小区",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "422181ce00ba4ce2b302e552eebe1aa3.jpeg",
+      "doc_type": "购房合同",
+      "field": "合同编号",
+      "expected": "202402270015",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "422181ce00ba4ce2b302e552eebe1aa3.jpeg",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "刘远顺",
+      "actual": "刘顺",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "92758c5c54c443d09fc60590b53c9a26.jpeg",
+      "doc_type": "购房合同",
+      "field": "合同编号",
+      "expected": "202402270015",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "42a7ca8ed34d4b66ba25fb71cee64aa7.jpeg",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "蚌埠市蚌山区解放路东侧、M-H-13(E)路南侧地块18幢1单元7层701号",
+      "actual": "安徽省蚌埠市固镇县新马桥镇卢渡村六组34号",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "42a7ca8ed34d4b66ba25fb71cee64aa7.jpeg",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "张利焕",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "42a7ca8ed34d4b66ba25fb71cee64aa7.jpeg",
+      "doc_type": "购房合同",
+      "field": "建筑面积",
+      "expected": "124.18平方米",
+      "actual": "102.82",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "a5ac28a697bc48ef82c5762818fe41f0.jpeg",
+      "doc_type": "购房合同",
+      "field": "合同编号",
+      "expected": "202402280061",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "4e77c40a6075458b841d4d8fcdcc04be.jpeg",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "蚌山区解放路东侧、M-H-13(E)路南侧山水拾光小区5幢2单元3层302号",
+      "actual": "于蚌山区解放路东侧、M-H-13(E)路南侧地块的建设用地使用权。该地块【国有土地使用证号】为 皖（2023）蚌埠市不动产权第0118214号，土地使用权面积为 103565.22 平方米。买受人购买的商品房（以下简称该商品房）所占用的土地用途为 城镇住宅用地，土地使用权终止日期为2093 年 03 月 31 日。",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "4e77c40a6075458b841d4d8fcdcc04be.jpeg",
+      "doc_type": "购房合同",
+      "field": "建筑面积",
+      "expected": "116.90平方米",
+      "actual": "97.99",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "6c053d60633442d9806041734de45e28.jpeg",
+      "doc_type": "购房合同",
+      "field": "出卖人",
+      "expected": "蚌埠联臣置业有限公司",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "6c053d60633442d9806041734de45e28.jpeg",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "钱文跃",
+      "actual": "钱文强",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "6fbfb73dec55485d804702083bb387af.jpeg",
+      "doc_type": "购房合同",
+      "field": "合同编号",
+      "expected": "202403180015",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "6fbfb73dec55485d804702083bb387af.jpeg",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "王瑁",
+      "actual": "王强",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "dd72b64d118f4687bcdccb4f40e5d0c2.jpeg",
+      "doc_type": "购房合同",
+      "field": "合同编号",
+      "expected": "202403180015",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "f2f3ecb1c46341d29dc5e3669b66cf24.jpeg",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "蚌山区解放路东侧、M-H-13(E)南侧山水拾光小区12幢1单元6层601号",
+      "actual": "于蚌山区解放路东侧、M-H-13(E)南侧地块的建设用地使用权。该地块【国有土地使用证号】为 皖（2023）蚌埠市不动产权第0118214号，土地使用权面积为103565.22平方米。买受人购买的商品房（以下简称该商品房）所占用的土地用途为 城镇住宅用地，土地使用权终止日期为2093 年03 月31 日。",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "f2f3ecb1c46341d29dc5e3669b66cf24.jpeg",
+      "doc_type": "购房合同",
+      "field": "建筑面积",
+      "expected": "110.30平方米",
+      "actual": "92.87",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "0bb6e64a8fbe4e958adc8917dd161362.jpg",
+      "doc_type": "资金监管协议",
+      "field": "监管金额",
+      "expected": "818000.00元",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "2cb1d9c6be184ff1a45cec0c5e79ed93.jpg",
+      "doc_type": "资金监管协议",
+      "field": "监管机构",
+      "expected": "蚌埠市城市开发建设集团有限公司",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "31758c6e5405483293958a1c3231f034.jpg",
+      "doc_type": "存量房合同",
+      "field": "买受人",
+      "expected": "尹笑男",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "6c5bcc7f6a704148ba19125c5fb7c7b9.jpg",
+      "doc_type": "资金监管协议",
+      "field": "卖方",
+      "expected": "褚作宝",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "6c5bcc7f6a704148ba19125c5fb7c7b9.jpg",
+      "doc_type": "资金监管协议",
+      "field": "买方",
+      "expected": "尹笑男",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "6e26f2d4212d4d5b9bca7712775be8a8.jpg",
+      "doc_type": "户口本",
+      "field": "户主姓名",
+      "expected": "尹守广",
+      "actual": "户",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "6e26f2d4212d4d5b9bca7712775be8a8.jpg",
+      "doc_type": "户口本",
+      "field": "住址",
+      "expected": "安徽省蚌埠市五河县小圩镇小圩村大许77号",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "212a6c910a0b4e2da52ee77c496358a2.jpg",
+      "doc_type": "户口本",
+      "field": "户主姓名",
+      "expected": "王晨露",
+      "actual": "王子龙",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "421650c1e8314f49a90392093337be36.jpg",
+      "doc_type": "资金监管协议",
+      "field": "监管金额",
+      "expected": "200000.00元",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "699370a96a974d30a945a652200a37b7.jpg",
+      "doc_type": "资金监管协议",
+      "field": "监管机构",
+      "expected": "蚌埠市城市开发建设集团有限公司",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "8234edd054b647f197e9bc91f2f9f2fd.jpg",
+      "doc_type": "资金监管协议",
+      "field": "卖方",
+      "expected": "葛瑞云",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "8234edd054b647f197e9bc91f2f9f2fd.jpg",
+      "doc_type": "资金监管协议",
+      "field": "买方",
+      "expected": "王晨露",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "8ccc79c95a194b059982d8bc90b9ebec.jpg",
+      "doc_type": "不动产权证书",
+      "field": "权利人",
+      "expected": "喜迎门小区37号楼全体业主",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "b725d47c747d40ef9119190e63939bb1.jpg",
+      "doc_type": "户口本",
+      "field": "户主姓名",
+      "expected": "王晨露",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "b725d47c747d40ef9119190e63939bb1.jpg",
+      "doc_type": "户口本",
+      "field": "与户主关系",
+      "expected": "户主",
+      "actual": "长女",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "be85b7f36c0945cc82b64b9b22c5b7d6.jpg",
+      "doc_type": "存量房合同",
+      "field": "出卖人",
+      "expected": "葛瑞元",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "be85b7f36c0945cc82b64b9b22c5b7d6.jpg",
+      "doc_type": "存量房合同",
+      "field": "买受人",
+      "expected": "王晨露",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "f503b6f07b4e4f71bf9f0a5116bf01c0.jpg",
+      "doc_type": "不动产权证书",
+      "field": "房屋地址",
+      "expected": "喜迎门小区37号楼1单元5层4号",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "f503b6f07b4e4f71bf9f0a5116bf01c0.jpg",
+      "doc_type": "不动产权证书",
+      "field": "建筑面积",
+      "expected": "88.32㎡",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "1361187da239423b9851912573e4959e.jpg",
+      "doc_type": "户口本",
+      "field": "户号",
+      "expected": "009119378",
+      "actual": "099119378",
+      "match_type": "wrong"
+    },
+    {
+      "filename": "68771b84a9e947589327dded7ae61837.jpg",
+      "doc_type": "资金监管协议",
+      "field": "卖方",
+      "expected": "曹子娟",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "68771b84a9e947589327dded7ae61837.jpg",
+      "doc_type": "资金监管协议",
+      "field": "买方",
+      "expected": "杨晓玲",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "e5a49c298a244c8295dbe72194ff493b.jpg",
+      "doc_type": "存量房合同",
+      "field": "出卖人",
+      "expected": "曹娜",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "e5a49c298a244c8295dbe72194ff493b.jpg",
+      "doc_type": "存量房合同",
+      "field": "买受人",
+      "expected": "杨晓玲",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "f3c39dd81d484c889d34fa8e09dde59c.jpg",
+      "doc_type": "存量房合同",
+      "field": "出卖人",
+      "expected": "雷世娟",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "f3c39dd81d484c889d34fa8e09dde59c.jpg",
+      "doc_type": "存量房合同",
+      "field": "买受人",
+      "expected": "杨晓玲",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "f8475c3cabff4dab823112bf1fd5e017.jpg",
+      "doc_type": "结婚证",
+      "field": "男方身份证号",
+      "expected": "403211199305078253",
+      "actual": "",
+      "match_type": "missed"
+    },
+    {
+      "filename": "f8475c3cabff4dab823112bf1fd5e017.jpg",
+      "doc_type": "结婚证",
+      "field": "结婚证字号",
+      "expected": "鄂340321-2022-000122",
+      "actual": "黔40321-2022-000122",
+      "match_type": "wrong"
+    }
+  ],
+  "timing": {
+    "total_s": 1571.6,
+    "avg_ms_per_image": 11906.0
+  }
+}

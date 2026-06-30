@@ -6,13 +6,13 @@ VLM分类器：使用视觉语言模型进行文档分类
 当规则分类器无法确定文档类型时，使用VLM进行兜底分类
 """
 
-import base64
 import json
-import requests
 from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 
 from ocr_three_layer_hybrid.interfaces import DocumentType, DocumentInfo, IDocumentClassifier
+from ocr_three_layer_hybrid.config import ClassificationServiceConfig
+from ocr_three_layer_hybrid.external_services import ClassificationClient
 
 
 class VLMDocumentClassifier:
@@ -66,10 +66,17 @@ class VLMDocumentClassifier:
         base_url: str = DEFAULT_BASE_URL,
         model: str = DEFAULT_MODEL,
         timeout: float = DEFAULT_TIMEOUT,
+        client: Optional[ClassificationClient] = None,
     ):
         self.base_url = base_url
         self.model = model
         self.timeout = timeout
+        # 使用注入的客户端，或根据参数创建默认客户端
+        self._client = client or ClassificationClient(ClassificationServiceConfig(
+            base_url=base_url,
+            model_name=model,
+            timeout=timeout,
+        ))
 
     def classify(self, image_path: str) -> Tuple[DocumentType, float, Dict]:
         """
@@ -85,36 +92,8 @@ class VLMDocumentClassifier:
             return DocumentType.UNKNOWN, 0.0, {"error": f"图片不存在: {image_path}"}
 
         try:
-            # 编码图片
-            with open(image_path, 'rb') as f:
-                image_b64 = base64.b64encode(f.read()).decode('utf-8')
-
-            # 构建请求
-            payload = {
-                "model": self.model,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": self.CLASSIFICATION_PROMPT},
-                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}}
-                        ]
-                    }
-                ],
-                "temperature": 0.1,
-                "max_tokens": 50,
-            }
-
-            # 调用API
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                json=payload,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-
-            result = response.json()
-            content = result['choices'][0]['message'].get('content', '').strip()
+            # 通过统一客户端调用VLM分类
+            content = self._client.classify(self.CLASSIFICATION_PROMPT, image_path)
 
             # 解析结果
             doc_type_str = self._parse_response(content)

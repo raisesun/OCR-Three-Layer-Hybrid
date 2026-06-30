@@ -1,0 +1,53 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "🔍 OCR三层混合架构" [level=1] [ref=e6]
+        - paragraph [ref=e7]: 规则层 + VLM层 + LLM层 | 分类准确率 99.2%
+      - generic [ref=e8]:
+        - generic [ref=e9]: ● GLM-OCR :8080
+        - generic [ref=e10]: ● Qwen3.5-4B :8081
+  - navigation [ref=e11]:
+    - generic [ref=e13]:
+      - button "📷 单图处理" [ref=e14] [cursor=pointer]
+      - button "📦 批量处理" [ref=e15] [cursor=pointer]
+      - button "📊 基线对比" [ref=e16] [cursor=pointer]
+      - button "📈 统计面板" [ref=e17] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e40]:
+      - generic [ref=e41]:
+        - heading "📦 批量处理" [level=3] [ref=e42]
+        - generic [ref=e44]:
+          - button "基线数据" [ref=e45] [cursor=pointer]
+          - button "指定目录" [active] [ref=e46] [cursor=pointer]
+      - generic [ref=e50]:
+        - button "sample-OCR" [ref=e53] [cursor=pointer]
+        - generic [ref=e54]:
+          - button "📄 baseline_v3 0 张图片" [ref=e55] [cursor=pointer]:
+            - generic [ref=e56]:
+              - generic [ref=e57]: 📄
+              - generic [ref=e58]: baseline_v3
+            - generic [ref=e59]: 0 张图片
+          - button "📁 benchmark_results 0 张图片" [ref=e60] [cursor=pointer]:
+            - generic [ref=e61]:
+              - generic [ref=e62]: 📁
+              - generic [ref=e63]: benchmark_results
+            - generic [ref=e64]: 0 张图片
+          - button "📁 sample50 0 张图片" [ref=e65] [cursor=pointer]:
+            - generic [ref=e66]:
+              - generic [ref=e67]: 📁
+              - generic [ref=e68]: sample50
+            - generic [ref=e69]: 0 张图片
+          - button "📁 增量房图片资料 0 张图片" [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]:
+              - generic [ref=e72]: 📁
+              - generic [ref=e73]: 增量房图片资料
+            - generic [ref=e74]: 0 张图片
+          - button "📁 存量房图片资料 0 张图片" [ref=e75] [cursor=pointer]:
+            - generic [ref=e76]:
+              - generic [ref=e77]: 📁
+              - generic [ref=e78]: 存量房图片资料
+            - generic [ref=e79]: 0 张图片
+        - generic [ref=e80]:
+          - generic [ref=e81]: "当前: /Users/dongsun/Github/sample-OCR"
+          - button "开始处理" [ref=e82] [cursor=pointer]

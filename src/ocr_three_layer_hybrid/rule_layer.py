@@ -3,10 +3,14 @@
 """
 第2A层：规则层
 使用正则表达式从固定格式文档中提取字段
+
+增强：户口本首页支持位置标注提取（通过 PaddleOCR 坐标）
 """
 
+import logging
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
+
 from ocr_three_layer_hybrid.interfaces import (
     DocumentType,
     DocumentInfo,
@@ -15,9 +19,21 @@ from ocr_three_layer_hybrid.interfaces import (
     IExtractionLayer,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class RuleExtractionLayer(IExtractionLayer):
-    """规则提取层：身份证、结婚证、户口本、房产证、发票、合同/协议"""
+    """规则提取层：身份证、结婚证、户口本、房产证、发票、合同/协议
+
+    户口本首页增强：位置标注提取优先，正则补充。
+    """
+
+    def __init__(self, position_extractor=None):
+        """
+        Args:
+            position_extractor: 位置标注提取器（可选，用于户口本首页）
+        """
+        self._position_extractor = position_extractor
 
     @property
     def supported_doc_types(self) -> List[DocumentType]:
@@ -30,6 +46,7 @@ class RuleExtractionLayer(IExtractionLayer):
             DocumentType.PURCHASE_CONTRACT,
             DocumentType.STOCK_CONTRACT,
             DocumentType.FUND_SUPERVISION,
+            DocumentType.DIVORCE_AGREEMENT,
         ]
 
     def can_process(self, doc_info: DocumentInfo) -> bool:
@@ -47,7 +64,7 @@ class RuleExtractionLayer(IExtractionLayer):
             elif doc_info.doc_type == DocumentType.MARRIAGE_CERTIFICATE:
                 fields = self._extract_marriage_certificate(full_text, key_list)
             elif doc_info.doc_type == DocumentType.HOUSEHOLD_REGISTER:
-                fields = self._extract_household_register(full_text, key_list)
+                fields = self._extract_household_register(full_text, key_list, doc_info.image_path)
             elif doc_info.doc_type == DocumentType.PROPERTY_CERTIFICATE:
                 fields = self._extract_property_certificate(full_text, key_list)
             elif doc_info.doc_type == DocumentType.INVOICE:
@@ -56,6 +73,8 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields = self._extract_contract(full_text, key_list, doc_info.doc_type)
             elif doc_info.doc_type == DocumentType.FUND_SUPERVISION:
                 fields = self._extract_fund_supervision(full_text, key_list)
+            elif doc_info.doc_type == DocumentType.DIVORCE_AGREEMENT:
+                fields = self._extract_divorce_agreement(full_text, key_list)
             else:
                 fields = {}
 
@@ -104,8 +123,12 @@ class RuleExtractionLayer(IExtractionLayer):
             fields["民族"] = match.group(1) if match else ""
 
         if "出生" in key_list or "出生日期" in key_list:
-            match = re.search(r'出生\s*(\d{4}年\d{1,2}月\d{1,2}日)', full_text)
+            # OCR 输出可能有空格：出生 2004 年 8 月 3 日
+            match = re.search(r'出生\s*(\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日)', full_text)
             value = match.group(1) if match else ""
+            # 标准化：去除日期内空格 "2004 年 8 月 3 日" → "2004年8月3日"
+            if value:
+                value = re.sub(r'\s+', '', value)
             if "出生" in key_list:
                 fields["出生"] = value
             if "出生日期" in key_list:
@@ -141,7 +164,8 @@ class RuleExtractionLayer(IExtractionLayer):
         fields = {}
 
         if "持证人" in key_list:
-            match = re.search(r'持证人\s*([^\s]+)', full_text)
+            # OCR 可能输出 "持 证 人"（字间有空格）
+            match = re.search(r'持\s*证\s*人\s*([^\s]+)', full_text)
             fields["持证人"] = match.group(1) if match else ""
 
         if "登记日期" in key_list:
@@ -149,20 +173,33 @@ class RuleExtractionLayer(IExtractionLayer):
             fields["登记日期"] = match.group(1) if match else ""
 
         if "结婚证字号" in key_list:
-            match = re.search(r'结婚证字号\s*([A-Z0-9\-]+)', full_text)
-            fields["结婚证字号"] = match.group(1) if match else ""
+            # OCR 可能输出 "结 婚 证 字 号"，值可能包含中文字符如 "皖固镇结字第010800316号"
+            match = re.search(r'结\s*婚\s*证\s*字\s*号\s*([^\n]+)', full_text)
+            value = ""
+            if match:
+                raw = match.group(1).strip()
+                # 去除值内空格："J 340322 - 2025 - 000779" → "J340322-2025-000779"
+                value = re.sub(r'\s+', '', raw)
+            fields["结婚证字号"] = value
 
         if "男方姓名" in key_list:
             match = re.search(r'男方姓名\s*([^\s]+)', full_text)
             if not match:
-                match = re.search(r'姓名\s*([^\s]+)\s*性别\s*男', full_text)
+                # 允许姓名和性别之间有其他字段（国籍、证件号等）
+                match = re.search(
+                    r'姓名\s*([^\s]+)(?:(?!姓名).)*?性别\s*男',
+                    full_text, re.DOTALL,
+                )
             fields["男方姓名"] = match.group(1) if match else ""
 
         if "女方姓名" in key_list:
             match = re.search(r'女方姓名\s*([^\s]+)', full_text)
             if not match:
-                # 查找第二个姓名+性别女的组合
-                persons = re.findall(r'姓名\s*([^\s]+)\s*性别\s*(男|女)', full_text)
+                # 查找姓名+性别女的组合（允许中间有其他字段）
+                persons = re.findall(
+                    r'姓名\s*([^\s]+)(?:(?!姓名).)*?性别\s*(男|女)',
+                    full_text, re.DOTALL,
+                )
                 for name, gender in persons:
                     if gender == "女":
                         fields["女方姓名"] = name
@@ -171,39 +208,130 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields["女方姓名"] = match.group(1)
 
         if "男方身份证号" in key_list:
-            # 尝试找男方姓名后的身份证号
-            match = re.search(r'性别\s*男.*?(\d{17}[\dXx])', full_text, re.DOTALL)
+            # 模式1：同一person块内（姓名→身份证号→性别男），避免跨person匹配
+            match = re.search(
+                r'姓名\s*[^\s]+\s*(?:(?!姓名).)*?(\d{17}[\dXx])\s*(?:(?!姓名).)*?性\s*别\s*男',
+                full_text, re.DOTALL,
+            )
+            if not match:
+                # 模式2：身份证号在性别后
+                match = re.search(
+                    r'性\s*别\s*男(?:(?!姓名).)*?(\d{17}[\dXx])',
+                    full_text, re.DOTALL,
+                )
             fields["男方身份证号"] = match.group(1).upper() if match else ""
 
         if "女方身份证号" in key_list:
-            # 尝试找女方姓名后的身份证号
-            match = re.search(r'性别\s*女.*?(\d{17}[\dXx])', full_text, re.DOTALL)
+            # 模式1：同一person块内
+            match = re.search(
+                r'姓名\s*[^\s]+\s*(?:(?!姓名).)*?(\d{17}[\dXx])\s*(?:(?!姓名).)*?性\s*别\s*女',
+                full_text, re.DOTALL,
+            )
+            if not match:
+                # 模式2：身份证号在性别后
+                match = re.search(
+                    r'性\s*别\s*女(?:(?!姓名).)*?(\d{17}[\dXx])',
+                    full_text, re.DOTALL,
+                )
             fields["女方身份证号"] = match.group(1).upper() if match else ""
 
         return fields
 
-    def _extract_household_register(self, full_text: str, key_list: List[str]) -> Dict[str, str]:
-        """从户口本文本中提取字段"""
+    def _extract_household_register(
+        self, full_text: str, key_list: List[str], image_path: str = ""
+    ) -> Dict[str, str]:
+        """
+        从户口本文本中提取字段（位置标注优先，正则兜底）
+
+        首页字段（位置标注可处理）：户别、户主姓名、户号、住址
+        个人页字段（正则处理）：姓名、与户主关系、性别、公民身份号码
+        """
         fields = {}
 
-        if "户主姓名" in key_list or "户主" in key_list:
-            match = re.search(r'户主姓名\s*([^\s]+)', full_text)
-            if not match:
-                match = re.search(r'户主\s*([^\s]+)', full_text)
-            value = match.group(1) if match else ""
-            if "户主姓名" in key_list:
-                fields["户主姓名"] = value
-            if "户主" in key_list:
-                fields["户主"] = value
+        # 空白模板页检测："常住人口登记卡" 页面若无身份证号，则只有字段标签无数据
+        if "常住人口登记卡" in full_text and not re.search(r"\d{17}[\dXx]", full_text):
+            return fields
 
-        if "户号" in key_list:
-            match = re.search(r'户号\s*([A-Z0-9]+)', full_text, re.IGNORECASE)
+        # 第1层：位置标注提取（首页字段）
+        pos_fields = {}
+        if image_path and self._position_extractor:
+            try:
+                pos_fields = self._position_extractor.extract(image_path)
+                logger.debug(f"位置标注结果: {pos_fields}")
+            except Exception as e:
+                logger.warning(f"位置标注提取失败，回退到正则: {e}")
+
+        # 合并位置标注结果（优先）
+        pos_field_names = ["户别", "户主姓名", "户号", "住址"]
+        for key in pos_field_names:
+            if key in key_list and pos_fields.get(key):
+                fields[key] = pos_fields[key]
+                if key == "户主姓名" and "户主" in key_list:
+                    fields["户主"] = pos_fields[key]
+                if key == "住址" and "地址" in key_list:
+                    fields["地址"] = pos_fields[key]
+
+        # 第2层：正则提取（补充位置标注未覆盖的字段）
+        # 只填充 fields 中尚未有值的字段
+
+        if ("户主姓名" in key_list or "户主" in key_list) and "户主姓名" not in fields:
+            # OCR 可能输出 "户 主 姓 名"（字间有空格）
+            match = re.search(r'户\s*主\s*姓\s*名\s*([^\s]+)', full_text)
+            if not match:
+                match = re.search(r'户主\s+姓名\s*([^\s]+)', full_text)
+            if not match:
+                # Fallback：无"户主姓名"标签，从"姓名"字段取（当该页是户主页时）
+                if re.search(r'户\s*主\s*或\s*与\s*户\s*主\s*关\s*系\s*户\s*主', full_text):
+                    m = re.search(r'姓\s*名\s*([^\s]+)', full_text)
+                    if m:
+                        value = m.group(1)
+                        if "户主姓名" in key_list:
+                            fields["户主姓名"] = value
+                        if "户主" in key_list:
+                            fields["户主"] = value
+                        # 跳过后续重复赋值
+                        value = None
+                    else:
+                        value = ""
+                else:
+                    value = ""
+                if value is not None:
+                    # 过滤封面页噪声
+                    if value and ("签章" in value or value in (
+                        "姓名", "与户主关系", "性别", "住址", "出生日期", "公民身份号码",
+                    )):
+                        value = ""
+                    if "户主姓名" in key_list:
+                        fields["户主姓名"] = value
+                    if "户主" in key_list:
+                        fields["户主"] = value
+            else:
+                value = match.group(1) if match else ""
+                # 过滤封面页噪声（承办人签章、字段标签等）
+                if value and ("签章" in value or value in (
+                    "姓名", "与户主关系", "性别", "住址", "出生日期", "公民身份号码",
+                )):
+                    value = ""
+                if "户主姓名" in key_list:
+                    fields["户主姓名"] = value
+                if "户主" in key_list:
+                    fields["户主"] = value
+
+        if "户号" in key_list and "户号" not in fields:
+            # OCR 可能输出 "户 号"（字间有空格）
+            match = re.search(r'户\s*号\s*([A-Z0-9]+)', full_text, re.IGNORECASE)
+            if not match:
+                match = re.search(r'^([0-9]{6,12})\s*常住人口登记卡', full_text, re.MULTILINE)
+            if not match:
+                match = re.search(r'^([0-9]{6,12})\s*\n', full_text, re.MULTILINE)
             fields["户号"] = match.group(1) if match else ""
 
-        if "住址" in key_list or "地址" in key_list:
-            match = re.search(r'住址\s*([^\n]+)', full_text)
+        if ("住址" in key_list or "地址" in key_list) and "住址" not in fields:
+            # 避免匹配"住址变动登记"等噪声
+            # 同时避免匹配 "其他住址" 等复合词（前面不能有中文字符）
+            match = re.search(r'(?<![一-鿿])住\s*址\s*(?!变动)([^\n]+)', full_text)
             if not match:
-                match = re.search(r'地址\s*([^\n]+)', full_text)
+                match = re.search(r'(?<![一-鿿])地\s*址\s*(?!变动)([^\n]+)', full_text)
             value = match.group(1).strip() if match else ""
             if "住址" in key_list:
                 fields["住址"] = value
@@ -211,24 +339,43 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields["地址"] = value
 
         if "姓名" in key_list:
-            # 匹配常住人口登记卡中的姓名
-            match = re.search(r'姓名\s*[:：]?\s*([^\s]+)', full_text)
+            # 格式1：姓名 张玉德
+            # 格式2：姓 名 张玉德（带空格）
+            # 注意：用负向后行断言排除 "户主姓名"（封面页），避免户主值覆盖个人页姓名
+            match = re.search(r'(?<!户主)姓\s*名\s*[:：]?\s*([^\s]+)', full_text)
             fields["姓名"] = match.group(1) if match else ""
 
         if "与户主关系" in key_list or "关系" in key_list:
-            match = re.search(r'(?:与户主关系|关系)\s*[:：]?\s*([^\s]+)', full_text)
+            # OCR 可能输出 "户主或与户主关系"（字间有空格）
+            # 捕获长度限制 ≤5 字符，避免匹配"注意事项"法律条文（如"户主或本户成员..."）
+            match = re.search(r'户\s*主\s*或\s*与\s*户\s*主\s*关\s*系\s*(\S{1,5})', full_text)
+            if not match:
+                match = re.search(r'(?:与\s*户\s*主\s*关\s*系|关\s*系)\s*[:：]?\s*(\S{1,5})', full_text)
             value = match.group(1) if match else ""
+            # 过滤明显的非关系词（如法律术语、字段名等）
+            if value and (
+                value in ("姓名", "性别", "曾用名", "出生地", "籍贯", "民族",
+                          "宗教信仰", "公民身份号码", "出生日期", "文化程度",
+                          "婚姻状况", "兵役状况", "服务处所", "职业",
+                          "承办人签章", "登记日期", "户号", "住址")
+                or "法律" in value or "效力" in value or "机关" in value
+            ):
+                value = ""
             if "与户主关系" in key_list:
                 fields["与户主关系"] = value
             if "关系" in key_list:
                 fields["关系"] = value
 
         if "性别" in key_list:
-            match = re.search(r'性别\s*[:：]?\s*(男|女)', full_text)
+            match = re.search(r'性\s*别\s*[:：]?\s*(男|女)', full_text)
             fields["性别"] = match.group(1) if match else ""
 
         if "公民身份号码" in key_list or "身份证号" in key_list:
-            match = re.search(r'(?:公民身份号码|身份证号)\s*[:：]?\s*(\d{17}[\dXx])', full_text, re.IGNORECASE)
+            # OCR 可能输出 "公 民 身 份 号 码" 或 "公民身份证件编号"（字间有空格）
+            match = re.search(
+                r'(?:公\s*民\s*身\s*份\s*号\s*码|公\s*民\s*身\s*份\s*证\s*件\s*编\s*号|身\s*份\s*证\s*号)\s*[:：]?\s*(\d{17}[\dXx])',
+                full_text, re.IGNORECASE,
+            )
             value = match.group(1).upper() if match else ""
             if "公民身份号码" in key_list:
                 fields["公民身份号码"] = value
@@ -242,18 +389,38 @@ class RuleExtractionLayer(IExtractionLayer):
         fields = {}
 
         if "不动产权证书号" in key_list or "证书号" in key_list:
-            # 匹配格式：皖（2017）蚌埠市不动产权第0025588号
-            match = re.search(r'([（(]\d{4}[）)]\s*[一-龥]+市?\s*不动产权第\s*[A-Z0-9]+号)', full_text)
-            if not match:
+            # 标准格式：皖（2017）蚌埠市不动产权第0025588号
+            # OCR 可能输出: "皖（ 2025 ） 蚌埠市 不动产权第 0058326 号"（括号内/数字后有空格）
+            match = re.search(
+                r'[一-龥]*\s*[（(]\s*\d{4}\s*[）)]\s*[一-龥]+\s*市?\s*不动产权第\s*[A-Z0-9]+\s*号',
+                full_text,
+            )
+            if match:
+                value = re.sub(r'\s+', '', match.group(0))  # 标准化去空格
+            else:
+                value = ""
+            # Fallback: "编号 № 34026135082" 格式
+            if not value:
+                match = re.search(r'编\s*号\s*[№#]+\s*([A-Z0-9]+)', full_text)
+                if match:
+                    value = match.group(1).strip()
+            # Fallback: 直接 "不动产权证书号：..."
+            if not value:
                 match = re.search(r'不动产权证书号\s*[:：]?\s*([^\n]+)', full_text)
-            value = match.group(1).strip() if match else ""
+                if match:
+                    value = re.sub(r'\s+', '', match.group(1).strip())
             if "不动产权证书号" in key_list:
                 fields["不动产权证书号"] = value
             if "证书号" in key_list:
                 fields["证书号"] = value
 
         if "权利人" in key_list:
-            match = re.search(r'权利人\s*[:：]?\s*([^\n]+)', full_text)
+            # 权利人必须出现在行首，避免匹配法律条文中的 "保护不动产权利人合法权益"
+            # OCR 可能输出 "土地权利人" 而非 "权利人"
+            match = re.search(r'^(?:土地)?权利人\s*[:：]?\s*([^\n]+)', full_text, re.MULTILINE)
+            if not match:
+                # fallback: 前面不是中文字符的情况（避免匹配"...保护不动产权利人..."）
+                match = re.search(r'(?<=[^一-鿿])(?:土地)?权利人\s*[:：]?\s*([^\n]+)', full_text)
             fields["权利人"] = match.group(1).strip() if match else ""
 
         if "共有情况" in key_list:
@@ -271,9 +438,11 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields["单元号"] = value
 
         if "房屋地址" in key_list or "地址" in key_list or "坐落" in key_list:
-            match = re.search(r'(?:房屋坐落|坐落|地址)\s*[:：]?\s*([^\n]+)', full_text)
+            # OCR 可能输出 "坐 落"（字间有空格）
+            # 必须匹配行首，避免匹配房产分户图表头中的 "坐落"（与 "结构 层数..." 同行）
+            match = re.search(r'^(?:房屋坐落|坐\s*落|地址)\s*[:：]?\s*([^\n]+)', full_text, re.MULTILINE)
             if not match:
-                match = re.search(r'房屋地址\s*[:：]?\s*([^\n]+)', full_text)
+                match = re.search(r'^房屋地址\s*[:：]?\s*([^\n]+)', full_text, re.MULTILINE)
             value = match.group(1).strip() if match else ""
             if "房屋地址" in key_list:
                 fields["房屋地址"] = value
@@ -283,9 +452,23 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields["坐落"] = value
 
         if "建筑面积" in key_list or "面积" in key_list:
-            match = re.search(r'建筑面积\s*[:：]?\s*([\d.]+)\s*(?:平方米|㎡|m2)', full_text)
+            # OCR 可能输出:
+            # - "房屋建筑面积 101.79 平方米"
+            # - "共有宗地面积932.58平方米/房屋建筑面积101.79平方米"
+            # - "建筑面积,m²\n... 88.32" （房产分户图表格格式）
+            # - "面 积 ... 101.79平方米"
+            match = re.search(r'房\s*屋\s*建\s*筑\s*面\s*积\s*[:：]?\s*([\d.]+)\s*(?:㎡|平方米|m2)', full_text)
             if not match:
-                match = re.search(r'面积\s*[:：]?\s*([\d.]+)', full_text)
+                match = re.search(r'建\s*筑\s*面\s*积\s*[:：]?\s*([\d.]+)\s*(?:㎡|平方米|m2)', full_text)
+            if not match:
+                # 房产分户图表格数据：数字直接跟 m²（如 "88.32 m²"）
+                match = re.search(r'([\d.]+)\s*m²', full_text)
+            if not match:
+                # 表格格式：表头 "建筑面积,m²" 后跟数值（可能换行）
+                match = re.search(r'建\s*筑\s*面\s*积\s*,?\s*(?:㎡|m²|m2)?\s*\n?\s*([\d.]+)', full_text)
+            if not match:
+                # 通用 fallback：排除 "宗地面积"
+                match = re.search(r'(?<!宗地)面\s*积\s*[:：]?\s*([\d.]+)', full_text)
             value = match.group(1) if match else ""
             if "建筑面积" in key_list:
                 fields["建筑面积"] = value
@@ -293,7 +476,8 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields["面积"] = value
 
         if "用途" in key_list:
-            match = re.search(r'用途\s*[:：]?\s*([^\n]+)', full_text)
+            # OCR 可能输出 "用 途"（字间有空格）
+            match = re.search(r'用\s*途\s*[:：]?\s*([^\n]+)', full_text)
             fields["用途"] = match.group(1).strip() if match else ""
 
         return fields
@@ -337,9 +521,13 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields["金额"] = value
 
         if "价税合计" in key_list or "合计" in key_list:
-            match = re.search(r'价税合计\s*[:：]?\s*([\d,.]+)', full_text)
+            # 匹配：价税合计（大写）⊗柒拾玖万伍仟陆佰肆拾圆整 （小写）¥795640.00
+            # 或：合计 ¥729944.95
+            match = re.search(r'价税合计.*?（小写）\s*[¥￥]?\s*([\d,.]+)', full_text)
             if not match:
-                match = re.search(r'合计\s*[:：]?\s*([\d,.]+)', full_text)
+                match = re.search(r'价税合计\s*[:：]?\s*([\d,.]+)', full_text)
+            if not match:
+                match = re.search(r'合计\s*[¥￥]?\s*([\d,.]+)', full_text)
             value = match.group(1) if match else ""
             if "价税合计" in key_list:
                 fields["价税合计"] = value
@@ -347,31 +535,63 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields["合计"] = value
 
         if "购买方名称" in key_list or "购买方" in key_list:
-            match = re.search(r'购买方\s*名称\s*[:：]?\s*([^\n]+)', full_text)
+            # 格式1：购买方信息 → 名称：张玉德
+            # 格式2：购买方名称：张玉德（负向后行断言排除"共同购买方"）
+            # 格式3：名称：张铭辉（无"购买方"前缀，出现在发票头部）
+            match = re.search(r'购买方信息\s*\n\s*名称\s*[:：]\s*([^\n]+)', full_text)
             if not match:
-                match = re.search(r'购买方\s*[:：]?\s*([^\n]+)', full_text)
+                match = re.search(r'(?<!共同)购买方\s*名称\s*[:：]?\s*([^\n]+)', full_text)
+            if not match:
+                match = re.search(r'(?<!共同)购买方\s*[:：]\s*([^\n]+)', full_text)
+            if not match:
+                # 格式3：无"购买方"前缀，匹配第一个非销售方/共同购买方的名称行
+                match = re.search(
+                    r'(?<!销售方)(?<!卖方信息)(?<!共同购买方)\n\s*名称\s*[:：]\s*([^\n]+)',
+                    full_text,
+                )
             value = match.group(1).strip() if match else ""
+            # 清理可能的噪声
+            if value in ('信息', '名称'):
+                value = ""
             if "购买方名称" in key_list:
                 fields["购买方名称"] = value
             if "购买方" in key_list:
                 fields["购买方"] = value
 
         if "购买方纳税人识别号" in key_list:
-            match = re.search(r'购买方.*?纳税人识别号\s*[:：]?\s*([A-Z0-9]+)', full_text, re.DOTALL)
+            # 购买方信息 → 统一社会信用代码/纳税人识别号：34030320040803351X
+            match = re.search(r'购买方信息\s*\n.*?纳税人识别号\s*[:：]\s*([A-Z0-9]{15,20})', full_text, re.DOTALL)
+            if not match:
+                # 负向后行断言：排除"共同购买方"
+                match = re.search(r'(?<!共同)购买方.*?纳税人识别号\s*[:：]?\s*([A-Z0-9]{15,20})', full_text, re.DOTALL)
+            if not match:
+                # 格式3：名称行直接跟纳税人识别号行（无"购买方"前缀，不跨行匹配）
+                match = re.search(
+                    r'(?<!共同)名称[^\n]+\n\s*统一社会信用代码/纳税人识别号\s*[:：]\s*([A-Z0-9]{15,20})',
+                    full_text,
+                )
             fields["购买方纳税人识别号"] = match.group(1) if match else ""
 
         if "销售方名称" in key_list or "销售方" in key_list:
-            match = re.search(r'销售方\s*名称\s*[:：]?\s*([^\n]+)', full_text)
+            # 格式1：销售方信息 → 名称：蚌埠宏翔置业有限公司
+            # 格式2：销售方名称：蚌埠宏翔置业有限公司
+            match = re.search(r'销售方信息\s*\n\s*名称\s*[:：]\s*([^\n]+)', full_text)
+            if not match:
+                match = re.search(r'销售方\s*名称\s*[:：]?\s*([^\n]+)', full_text)
             if not match:
                 match = re.search(r'销售方\s*[:：]?\s*([^\n]+)', full_text)
             value = match.group(1).strip() if match else ""
+            if value in ('信息', '名称'):
+                value = ""
             if "销售方名称" in key_list:
                 fields["销售方名称"] = value
             if "销售方" in key_list:
                 fields["销售方"] = value
 
         if "销售方纳税人识别号" in key_list:
-            match = re.search(r'销售方.*?纳税人识别号\s*[:：]?\s*([A-Z0-9]+)', full_text, re.DOTALL)
+            match = re.search(r'销售方信息\s*\n.*?纳税人识别号\s*[:：]\s*([A-Z0-9]{15,20})', full_text, re.DOTALL)
+            if not match:
+                match = re.search(r'销售方.*?纳税人识别号\s*[:：]?\s*([A-Z0-9]{15,20})', full_text, re.DOTALL)
             fields["销售方纳税人识别号"] = match.group(1) if match else ""
 
         return fields
@@ -385,16 +605,72 @@ class RuleExtractionLayer(IExtractionLayer):
             fields["合同编号"] = match.group(1) if match else ""
 
         if "买受人" in key_list:
-            match = re.search(r'买受人\s*[:：]?\s*([^\s,，]+)', full_text)
-            fields["买受人"] = match.group(1) if match else ""
+            # 格式1：乙方/买受人（签章）：张玉煌
+            # 格式2：买受人（签章）：张玉煌
+            # 避免匹配：买受人已详细阅读...
+            # 注意：[ \t]* 只匹配空格/制表符，不匹配换行
+            match = re.search(r'(?:乙方/)?买受人[（(]签章[）)][ \t]*[:：][ \t]*([^\n]+)', full_text)
+            if not match:
+                match = re.search(r'买受人[ \t]*[:：][ \t]*([^\s,，已详阅]+)', full_text)
+            if not match:
+                # 存量房合同格式：买方： 凡荣，尹笑男
+                match = re.search(r'(?:乙方[/／]?)?买方\s*[:：]\s*([^\n]+)', full_text)
+            value = match.group(1).strip() if match else ""
+            # 清理噪声
+            if value.startswith('已') or value in ('签章', '（签章）', '签字'):
+                value = ""
+            fields["买受人"] = value
 
         if "出卖人" in key_list:
-            match = re.search(r'出卖人\s*[:：]?\s*([^\s,，]+)', full_text)
-            fields["出卖人"] = match.group(1) if match else ""
+            # 格式1：甲方/出卖人（签章）：蚌埠宏翔置业有限公司
+            # 格式2：甲方/出卖人（签章）：（值在下一行或印章中）
+            # 注意：[ \t]* 只匹配空格/制表符，不匹配换行
+            match = re.search(r'(?:甲方/)?出卖人[（(]签章[）)][ \t]*[:：][ \t]*([^\n]+)', full_text)
+            value = match.group(1).strip() if match else ""
+            # 如果同一行没有值，尝试从下一行获取
+            if not value:
+                match = re.search(r'(?:甲方/)?出卖人[（(]签章[）)][ \t]*[:：]\n[ \t]*([^\n]+)', full_text)
+                next_line = match.group(1).strip() if match else ""
+                # 下一行不能是买受人信息
+                if next_line and '买受人' not in next_line and '乙方' not in next_line:
+                    value = next_line
+            # 如果还是没有，尝试从印章中提取
+            if not value:
+                match = re.search(r'[（(]印章[：:][ \t]*([^\s)）]+)', full_text)
+                stamp_value = match.group(1) if match else ""
+                # 印章值不能是个人名（通常是公司名）
+                if stamp_value and len(stamp_value) > 4:
+                    value = stamp_value
+            if not value:
+                # 简单格式：出卖人：蚌埠宏翔置业有限公司（无签章标记）
+                match = re.search(r'出卖人\s*[:：]\s*([^\n]+)', full_text)
+                if match:
+                    candidate = match.group(1).strip()
+                    # 排除法律条文中的匹配
+                    if candidate and len(candidate) < 30:
+                        value = candidate
+            if not value:
+                # 存量房合同格式：卖方： 褚作宝
+                match = re.search(r'(?:甲方[/／]?)?卖方\s*[:：]\s*([^\n]+)', full_text)
+                value = match.group(1).strip() if match else ""
+            # 清理噪声
+            if value in ('签章', '（签章）', '签字', '：', ''):
+                value = ""
+            fields["出卖人"] = value
 
         if "总价款" in key_list or "价款" in key_list or "合同金额" in key_list:
-            match = re.search(r'(?:总价款|价款|合同金额)\s*[:：]?\s*([\d,.]+)\s*(?:元|万元)?', full_text)
+            # 优先匹配带冒号的格式（避免匹配章节标题 "第三章 商品房价款"）
+            match = re.search(r'(?:总价款|合同金额)\s*[:：]\s*([\d,.]+)\s*(?:元|万元)?', full_text)
+            if not match:
+                # 内联格式：总价款为 人民币 800000 元
+                match = re.search(r'总价款\s*为\s*(?:人民币\s*)?(?:（[^）]*）\s*)?([\d,.]+)\s*(?:元|万元)', full_text)
+            if not match:
+                # 回退匹配（无冒号，但需要至少2位数字以避免匹配 "价款\n1." 噪声）
+                match = re.search(r'(?:总价款|合同金额)\s*[:：]?\s*(\d{2,}[,.]?\d*)\s*(?:元|万元)?', full_text)
             value = match.group(1) if match else ""
+            # 过滤噪声值
+            if value in ("1", "1.", "2", "3", "4"):
+                value = ""
             if "总价款" in key_list:
                 fields["总价款"] = value
             if "价款" in key_list:
@@ -402,15 +678,26 @@ class RuleExtractionLayer(IExtractionLayer):
             if "合同金额" in key_list:
                 fields["合同金额"] = value
 
-        if "合同签订日期" in key_list or "签订日期" in key_list:
-            match = re.search(r'(?:合同签订日期|签订日期)\s*[:：]?\s*(\d{4}年\d{1,2}月\d{1,2}日)', full_text)
+        if "签订日期" in key_list or "合同签订日期" in key_list:
+            # 格式：签署日期：2024.2.21 或 签订日期：2024年2月21日（数字与年月日间可能有空格）
+            match = re.search(r'(?:签署日期|签订日期|合同签订日期)\s*[:：]\s*(\d{4}\s*[.年\-]\s*\d{1,2}\s*[.月\-]\s*\d{1,2}\s*[日]?)', full_text)
             if not match:
-                match = re.search(r'(\d{4}年\d{1,2}月\d{1,2}日)', full_text)
+                # 后备：找文本中的日期，排除扫描时间戳
+                all_dates = list(re.finditer(r'(\d{4}\s*[.年\-]\s*\d{1,2}\s*[.月\-]\s*\d{1,2}\s*[日]?)', full_text))
+                for dm in all_dates:
+                    # 排除扫描时间戳（日期后紧跟 "HH:MM"）
+                    after = full_text[dm.end():dm.end()+10]
+                    if re.match(r'\s*\d{1,2}:\d{2}', after):
+                        continue
+                    match = dm
+                    break
             value = match.group(1) if match else ""
-            if "合同签订日期" in key_list:
-                fields["合同签订日期"] = value
+            # 去除日期内的所有空格，统一格式
+            value = value.replace(' ', '').replace('　', '')
             if "签订日期" in key_list:
                 fields["签订日期"] = value
+            if "合同签订日期" in key_list:
+                fields["合同签订日期"] = value
 
         if "房屋地址" in key_list or "房屋坐落" in key_list or "地址" in key_list:
             match = re.search(r'(?:房屋坐落|坐落|房屋地址|地址)\s*[:：]?\s*([^\n]+)', full_text)
@@ -436,24 +723,160 @@ class RuleExtractionLayer(IExtractionLayer):
         """从资金监管协议文本中提取字段"""
         fields = {}
 
+        # ===== 监管金额 =====
         if "监管金额" in key_list or "监管价款" in key_list:
-            match = re.search(r'(?:监管金额|监管价款)\s*[:：]?\s*([\d,.]+)\s*(?:元|万元)?', full_text)
+            # 模式1: "监管总额 肆拾伍万元整 ￥450000.00"
+            match = re.search(r'(?:监管总额|监管金额|监管价款)\s*[^\n]*?[¥￥]\s*([\d,.]+)', full_text)
+            if not match:
+                # 模式2: "监管金额：818000.00元"
+                match = re.search(r'(?:监管金额|监管价款)\s*[:：]\s*([\d,.]+)\s*(?:元|万元)?', full_text)
+            if not match:
+                # 模式3: "监管总额 贰拾[万...]元" Chinese amount
+                match = re.search(r'(?:监管总额|监管金额)\s*[:：]?\s*([零壹贰叁肆伍陆柒捌拾拾佰仟万亿元整]+(?:[¥￥][\d,.]+)?)', full_text)
             value = match.group(1) if match else ""
             if "监管金额" in key_list:
                 fields["监管金额"] = value
             if "监管价款" in key_list:
                 fields["监管价款"] = value
 
+        # ===== 买方/卖方 =====
         if "买方" in key_list or "卖方" in key_list:
-            buyer_match = re.search(r'买方\s*[:：]?\s*([^\s,，]+)', full_text)
-            seller_match = re.search(r'卖方\s*[:：]?\s*([^\s,，]+)', full_text)
-            if "买方" in key_list:
-                fields["买方"] = buyer_match.group(1) if buyer_match else ""
-            if "卖方" in key_list:
-                fields["卖方"] = seller_match.group(1) if seller_match else ""
+            # 模式1: "乙方｛买方｝：尹笑男" / "甲方｛卖方｝：褚作宝"
+            buyer_match = re.search(r'[｛{]买方[}｝]\s*[:：]\s*(\S+)', full_text)
+            seller_match = re.search(r'[｛{]卖方[}｝]\s*[:：]\s*(\S+)', full_text)
 
+            # 模式2: "买房人 尹笑男 凡荣" (凭证页, space-separated)
+            if not buyer_match:
+                buyer_match = re.search(r'买[房方]人\s+([^\n]+?)(?:\s+卖|$)', full_text)
+            # 模式3: "买方：xxx"
+            if not buyer_match:
+                buyer_match = re.search(r'买方\s*[:：]\s*(\S+)', full_text)
+
+            if not seller_match:
+                seller_match = re.search(r'卖[房方]人\s+([^\n]+?)(?:\s|$)', full_text)
+            if not seller_match:
+                seller_match = re.search(r'卖方\s*[:：]\s*(\S+)', full_text)
+
+            buyer_val = buyer_match.group(1).strip() if buyer_match else ""
+            seller_val = seller_match.group(1).strip() if seller_match else ""
+
+            # 清理"买房人"行中混入的多余信息
+            if buyer_val:
+                # "尹笑男 凡荣 尹笑男 卖房人 褚作宝" → 取到"卖房人"之前的名字
+                buyer_val = re.split(r'卖[房方]人', buyer_val)[0].strip()
+                # 多个名字之间用"、"连接
+                names = buyer_val.split()
+                buyer_val = "、".join(names) if names else buyer_val
+
+            if "买方" in key_list:
+                fields["买方"] = buyer_val
+            if "卖方" in key_list:
+                fields["卖方"] = seller_val
+
+        # ===== 监管机构 =====
         if "监管机构" in key_list:
-            match = re.search(r'监管机构\s*[:：]?\s*([^\n]+)', full_text)
-            fields["监管机构"] = match.group(1).strip() if match else ""
+            # 模式1: "丙方｛监管机构｝：蚌埠市城市开发建设集团有限公司"
+            match = re.search(r'[｛{]监管机构[}｝]\s*[:：]\s*([^\n]+)', full_text)
+            if not match:
+                # 模式2: "监管机构：xxx"
+                match = re.search(r'监管机构\s*[:：]\s*([^\n]+)', full_text)
+            if not match:
+                # 模式3: 凭证页 — 公司名后紧跟"资金监管专用章"
+                match = re.search(r'([^\n]{4,30}公司)\s*\n\s*资金监管专用章', full_text)
+            if not match:
+                # 模式4: 印章文本 "（印章：蚌埠市城市开发建设集团有限公司 资金监管专用章..."
+                match = re.search(r'印章\s*[:：]\s*([^\s）]+公司)', full_text)
+            value = match.group(1).strip() if match else ""
+            # 清理括号残留
+            value = re.sub(r'^[｝}]\s*[:：]?\s*', '', value)
+            fields["监管机构"] = value
+
+        return fields
+
+    def _extract_divorce_agreement(self, full_text: str, key_list: List[str]) -> Dict[str, str]:
+        """从离婚协议文本中提取字段"""
+        fields = {}
+
+        # ===== 男方姓名 =====
+        if "男方姓名" in key_list:
+            match = re.search(r'男方姓名\s*[:：]\s*(\S+)', full_text)
+            if not match:
+                match = re.search(r'男\s*方\s*[:：]\s*(\S+)', full_text)
+            fields["男方姓名"] = match.group(1).strip() if match else ""
+
+        # ===== 女方姓名 =====
+        if "女方姓名" in key_list:
+            match = re.search(r'女方姓名\s*[:：]\s*(\S+)', full_text)
+            if not match:
+                match = re.search(r'女\s*方\s*[:：]\s*(\S+)', full_text)
+            fields["女方姓名"] = match.group(1).strip() if match else ""
+
+        # ===== 离婚日期 =====
+        if "离婚日期" in key_list:
+            # 模式1: "离婚日期：2018年7月30日"
+            match = re.search(r'离婚日期\s*[:：]\s*(\d{4}年\d{1,2}月\d{1,2}日)', full_text)
+            if match:
+                fields["离婚日期"] = match.group(1)
+            else:
+                # 策略：取最后一个非结婚登记日期
+                all_dates = re.findall(r'(\d{4}年\d{1,2}月\d{1,2}日)', full_text)
+                marriage_date = None
+                m = re.search(r'(\d{4}年\d{1,2}月\d{1,2}日)[^\n]{0,30}结婚登记', full_text)
+                if m:
+                    marriage_date = m.group(1)
+                # 取最后一个不是结婚日期的日期（即签署日期）
+                non_marriage_dates = [d for d in all_dates if d != marriage_date]
+                if non_marriage_dates:
+                    fields["离婚日期"] = non_marriage_dates[-1]
+
+        # ===== 子女抚养 =====
+        if "子女抚养" in key_list:
+            # "一、子女抚养问题：婚后子女已成年。"
+            match = re.search(r'子女抚养[^\n]*?[:：]\s*([^\n]+)', full_text)
+            if not match:
+                match = re.search(r'子女抚养\s*([^\n]+)', full_text)
+            value = match.group(1).strip() if match else ""
+            # 清理：截取到下一个编号条目之前
+            value = re.split(r'[一二三四五六七八九十]+[、.]', value)[0].strip()
+            fields["子女抚养"] = value
+
+        # ===== 财产分割约定 =====
+        if "财产分割约定" in key_list:
+            # "二、财产分割及债务、债权处理问题：\n 1、婚后男女双方无共同财产分割\n 2、婚后男女双方无共同债务..."
+            # 先找到该条款区域
+            section_match = re.search(r'财产分割[^\n]*?[:：]([\s\S]+?)(?:三[、.]|其他协议|$)', full_text)
+            if section_match:
+                section_text = section_match.group(1)
+                # 提取各子条款内容
+                sub_items = re.findall(r'\d+[、.]\s*([^\n]+)', section_text)
+                if sub_items:
+                    # 合并所有子条款，去除尾部日期等噪声
+                    parts = []
+                    for item in sub_items:
+                        # 去除尾部的数字日期格式 "2018.7.30"
+                        item = re.sub(r'\s*\d{4}\.\d{1,2}\.\d{1,2}\s*', '', item)
+                        # 去除尾部句号
+                        item = item.rstrip('。')
+                        if item.strip():
+                            parts.append(item.strip())
+                    # 去除后续子条款中与第一项重复的主语前缀
+                    if len(parts) > 1:
+                        first = parts[0]
+                        # 尝试提取主语（取第一个谓语之前的部分）
+                        # "婚后男女双方无共同财产分割" → 主语 "婚后男女双方"
+                        prefix_match = re.match(r'^(.+?)(无|有|应|须|由|已|不)', first)
+                        if prefix_match:
+                            subject = prefix_match.group(1)
+                            for i in range(1, len(parts)):
+                                if parts[i].startswith(subject):
+                                    parts[i] = parts[i][len(subject):]
+                    value = "，".join(parts)
+                else:
+                    value = section_text.strip()
+            else:
+                # 简单模式: "财产分割：xxx"
+                match = re.search(r'财产分割[^\n]*?[:：]?\s*([^\n]+)', full_text)
+                value = match.group(1).strip() if match else ""
+            fields["财产分割约定"] = value
 
         return fields

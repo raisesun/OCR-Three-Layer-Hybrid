@@ -38,6 +38,8 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         DocumentType.PROPERTY_CERTIFICATE: [
             "不动产权证书",      # 房产证独有
             "BDCQZ",            # 房产证编号前缀
+            "房产分户图",        # 房产证附图页
+            "宗地图",            # 房产证附图页
         ],
     }
 

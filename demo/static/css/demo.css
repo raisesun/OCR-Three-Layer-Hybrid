@@ -1,0 +1,145 @@
+/* OCR演示 - 自定义样式 */
+
+/* Alpine.js x-cloak: 隐藏未初始化的元素 */
+[x-cloak] { display: none !important; }
+
+/* ========== Pipeline流程图 ========== */
+
+.pipeline-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pipeline-stage {
+    position: relative;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+}
+
+.pipeline-stage.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.pipeline-stage.passed {
+    border-color: #d1d5db;
+    background: #f3f4f6;
+    opacity: 0.6;
+}
+
+.pipeline-stage.vlm-stage.active {
+    border-color: #8b5cf6;
+    background: #f5f3ff;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.stage-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.pipeline-stage.active .stage-icon {
+    background: #3b82f6;
+    color: white;
+}
+
+.pipeline-stage.vlm-stage.active .stage-icon {
+    background: #8b5cf6;
+}
+
+.pipeline-stage.passed .stage-icon {
+    background: #d1d5db;
+    color: #6b7280;
+}
+
+.pipeline-stage:not(.active):not(.passed) .stage-icon {
+    background: #e5e7eb;
+    color: #9ca3af;
+}
+
+.match-info {
+    font-size: 11px;
+    color: #3b82f6;
+    padding-left: 34px;
+    font-family: monospace;
+}
+
+.pipeline-extraction {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid;
+    background: #f9fafb;
+}
+
+/* ========== 连接线 ========== */
+
+.pipeline-flow .pipeline-stage + .pipeline-stage::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 22px;
+    width: 2px;
+    height: 4px;
+    background: #d1d5db;
+}
+
+.pipeline-flow .pipeline-stage.active + .pipeline-stage::before {
+    background: #3b82f6;
+}
+
+/* ========== 动画 ========== */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+[x-show] {
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* ========== 滚动条 ========== */
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ========== 响应式 ========== */
+
+@media (max-width: 768px) {
+    .pipeline-flow {
+        gap: 4px;
+    }
+
+    .pipeline-stage {
+        padding: 6px 10px;
+    }
+}

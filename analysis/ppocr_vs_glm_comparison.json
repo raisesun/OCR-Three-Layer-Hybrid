@@ -1,0 +1,14 @@
+{
+  "户口本首页_列错位": {
+    "basic_ocr_error": "PaddleOCR.predict() got an unexpected keyword argument 'cls'",
+    "structure_v3_error": "Unknown argument: table_recognition"
+  },
+  "户口本个人页": {
+    "basic_ocr_error": "PaddleOCR.predict() got an unexpected keyword argument 'cls'",
+    "structure_v3_error": "Unknown argument: table_recognition"
+  },
+  "结婚证_多错误": {
+    "basic_ocr_error": "PaddleOCR.predict() got an unexpected keyword argument 'cls'",
+    "structure_v3_error": "Unknown argument: table_recognition"
+  }
+}

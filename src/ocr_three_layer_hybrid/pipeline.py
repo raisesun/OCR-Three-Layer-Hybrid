@@ -3,10 +3,14 @@
 """
 方案E+编排管道
 将文档分类器、规则层、VLM层、LLM层组合成完整流程
+
+增强：VLM兜底层（字段校验失败时触发）
 """
 
+import logging
 import time
 from typing import Dict, List, Optional, Any
+
 from ocr_three_layer_hybrid.interfaces import (
     DocumentType,
     DocumentInfo,
@@ -19,6 +23,8 @@ from ocr_three_layer_hybrid.classifier import KeywordDocumentClassifier
 from ocr_three_layer_hybrid.vlm_classifier import VLMDocumentClassifier, HybridDocumentClassifier
 from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
 
+logger = logging.getLogger(__name__)
+
 
 class PlanEPlusPipeline:
     """方案E+三层混合架构管道"""
@@ -26,35 +32,42 @@ class PlanEPlusPipeline:
     # 文档类型到默认字段的映射
     DEFAULT_KEY_LISTS: Dict[DocumentType, List[str]] = {
         DocumentType.ID_CARD: [
-            "姓名", "性别", "民族", "出生", "住址", "公民身份号码"
+            "姓名", "性别", "民族", "出生", "住址", "公民身份号码",
+            "签发机关", "有效期限",
         ],
         DocumentType.MARRIAGE_CERTIFICATE: [
-            "持证人", "登记日期", "结婚证字号", "男方姓名", "女方姓名"
+            "持证人", "登记日期", "结婚证字号", "男方姓名", "女方姓名",
+            "男方身份证号", "女方身份证号",
         ],
         DocumentType.HOUSEHOLD_REGISTER: [
-            "姓名", "户主", "与户主关系", "性别", "户籍地址", "公民身份号码"
+            "户主姓名", "户号", "住址", "姓名",
+            "与户主关系", "性别", "公民身份号码",
         ],
         DocumentType.PROPERTY_CERTIFICATE: [
-            "权利人", "共有情况", "房屋地址", "不动产单元号", "建筑面积"
+            "证书号", "权利人", "共有情况", "不动产单元号",
+            "房屋地址", "建筑面积", "用途",
         ],
         DocumentType.INVOICE: [
-            "发票代码", "发票号码", "开票日期", "税额", "不含税金额", "价税合计",
-            "购买方名称", "销售方名称"
+            "发票代码", "发票号码", "开票日期", "价税合计",
+            "购买方名称", "购买方纳税人识别号",
+            "销售方名称", "销售方纳税人识别号",
         ],
         DocumentType.PURCHASE_CONTRACT: [
-            "合同编号", "买受人", "出卖人", "总价款", "合同签订日期", "房屋地址", "建筑面积"
+            "合同编号", "买受人", "出卖人", "总价款",
+            "签订日期", "房屋地址", "建筑面积",
         ],
         DocumentType.STOCK_CONTRACT: [
-            "合同编号", "买受人", "出卖人", "总价款", "合同签订日期", "房屋地址", "建筑面积"
+            "合同编号", "买受人", "出卖人", "总价款",
+            "签订日期", "房屋地址", "建筑面积",
         ],
         DocumentType.FUND_SUPERVISION: [
             "监管金额", "买方", "卖方", "监管机构"
         ],
         DocumentType.DIVORCE_CERTIFICATE: [
-            "离婚证字号", "持证人", "登记日期"
+            "持证人", "登记日期", "离婚证字号"
         ],
         DocumentType.DIVORCE_AGREEMENT: [
-            "男方姓名", "女方姓名", "离婚日期", "财产分割", "子女抚养"
+            "男方姓名", "女方姓名", "离婚日期", "财产分割约定", "子女抚养"
         ],
     }
 
@@ -69,7 +82,7 @@ class PlanEPlusPipeline:
         DocumentType.STOCK_CONTRACT: ProcessingLayer.RULE,  # 已添加到规则层
         DocumentType.FUND_SUPERVISION: ProcessingLayer.RULE,  # 新增：资金监管协议由规则层处理
         DocumentType.DIVORCE_CERTIFICATE: ProcessingLayer.VLM,  # 离婚证由VLM层处理
-        DocumentType.DIVORCE_AGREEMENT: ProcessingLayer.LLM,  # 离婚协议由LLM层处理
+        DocumentType.DIVORCE_AGREEMENT: ProcessingLayer.RULE,  # 离婚协议由规则层处理
         DocumentType.UNKNOWN: ProcessingLayer.VLM,  # VLM兜底
     }
 
@@ -82,6 +95,7 @@ class PlanEPlusPipeline:
         key_lists: Optional[Dict[DocumentType, List[str]]] = None,
         layer_routing: Optional[Dict[DocumentType, ProcessingLayer]] = None,
         enable_vlm_classification_fallback: bool = True,
+        vlm_fallback_handler=None,  # VLM字段级兜底处理器
     ):
         """
         初始化方案E+管道
@@ -94,6 +108,7 @@ class PlanEPlusPipeline:
             key_lists: 各文档类型的默认字段列表
             layer_routing: 文档类型到处理层的映射
             enable_vlm_classification_fallback: 是否启用VLM分类兜底（默认True）
+            vlm_fallback_handler: VLM字段级兜底处理器（校验失败时触发）
         """
         # 如果没有指定分类器，创建混合分类器（规则优先，VLM兜底）
         if classifier is None:
@@ -109,6 +124,7 @@ class PlanEPlusPipeline:
         self.rule_layer = rule_layer or RuleExtractionLayer()
         self.vlm_layer = vlm_layer
         self.llm_layer = llm_layer
+        self.vlm_fallback_handler = vlm_fallback_handler
 
         self.key_lists = key_lists or self.DEFAULT_KEY_LISTS.copy()
         self.layer_routing = layer_routing or self.DEFAULT_LAYER_ROUTING.copy()
@@ -119,6 +135,7 @@ class PlanEPlusPipeline:
         ocr_texts: List[str],
         key_list: Optional[List[str]] = None,
         force_layer: Optional[ProcessingLayer] = None,
+        doc_info: Optional[DocumentInfo] = None,
     ) -> ExtractionResult:
         """
         处理文档并提取字段
@@ -128,17 +145,20 @@ class PlanEPlusPipeline:
             ocr_texts: OCR识别文本列表
             key_list: 指定提取的字段列表，不传则使用默认字段
             force_layer: 强制使用某一层处理
+            doc_info: 预计算的分类结果（若提供则跳过内部重复分类）
 
         Returns:
             ExtractionResult对象
         """
         start_time = time.time()
 
-        # 第1层：文档分类
-        doc_info = self.classifier.classify(image_path, ocr_texts)
+        # 第1层：文档分类（如果未提供预计算结果）
+        if doc_info is None:
+            doc_info = self.classifier.classify(image_path, ocr_texts)
 
         # 附属页面检查：如果VLM识别为附属页面，跳过提取
-        if doc_info.metadata.get("is_attachment"):
+        # 例外：如果文档类型已被明确识别（非UNKNOWN），则不视为附属页面，继续提取
+        if doc_info.metadata.get("is_attachment") and doc_info.doc_type == DocumentType.UNKNOWN:
             return ExtractionResult(
                 doc_type=doc_info.doc_type,
                 layer=ProcessingLayer.VLM,
@@ -157,6 +177,12 @@ class PlanEPlusPipeline:
             doc_info.doc_type, ProcessingLayer.LLM
         )
 
+        # 回退逻辑：规则层提取依赖OCR文本，若无文本则回退到VLM提取
+        full_text = " ".join(ocr_texts).strip()
+        if target_layer == ProcessingLayer.RULE and not full_text:
+            if self.vlm_layer is not None:
+                target_layer = ProcessingLayer.VLM
+
         # 第2层：字段提取
         layer = self._get_layer(target_layer)
 
@@ -171,8 +197,52 @@ class PlanEPlusPipeline:
             )
 
         result = layer.extract(doc_info, key_list)
+
+        # 第2.5层：VLM字段级兜底（校验失败时触发）
+        if self.vlm_fallback_handler and result.success:
+            result = self._apply_vlm_fallback(image_path, result, doc_info)
+
         result.time_cost = time.time() - start_time  # 包含分类时间
         return result
+
+    def _apply_vlm_fallback(
+        self, image_path: str, result: ExtractionResult, doc_info: DocumentInfo
+    ) -> ExtractionResult:
+        """
+        对提取结果进行校验，失败字段触发VLM兜底
+
+        仅对启用VLM兜底的文档类型生效（当前：户口本、结婚证）
+        """
+        # 只对特定文档类型启用VLM字段级兜底
+        fallback_enabled_types = {
+            DocumentType.HOUSEHOLD_REGISTER,
+            DocumentType.MARRIAGE_CERTIFICATE,
+            DocumentType.ID_CARD,
+        }
+        if doc_info.doc_type not in fallback_enabled_types:
+            return result
+
+        try:
+            failed_fields = self.vlm_fallback_handler.get_failed_fields(result.fields)
+            if not failed_fields:
+                return result
+
+            logger.info(
+                f"[VLM兜底] {doc_info.doc_type.value} | 失败字段: {failed_fields}"
+            )
+            vlm_fields = self.vlm_fallback_handler.fallback_extract(
+                image_path, failed_fields, doc_info.doc_type
+            )
+
+            # 合并VLM结果（只覆盖失败字段）
+            for field_name in failed_fields:
+                if vlm_fields.get(field_name):
+                    result.fields[field_name] = vlm_fields[field_name]
+
+            return result
+        except Exception as e:
+            logger.warning(f"[VLM兜底] 异常: {e}")
+            return result
 
     def _get_layer(self, layer: ProcessingLayer) -> Optional[IExtractionLayer]:
         """根据层类型获取对应的处理器"""

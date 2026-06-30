@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR三层混合架构 — 演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.x.x/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/css/demo.css">
+</head>
+<body class="bg-gray-50 min-h-screen" x-data="app()" x-init="init()">
+
+<!-- 顶部导航 -->
+<header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">🔍 OCR三层混合架构</h1>
+                <p class="text-blue-200 text-sm mt-1">规则层 + VLM层 + LLM层 | 分类准确率 99.2%</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="px-3 py-1 bg-green-500/20 rounded-full text-green-200 text-xs">
+                    ● GLM-OCR :8080
+                </span>
+                <span class="px-3 py-1 bg-blue-500/20 rounded-full text-blue-200 text-xs">
+                    ● Qwen3.5-4B :8081
+                </span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Tab导航 -->
+<nav class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex space-x-1">
+            <template x-for="tab in tabs" :key="tab.id">
+                <button
+                    @click="activeTab = tab.id"
+                    :class="activeTab === tab.id ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="px-4 py-3 text-sm font-medium border-b-2 transition-colors"
+                    x-text="tab.label">
+                </button>
+            </template>
+        </div>
+    </div>
+</nav>
+
+<!-- 主内容区 -->
+<main class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Tab 1: 单图处理 -->
+    <div x-show="activeTab === 'single'" x-cloak>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 左侧: 图片上传 + 预览 -->
+            <div class="space-y-4">
+                <div class="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 class="text-lg font-semibold mb-3">📷 图片输入</h3>
+                    <!-- 上传区域 -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4 hover:border-blue-400 transition-colors cursor-pointer"
+                         @click="$refs.fileInput.click()"
+                         @dragover.prevent="dragOver = true"
+                         @dragleave="dragOver = false"
+                         @drop.prevent="handleDrop($event)"
+                         :class="dragOver ? 'border-blue-500 bg-blue-50' : ''">
+                        <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" accept="image/*" class="hidden">
+                        <div x-show="!uploadedImageUrl" class="text-gray-400">
+                            <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p>拖拽图片到此处，或点击上传</p>
+                            <p class="text-xs text-gray-300 mt-1">支持 JPG / PNG 格式</p>
+                        </div>
+                        <img x-show="uploadedImageUrl" :src="uploadedImageUrl" class="max-h-64 mx-auto rounded-lg" alt="预览">
+                    </div>
+                    <!-- 从基线选择 -->
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">或从基线数据选择：</label>
+                        <div class="space-y-2">
+                            <select x-model="selectedCase" @change="loadCaseImages()" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                <option value="">选择业务...</option>
+                                <template x-for="c in cases" :key="c.case_id">
+                                    <option :value="c.case_id" x-text="c.case_id + ' (' + c.category + ')'"></option>
+                                </template>
+                            </select>
+                            <select x-show="caseImages.length > 0" x-model="selectedImagePath" @change="loadSelectedImage()" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                <option value="">选择图片...</option>
+                                <template x-for="img in caseImages" :key="img.file_path">
+                                    <option :value="img.file_path" x-text="img.file_name + ' (' + img.doc_type + ')'"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- OCR文本 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">OCR文本（可编辑后重新分类）：</label>
+                        <textarea x-model="ocrText" rows="5" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="OCR识别文本将在此显示..."></textarea>
+                    </div>
+                    <!-- 处理按钮 -->
+                    <button @click="processImage()" :disabled="!currentImagePath && !uploadedImageUrl || processing"
+                            class="mt-3 w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+                        <span x-show="!processing">🚀 开始处理</span>
+                        <span x-show="processing">处理中...</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧: 结果展示 -->
+            <div class="space-y-4">
+                <!-- 分类结果 -->
+                <div x-show="processResult" class="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 class="text-lg font-semibold mb-3">📋 分类结果</h3>
+                    <div class="grid grid-cols-2 gap-3" x-show="processResult">
+                        <div class="bg-blue-50 rounded-lg p-3">
+                            <div class="text-xs text-blue-600 font-medium">文档类型</div>
+                            <div class="text-lg font-bold text-blue-800" x-text="processResult?.classification?.doc_type_label"></div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-3">
+                            <div class="text-xs text-green-600 font-medium">置信度</div>
+                            <div class="text-lg font-bold text-green-800" x-text="(processResult?.classification?.confidence * 100)?.toFixed(0) + '%'"></div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-3">
+                            <div class="text-xs text-purple-600 font-medium">分类路由</div>
+                            <div class="text-sm font-bold text-purple-800" x-text="processResult?.classification?.route_name"></div>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-3">
+                            <div class="text-xs text-orange-600 font-medium">提取层</div>
+                            <div class="text-sm font-bold text-orange-800" x-text="processResult?.extraction?.layer"></div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500" x-show="processResult?.classification?.signal">
+                        匹配信号: <span class="font-mono text-gray-700" x-text="processResult?.classification?.signal"></span>
+                    </div>
+                    <div class="mt-1 text-xs text-gray-500" x-show="processResult?.classification?.vlm_result">
+                        VLM结果: <span class="font-mono text-gray-700" x-text="processResult?.classification?.vlm_result"></span>
+                    </div>
+                </div>
+
+                <!-- Pipeline流程图 -->
+                <div x-show="processResult?.pipeline_flow" class="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 class="text-lg font-semibold mb-3">⚡ Pipeline流程</h3>
+                    <div class="pipeline-flow">
+                        <template x-for="stage in processResult?.pipeline_flow?.stages" :key="stage.id">
+                            <div class="pipeline-stage"
+                                 :class="{
+                                    'active': processResult?.pipeline_flow?.active_stage === stage.id,
+                                    'passed': isStagePassed(stage.id),
+                                    'vlm-stage': stage.id === 'stage4'
+                                 }">
+                                <div class="flex items-center space-x-2">
+                                    <span class="stage-icon" x-text="processResult?.pipeline_flow?.active_stage === stage.id ? '✓' : '○'"></span>
+                                    <div>
+                                        <div class="text-sm font-medium" x-text="stage.title"></div>
+                                        <div class="text-xs text-gray-400" x-text="stage.keywords"></div>
+                                    </div>
+                                </div>
+                                <div x-show="processResult?.pipeline_flow?.active_stage === stage.id && processResult?.pipeline_flow?.stage_match_info"
+                                     class="match-info mt-1" x-text="'匹配: ' + processResult?.pipeline_flow?.stage_match_info"></div>
+                            </div>
+                        </template>
+                        <!-- 提取层 -->
+                        <div class="pipeline-extraction mt-2" :style="'border-left-color: ' + processResult?.pipeline_flow?.layer_color">
+                            <span class="text-sm font-medium">提取层: </span>
+                            <span class="font-bold" :style="'color: ' + processResult?.pipeline_flow?.layer_color"
+                                  x-text="processResult?.pipeline_flow?.extraction_layer?.toUpperCase()"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提取字段 -->
+                <div x-show="processResult?.extraction?.fields && Object.keys(processResult?.extraction?.fields).length > 0" class="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 class="text-lg font-semibold mb-3">📝 提取字段</h3>
+                    <table class="w-full text-sm">
+                        <tbody>
+                            <template x-for="[key, value] in Object.entries(processResult?.extraction?.fields || {})" :key="key">
+                                <tr class="border-b last:border-0">
+                                    <td class="py-2 text-gray-500 font-medium w-1/3" x-text="key"></td>
+                                    <td class="py-2 text-gray-800" x-text="value || '-'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 耗时 -->
+                <div x-show="processResult?.timing" class="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 class="text-lg font-semibold mb-3">⏱ 处理耗时</h3>
+                    <div class="flex space-x-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600" x-text="processResult?.timing?.classify_ms + 'ms'"></div>
+                            <div class="text-xs text-gray-500">分类</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600" x-text="processResult?.timing?.extract_ms + 'ms'"></div>
+                            <div class="text-xs text-gray-500">提取</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-600" x-text="processResult?.timing?.total_ms + 'ms'"></div>
+                            <div class="text-xs text-gray-500">总计</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: 批量处理 -->
+    <div x-show="activeTab === 'batch'" x-cloak>
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">📦 批量处理</h3>
+                <!-- 模式切换 -->
+                <div class="flex items-center space-x-2">
+                    <div class="flex border rounded-lg overflow-hidden">
+                        <button @click="batchMode = 'case'" :class="batchMode === 'case' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'" class="px-3 py-1.5 text-xs font-medium transition-colors">基线数据</button>
+                        <button @click="batchMode = 'directory'; loadDirectories()" :class="batchMode === 'directory' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'" class="px-3 py-1.5 text-xs font-medium transition-colors">指定目录</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 基线数据模式 -->
+            <div x-show="batchMode === 'case'" class="flex items-center space-x-3 mb-4">
+                <select x-model="batchCaseId" class="flex-1 border rounded-lg px-3 py-2 text-sm">
+                    <option value="">选择业务Case...</option>
+                    <template x-for="c in cases" :key="c.case_id">
+                        <option :value="c.case_id" x-text="c.case_id + ' (' + c.category + ', ' + c.image_count + '张)'"></option>
+                    </template>
+                </select>
+                <button @click="runBatch()" :disabled="!batchCaseId || batchProcessing"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300">
+                    <span x-show="!batchProcessing">开始处理</span>
+                    <span x-show="batchProcessing">处理中...</span>
+                </button>
+            </div>
+
+            <!-- 指定目录模式 -->
+            <div x-show="batchMode === 'directory'" class="mb-4">
+                <!-- 面包屑导航 -->
+                <div class="flex items-center space-x-1 text-sm text-gray-500 mb-2 overflow-x-auto">
+                    <template x-for="(crumb, idx) in batchDirBreadcrumb" :key="crumb.path">
+                        <span class="flex items-center space-x-1 flex-shrink-0">
+                            <span x-show="idx > 0" class="text-gray-300">/</span>
+                            <button @click="loadDirectories(crumb.path)" class="hover:text-blue-600 hover:underline" x-text="crumb.name"></button>
+                        </span>
+                    </template>
+                </div>
+                <!-- 子目录列表 -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-3 max-h-48 overflow-y-auto">
+                    <template x-for="dir in batchSubdirs" :key="dir.path">
+                        <button @click="clickDirectory(dir)"
+                            :class="batchDirPath === dir.path ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'"
+                            class="border rounded-lg p-2.5 text-left transition-colors">
+                            <div class="flex items-center space-x-1.5">
+                                <span x-show="dir.has_subdirs" class="text-base">📁</span>
+                                <span x-show="!dir.has_subdirs" class="text-base">📄</span>
+                                <span class="text-sm font-medium truncate" x-text="dir.name"></span>
+                            </div>
+                            <div class="text-xs text-gray-400 mt-0.5" x-text="dir.image_count + ' 张图片'"></div>
+                        </button>
+                    </template>
+                </div>
+                <!-- 处理按钮 -->
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500" x-text="batchDirPath ? '当前: ' + batchDirPath : '请选择目录'"></span>
+                    <button @click="runBatchFromDirectory()" :disabled="!batchDirPath || batchProcessing"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300">
+                        <span x-show="!batchProcessing">开始处理</span>
+                        <span x-show="batchProcessing">处理中...</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 进度条 -->
+            <div x-show="batchProcessing || batchResults.length > 0" class="mb-4">
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                    <span x-text="'已处理: ' + batchResults.length + ' / ' + batchTotal"></span>
+                    <span x-text="batchStats.accuracy ? '准确率: ' + batchStats.accuracy + '%' : ''"></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                         :style="'width: ' + (batchResults.length / batchTotal * 100) + '%'"></div>
+                </div>
+            </div>
+
+            <!-- 结果表格 -->
+            <div x-show="batchResults.length > 0" class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-3 py-2 text-left">图片</th>
+                            <th class="px-3 py-2 text-left">期望类型</th>
+                            <th class="px-3 py-2 text-left">实际类型</th>
+                            <th class="px-3 py-2 text-left">路由</th>
+                            <th class="px-3 py-2 text-left">提取层</th>
+                            <th class="px-3 py-2 text-left">OCR</th>
+                            <th class="px-3 py-2 text-left">耗时</th>
+                            <th class="px-3 py-2 text-left">结果</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="r in batchResults" :key="r.file_name">
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-3 py-2">
+                                    <img :src="getImageUrl(r.file_path)" class="w-10 h-10 object-cover rounded" alt="">
+                                </td>
+                                <td class="px-3 py-2" x-text="r.expected_type"></td>
+                                <td class="px-3 py-2" x-text="r.classification?.doc_type"></td>
+                                <td class="px-3 py-2 text-xs text-gray-500" x-text="r.classification?.route_name"></td>
+                                <td class="px-3 py-2">
+                                    <span class="px-2 py-0.5 rounded text-xs font-medium"
+                                          :class="{
+                                              'bg-green-100 text-green-700': r.extraction?.layer === 'rule',
+                                              'bg-blue-100 text-blue-700': r.extraction?.layer === 'vlm',
+                                              'bg-purple-100 text-purple-700': r.extraction?.layer === 'llm'
+                                          }"
+                                          x-text="r.extraction?.layer"></span>
+                                </td>
+                                <td class="px-3 py-2 text-xs" x-show="r.ocr_text !== undefined">
+                                    <span :class="(r.ocr_text || '').length > 50 ? 'text-green-600' : 'text-orange-500'"
+                                          x-text="(r.ocr_text || '').length + '字'"></span>
+                                </td>
+                                <td class="px-3 py-2 text-gray-500" x-text="r.timing?.total_ms + 'ms'"></td>
+                                <td class="px-3 py-2">
+                                    <span :class="r.is_correct ? 'text-green-600' : 'text-red-600'" x-text="r.is_correct ? '✓' : '✗'"></span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 批量统计摘要 -->
+            <div x-show="Object.keys(batchStats).length > 0" class="mt-4 grid grid-cols-6 gap-3">
+                <div class="bg-blue-50 rounded-lg p-3 text-center">
+                    <div class="text-xl font-bold text-blue-700" x-text="batchStats.total"></div>
+                    <div class="text-xs text-blue-500">总数</div>
+                </div>
+                <div class="bg-green-50 rounded-lg p-3 text-center" x-show="batchStats.accuracy !== undefined">
+                    <div class="text-xl font-bold text-green-700" x-text="batchStats.accuracy + '%'"></div>
+                    <div class="text-xs text-green-500">准确率</div>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-3 text-center">
+                    <div class="text-xl font-bold text-purple-700" x-text="batchStats.avg_time_ms + 'ms'"></div>
+                    <div class="text-xs text-purple-500">平均耗时</div>
+                </div>
+                <div class="bg-orange-50 rounded-lg p-3 text-center">
+                    <div class="text-xl font-bold text-orange-700" x-text="batchStats.total_time_s + 's'"></div>
+                    <div class="text-xs text-orange-500">总耗时</div>
+                </div>
+                <div class="bg-cyan-50 rounded-lg p-3 text-center" x-show="batchStats.ocr_time_s !== undefined">
+                    <div class="text-xl font-bold text-cyan-700" x-text="batchStats.ocr_time_s + 's'"></div>
+                    <div class="text-xs text-cyan-500">OCR耗时</div>
+                </div>
+                <div class="bg-amber-50 rounded-lg p-3 text-center" x-show="batchStats.pipeline_time_s !== undefined">
+                    <div class="text-xl font-bold text-amber-700" x-text="batchStats.pipeline_time_s + 's'"></div>
+                    <div class="text-xs text-amber-500">Pipeline耗时</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: 基线对比 -->
+    <div x-show="activeTab === 'compare'" x-cloak>
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold">📊 基线对比</h3>
+                <button @click="runCompare()" :disabled="compareRunning"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:bg-gray-300">
+                    <span x-show="!compareRunning">运行全量对比</span>
+                    <span x-show="compareRunning">运行中（约10-30秒）...</span>
+                </button>
+            </div>
+
+            <div x-show="compareResult">
+                <!-- KPI卡片 -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+                        <div class="text-3xl font-bold" x-text="compareResult?.total"></div>
+                        <div class="text-blue-200 text-sm">总图片数</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
+                        <div class="text-3xl font-bold" x-text="compareResult?.accuracy + '%'"></div>
+                        <div class="text-green-200 text-sm">分类准确率</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
+                        <div class="text-3xl font-bold" x-text="compareResult?.avg_time_ms + 'ms'"></div>
+                        <div class="text-purple-200 text-sm">平均耗时</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-4 text-white">
+                        <div class="text-3xl font-bold" x-text="(compareResult?.total - compareResult?.correct) || 0"></div>
+                        <div class="text-orange-200 text-sm">错误数</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <!-- 左侧: 各类型准确率 -->
+                    <div>
+                        <h4 class="font-semibold mb-3">各文档类型准确率</h4>
+                        <canvas id="compareAccuracyChart" height="300"></canvas>
+                    </div>
+                    <!-- 右侧: 错误列表 -->
+                    <div>
+                        <h4 class="font-semibold mb-3">错误详情</h4>
+                        <div x-show="compareResult?.errors?.length === 0" class="text-center py-8 text-green-600">
+                            <span class="text-4xl">🎉</span>
+                            <p class="mt-2">全部正确！</p>
+                        </div>
+                        <div class="space-y-2 max-h-80 overflow-y-auto">
+                            <template x-for="e in compareResult?.errors" :key="e.file_name">
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                                    <div class="text-sm font-mono text-gray-600" x-text="e.file_name"></div>
+                                    <div class="flex items-center space-x-2 mt-1">
+                                        <span class="text-sm">期望: <strong x-text="e.expected"></strong></span>
+                                        <span class="text-gray-400">→</span>
+                                        <span class="text-sm text-red-600">实际: <strong x-text="e.actual"></strong></span>
+                                    </div>
+                                    <div class="text-xs text-gray-400 mt-1" x-text="'页面状态: ' + e.page_status + ' | 路由: ' + e.route"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 4: 统计面板 -->
+    <div x-show="activeTab === 'stats'" x-cloak>
+        <div class="space-y-6">
+            <!-- KPI卡片 -->
+            <div class="grid grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl shadow-sm border p-5 text-center">
+                    <div class="text-3xl font-bold text-blue-600" x-text="(dashboardData && dashboardData.kpi) ? dashboardData.kpi.total_images : '-'"></div>
+                    <div class="text-sm text-gray-500 mt-1">总图片数</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border p-5 text-center">
+                    <div class="text-3xl font-bold text-green-600" x-text="(dashboardData && dashboardData.kpi) ? dashboardData.kpi.accuracy + '%' : '0%'"></div>
+                    <div class="text-sm text-gray-500 mt-1">分类准确率</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border p-5 text-center">
+                    <div class="text-3xl font-bold text-purple-600" x-text="(dashboardData && dashboardData.kpi) ? dashboardData.kpi.avg_time_ms + 'ms' : '0ms'"></div>
+                    <div class="text-sm text-gray-500 mt-1">平均处理时间</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border p-5 text-center">
+                    <div class="text-3xl font-bold text-orange-600" x-text="(dashboardData && dashboardData.kpi) ? dashboardData.kpi.vlm_call_rate + '%' : '0%'"></div>
+                    <div class="text-sm text-gray-500 mt-1">VLM调用率</div>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="grid grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-sm border p-5">
+                    <h4 class="font-semibold mb-3">📊 文档类型分布</h4>
+                    <canvas id="typeDistChart" height="250"></canvas>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border p-5">
+                    <h4 class="font-semibold mb-3">⚙️ 处理层使用比例</h4>
+                    <canvas id="layerDistChart" height="250"></canvas>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <h4 class="font-semibold mb-3">⏱ 处理耗时分布</h4>
+                <canvas id="timingDistChart" height="200"></canvas>
+            </div>
+
+            <!-- 加载按钮 -->
+            <div x-show="!dashboardData && !dashboardLoading" class="text-center py-12">
+                <button @click="loadDashboard()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700">
+                    📈 加载统计数据
+                </button>
+                <p class="text-sm text-gray-400 mt-2">将运行全量基线测试（约10-30秒）</p>
+            </div>
+            <!-- 加载中 -->
+            <div x-show="dashboardLoading" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                <p class="text-sm text-gray-500 mt-3">正在运行全量基线测试，请稍候...</p>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- 脚本 -->
+<script src="/static/js/app.js"></script>
+<script src="/static/js/charts.js"></script>
+</body>
+</html>

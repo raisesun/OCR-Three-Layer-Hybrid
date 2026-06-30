@@ -1,0 +1,37 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "🔍 OCR三层混合架构" [level=1] [ref=e6]
+        - paragraph [ref=e7]: 规则层 + VLM层 + LLM层 | 分类准确率 99.2%
+      - generic [ref=e8]:
+        - generic [ref=e9]: ● GLM-OCR :8080
+        - generic [ref=e10]: ● Qwen3.5-4B :8081
+  - navigation [ref=e11]:
+    - generic [ref=e13]:
+      - button "📷 单图处理" [ref=e14] [cursor=pointer]
+      - button "📦 批量处理" [ref=e15] [cursor=pointer]
+      - button "📊 基线对比" [ref=e16] [cursor=pointer]
+      - button "📈 统计面板" [active] [ref=e17] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e52]:
+      - generic [ref=e53]:
+        - generic [ref=e54]:
+          - generic [ref=e55]: "-"
+          - generic [ref=e56]: 总图片数
+        - generic [ref=e57]:
+          - generic [ref=e58]: 0%
+          - generic [ref=e59]: 分类准确率
+        - generic [ref=e60]:
+          - generic [ref=e61]: 0ms
+          - generic [ref=e62]: 平均处理时间
+        - generic [ref=e63]:
+          - generic [ref=e64]: 0%
+          - generic [ref=e65]: VLM调用率
+      - generic [ref=e66]:
+        - heading "📊 文档类型分布" [level=4] [ref=e68]
+        - heading "⚙️ 处理层使用比例" [level=4] [ref=e71]
+      - heading "⏱ 处理耗时分布" [level=4] [ref=e74]
+      - generic [ref=e76]:
+        - button "📈 加载统计数据" [ref=e77] [cursor=pointer]
+        - paragraph [ref=e78]: 将运行全量基线测试（约10-30秒）

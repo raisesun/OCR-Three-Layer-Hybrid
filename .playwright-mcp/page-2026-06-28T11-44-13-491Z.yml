@@ -1,0 +1,141 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "🔍 OCR三层混合架构" [level=1] [ref=e6]
+        - paragraph [ref=e7]: 规则层 + VLM层 + LLM层 | 分类准确率 99.2%
+      - generic [ref=e8]:
+        - generic [ref=e9]: ● GLM-OCR :8080
+        - generic [ref=e10]: ● Qwen3.5-4B :8081
+  - navigation [ref=e11]:
+    - generic [ref=e13]:
+      - button "📷 单图处理" [ref=e14] [cursor=pointer]
+      - button "📦 批量处理" [ref=e15] [cursor=pointer]
+      - button "📊 基线对比" [ref=e16] [cursor=pointer]
+      - button "📈 统计面板" [ref=e17] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e20]:
+      - generic [ref=e22]:
+        - heading "📷 图片输入" [level=3] [ref=e23]
+        - img "预览" [ref=e40] [cursor=pointer]
+        - generic [ref=e30]:
+          - generic [ref=e31]: 或从基线数据选择：
+          - generic [ref=e32]:
+            - combobox [ref=e33]:
+              - option "选择业务..."
+              - option "202402190050 (增量房)" [selected]
+              - option "202402270015 (增量房)"
+              - option "202402280061 (增量房)"
+              - option "202403080014 (增量房)"
+              - option "202403180015 (增量房)"
+              - option "BBJZ-2025-1013085 (存量房)"
+              - option "BBJZ-2026-0107026 (存量房)"
+              - option "BBJZ-2026-0112065 (存量房)"
+            - combobox [ref=e39]:
+              - option "选择图片..."
+              - option "0939d2a8e6e04f7f94494455a3956b3b.jpeg (购房合同)"
+              - option "0d1d47c8d5a34ce5a24372c6845eafdb.jpeg (身份证)" [selected]
+              - option "1913a5d845d848b29fab1b6f2104a30e.jpeg (购房合同)"
+              - option "1f0abdaaa52f47c799ae66b3325f1914.jpeg (身份证)"
+              - option "2f04ef2a8b5244c9b2ff926aa1d0e92b.jpeg (发票)"
+              - option "310f98d8c8654cea8b7f3ad4ef2b3d93.jpeg (户口本)"
+              - option "4312b6fd1e8f45b9afa4aeee9b905997.jpeg (户口本)"
+              - option "4df3ae74747e4059a54eca0feed85e26.jpeg (购房合同)"
+              - option "a59257a5396448e2b4647d88f994c34b.jpeg (购房合同)"
+              - option "c0929c1839754b1a8530b175bd4e1b1f.jpeg (购房合同)"
+        - generic [ref=e34]:
+          - generic [ref=e35]: OCR文本（可编辑后重新分类）：
+          - textbox "OCR识别文本将在此显示..." [ref=e36]: 中华人民共和国 居民身份证 签发机关 蚌埠市公安局蚌山分局 有效期限 2022.09.30-2032.09.30
+        - button "🚀 开始处理" [ref=e37] [cursor=pointer]
+      - generic [ref=e38]:
+        - generic [ref=e41]:
+          - heading "📋 分类结果" [level=3] [ref=e42]
+          - generic [ref=e43]:
+            - generic [ref=e44]:
+              - generic [ref=e45]: 文档类型
+              - generic [ref=e46]: 身份证
+            - generic [ref=e47]:
+              - generic [ref=e48]: 置信度
+              - generic [ref=e49]: 95%
+            - generic [ref=e50]:
+              - generic [ref=e51]: 分类路由
+              - generic [ref=e52]: "阶段1: 标准证件强信号"
+            - generic [ref=e53]:
+              - generic [ref=e54]: 提取层
+              - generic [ref=e55]: rule
+          - generic [ref=e56]: "匹配信号: 签发机关"
+        - generic [ref=e57]:
+          - heading "⚡ Pipeline流程" [level=3] [ref=e58]
+          - generic [ref=e59]:
+            - generic [ref=e61]:
+              - generic [ref=e62]: ○
+              - generic [ref=e63]:
+                - generic [ref=e64]: 多文档冲突检测
+                - generic [ref=e65]: 买受人+出卖人+房屋类型
+            - generic [ref=e66]:
+              - generic [ref=e67]:
+                - generic [ref=e68]: ✓
+                - generic [ref=e69]:
+                  - generic [ref=e70]: 标准证件强信号
+                  - generic [ref=e71]: 公民身份号码、常住人口登记卡等
+              - generic [ref=e72]: "匹配: 签发机关"
+            - generic [ref=e74]:
+              - generic [ref=e75]: ○
+              - generic [ref=e76]:
+                - generic [ref=e77]: 备选强信号
+                - generic [ref=e78]: 户口簿+户主、持证人+登记日期
+            - generic [ref=e80]:
+              - generic [ref=e81]: ○
+              - generic [ref=e82]:
+                - generic [ref=e83]: 更多备选信号
+                - generic [ref=e84]: 户别+户主姓名、结婚证+登记机关
+            - generic [ref=e86]:
+              - generic [ref=e87]: ○
+              - generic [ref=e88]:
+                - generic [ref=e89]: 标准单证强信号
+                - generic [ref=e90]: 发票代码+发票号码
+            - generic [ref=e92]:
+              - generic [ref=e93]: ○
+              - generic [ref=e94]:
+                - generic [ref=e95]: 合同字段组合
+                - generic [ref=e96]: 买受人+出卖人+价款
+            - generic [ref=e98]:
+              - generic [ref=e99]: ○
+              - generic [ref=e100]:
+                - generic [ref=e101]: VLM分类兜底
+                - generic [ref=e102]: Qwen3.5-4B视觉识别
+            - generic [ref=e103]: "提取层: RULE"
+        - generic [ref=e104]:
+          - heading "📝 提取字段" [level=3] [ref=e105]
+          - table [ref=e106]:
+            - rowgroup [ref=e107]:
+              - row "姓名 -" [ref=e108]:
+                - cell "姓名" [ref=e109]
+                - cell "-" [ref=e110]
+              - row "性别 -" [ref=e111]:
+                - cell "性别" [ref=e112]
+                - cell "-" [ref=e113]
+              - row "民族 -" [ref=e114]:
+                - cell "民族" [ref=e115]
+                - cell "-" [ref=e116]
+              - row "出生 -" [ref=e117]:
+                - cell "出生" [ref=e118]
+                - cell "-" [ref=e119]
+              - row "住址 -" [ref=e120]:
+                - cell "住址" [ref=e121]
+                - cell "-" [ref=e122]
+              - row "公民身份号码 -" [ref=e123]:
+                - cell "公民身份号码" [ref=e124]
+                - cell "-" [ref=e125]
+        - generic [ref=e126]:
+          - heading "⏱ 处理耗时" [level=3] [ref=e127]
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - generic [ref=e130]: 0ms
+              - generic [ref=e131]: 分类
+            - generic [ref=e132]:
+              - generic [ref=e133]: 0ms
+              - generic [ref=e134]: 提取
+            - generic [ref=e135]:
+              - generic [ref=e136]: 0.1ms
+              - generic [ref=e137]: 总计

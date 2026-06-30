@@ -5,7 +5,6 @@
 使用GLM-OCR多模态模型处理半固定文档（户口本等）
 """
 
-import base64
 import json
 import re
 import time
@@ -19,15 +18,26 @@ from ocr_three_layer_hybrid.interfaces import (
     IExtractionLayer,
     ProcessingLayer,
 )
+from ocr_three_layer_hybrid.config import VLMServiceConfig
+from ocr_three_layer_hybrid.external_services import VLMClient
 
 
 class VLMExtractionLayer(IExtractionLayer):
     """基于GLM-OCR的VLM提取层"""
 
-    # 默认支持的文档类型
+    # 默认支持的文档类型（所有类型均可处理，有专用Prompt的用专用，无的用通用模板）
     DEFAULT_SUPPORTED_TYPES = [
+        DocumentType.ID_CARD,
+        DocumentType.MARRIAGE_CERTIFICATE,
+        DocumentType.DIVORCE_CERTIFICATE,
         DocumentType.HOUSEHOLD_REGISTER,
-        DocumentType.UNKNOWN,  # VLM兜底：处理无法分类的文档
+        DocumentType.PROPERTY_CERTIFICATE,
+        DocumentType.INVOICE,
+        DocumentType.PURCHASE_CONTRACT,
+        DocumentType.STOCK_CONTRACT,
+        DocumentType.FUND_SUPERVISION,
+        DocumentType.DIVORCE_AGREEMENT,
+        DocumentType.UNKNOWN,
     ]
 
     # 默认配置
@@ -107,22 +117,30 @@ class VLMExtractionLayer(IExtractionLayer):
         api_key: str = DEFAULT_API_KEY,
         timeout: float = DEFAULT_TIMEOUT,
         supported_doc_types: Optional[List[DocumentType]] = None,
+        vlm_client: Optional[VLMClient] = None,
     ):
         """
         初始化VLM层
 
         Args:
-            model_name: Ollama模型名称
-            base_url: Ollama API地址
-            api_key: API密钥（Ollama默认用"ollama"）
+            model_name: GLM-OCR模型名称
+            base_url: GLM-OCR API地址
+            api_key: API密钥
             timeout: 请求超时时间（秒）
             supported_doc_types: 支持的文档类型
+            vlm_client: 外部注入的VLM客户端（优先使用）
         """
         self.model_name = model_name
         self.base_url = base_url
         self.api_key = api_key
         self.timeout = timeout
         self.supported_types = supported_doc_types or self.DEFAULT_SUPPORTED_TYPES.copy()
+        # 使用注入的客户端，或根据参数创建默认客户端
+        self._client = vlm_client or VLMClient(VLMServiceConfig(
+            base_url=base_url,
+            model_name=model_name,
+            timeout=timeout,
+        ))
 
     @property
     def supported_doc_types(self) -> List[DocumentType]:
@@ -175,9 +193,9 @@ class VLMExtractionLayer(IExtractionLayer):
             )
 
     def _encode_image_base64(self, image_path: str) -> str:
-        """将图片编码为base64字符串"""
-        with open(image_path, "rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")
+        """将图片编码为base64字符串（已迁移到 external_services.encode_image_base64）"""
+        from ocr_three_layer_hybrid.external_services import encode_image_base64
+        return encode_image_base64(image_path)
 
     def _build_prompt(self, doc_type: DocumentType, key_list: List[str]) -> str:
         """构建Prompt"""
@@ -194,7 +212,7 @@ class VLMExtractionLayer(IExtractionLayer):
 
     def _call_vlm(self, prompt: str, image_path: str) -> Any:
         """
-        调用VLM API（使用llama-server的OpenAI兼容API）
+        调用VLM API（通过统一的 VLMClient）
 
         Args:
             prompt: 文本prompt
@@ -203,47 +221,7 @@ class VLMExtractionLayer(IExtractionLayer):
         Returns:
             VLM返回的原始响应
         """
-        import base64
-        import requests
-
-        # 读取图片并编码为base64
-        with open(image_path, 'rb') as f:
-            image_b64 = base64.b64encode(f.read()).decode('utf-8')
-
-        url = f"{self.base_url}/chat/completions"
-        headers = {
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": self.model_name,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}
-                        }
-                    ]
-                }
-            ],
-            "temperature": 0.1,
-            "max_tokens": 1024,
-        }
-
-        response = requests.post(url, headers=headers, json=payload, timeout=self.timeout)
-        response.raise_for_status()
-
-        data = response.json()
-        # 提取回复内容
-        choices = data.get("choices", [])
-        if not choices:
-            return ""
-
-        message = choices[0].get("message", {})
-        content = message.get("content", "")
-        return content
+        return self._client.call(prompt, image_path, max_tokens=1024)
 
     # 户口本字段的键名映射（处理VLM可能输出的不同键名）
     HUKOU_KEY_MAPPINGS: Dict[str, List[str]] = {

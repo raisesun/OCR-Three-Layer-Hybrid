@@ -1,0 +1,590 @@
+{
+  "eval_type": "case_level",
+  "evaluated_at": "2026-06-30 10:11:37",
+  "total_images": 132,
+  "total_groups": 42,
+  "total_fields": 273,
+  "overall_accuracy": 92.7,
+  "strict_accuracy": 81.7,
+  "match_stats": {
+    "exact": 222,
+    "normalized": 1,
+    "partial": 27,
+    "missed": 1,
+    "extra": 3,
+    "empty_both": 0,
+    "wrong": 19
+  },
+  "type_accuracy": {
+    "发票": {
+      "total": 35,
+      "correct": 35,
+      "accuracy": 100.0
+    },
+    "户口本": {
+      "total": 55,
+      "correct": 53,
+      "accuracy": 96.4
+    },
+    "购房合同": {
+      "total": 35,
+      "correct": 22,
+      "accuracy": 62.9
+    },
+    "身份证": {
+      "total": 64,
+      "correct": 64,
+      "accuracy": 100.0
+    },
+    "不动产权证书": {
+      "total": 21,
+      "correct": 21,
+      "accuracy": 100.0
+    },
+    "结婚证": {
+      "total": 28,
+      "correct": 26,
+      "accuracy": 92.9
+    },
+    "存量房合同": {
+      "total": 15,
+      "correct": 14,
+      "accuracy": 93.3
+    },
+    "离婚协议": {
+      "total": 5,
+      "correct": 5,
+      "accuracy": 100.0
+    },
+    "离婚证": {
+      "total": 3,
+      "correct": 3,
+      "accuracy": 100.0
+    },
+    "资金监管协议": {
+      "total": 12,
+      "correct": 10,
+      "accuracy": 83.3
+    }
+  },
+  "per_group": [
+    {
+      "case_id": "202402190050",
+      "doc_type": "发票",
+      "pages": 1,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202402190050",
+      "doc_type": "户口本",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202402190050",
+      "doc_type": "购房合同",
+      "pages": 5,
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "case_id": "202402190050",
+      "doc_type": "身份证",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "不动产权证书",
+      "pages": 1,
+      "field_accuracy": 0,
+      "total_fields": 0,
+      "correct_fields": 0
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "发票",
+      "pages": 1,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "户口本",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 6,
+      "correct_fields": 6
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "购房合同",
+      "pages": 7,
+      "field_accuracy": 42.9,
+      "total_fields": 7,
+      "correct_fields": 3
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "身份证",
+      "pages": 4,
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "case_id": "202402280061",
+      "doc_type": "发票",
+      "pages": 1,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202402280061",
+      "doc_type": "户口本",
+      "pages": 6,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202402280061",
+      "doc_type": "结婚证",
+      "pages": 1,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202402280061",
+      "doc_type": "购房合同",
+      "pages": 4,
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "case_id": "202402280061",
+      "doc_type": "身份证",
+      "pages": 4,
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "case_id": "202403080014",
+      "doc_type": "发票",
+      "pages": 1,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202403080014",
+      "doc_type": "户口本",
+      "pages": 3,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202403080014",
+      "doc_type": "购房合同",
+      "pages": 5,
+      "field_accuracy": 57.1,
+      "total_fields": 7,
+      "correct_fields": 4
+    },
+    {
+      "case_id": "202403080014",
+      "doc_type": "身份证",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "case_id": "202403180015",
+      "doc_type": "发票",
+      "pages": 1,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202403180015",
+      "doc_type": "户口本",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "202403180015",
+      "doc_type": "购房合同",
+      "pages": 5,
+      "field_accuracy": 57.1,
+      "total_fields": 7,
+      "correct_fields": 4
+    },
+    {
+      "case_id": "202403180015",
+      "doc_type": "身份证",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "不动产权证书",
+      "pages": 3,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "存量房合同",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 5,
+      "correct_fields": 5
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "户口本",
+      "pages": 4,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "离婚协议",
+      "pages": 1,
+      "field_accuracy": 100.0,
+      "total_fields": 5,
+      "correct_fields": 5
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "离婚证",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 3,
+      "correct_fields": 3
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "结婚证",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "资金监管协议",
+      "pages": 5,
+      "field_accuracy": 75.0,
+      "total_fields": 4,
+      "correct_fields": 3
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "身份证",
+      "pages": 4,
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "不动产权证书",
+      "pages": 4,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "存量房合同",
+      "pages": 2,
+      "field_accuracy": 80.0,
+      "total_fields": 5,
+      "correct_fields": 4
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "户口本",
+      "pages": 5,
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "结婚证",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "资金监管协议",
+      "pages": 5,
+      "field_accuracy": 75.0,
+      "total_fields": 4,
+      "correct_fields": 3
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "身份证",
+      "pages": 6,
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "不动产权证书",
+      "pages": 2,
+      "field_accuracy": 100.0,
+      "total_fields": 7,
+      "correct_fields": 7
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "存量房合同",
+      "pages": 4,
+      "field_accuracy": 100.0,
+      "total_fields": 5,
+      "correct_fields": 5
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "户口本",
+      "pages": 5,
+      "field_accuracy": 85.7,
+      "total_fields": 7,
+      "correct_fields": 6
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "结婚证",
+      "pages": 2,
+      "field_accuracy": 71.4,
+      "total_fields": 7,
+      "correct_fields": 5
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "资金监管协议",
+      "pages": 4,
+      "field_accuracy": 100.0,
+      "total_fields": 4,
+      "correct_fields": 4
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "身份证",
+      "pages": 6,
+      "field_accuracy": 100.0,
+      "total_fields": 8,
+      "correct_fields": 8
+    }
+  ],
+  "errors": [
+    {
+      "case_id": "202402190050",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "张玉煊",
+      "actual": "张玉煌",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "刘远顺",
+      "actual": "刘顺",
+      "match_type": "wrong",
+      "pages": 7
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "蚌埠市蚌山区解放路东侧、M-H-13(E)路南侧山水拾光小区13幢1单元6层604号",
+      "actual": "于蚌山区解放路东侧、M-H-13(E)路南侧地块的建设用地使用权。该地块【国有土地使用证号】为 皖（2023）蚌埠市不动产权第0118214号，土地使用权面积为103565.22平方米。买受人购买的商品房（以下简称该商品房）所占用的土地用途为 城镇住宅用地，土地使用权终止日期为2093 年03 月31 日。",
+      "match_type": "wrong",
+      "pages": 7
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "购房合同",
+      "field": "签订日期",
+      "expected": "2024.2.27",
+      "actual": "2093年03月31日",
+      "match_type": "wrong",
+      "pages": 7
+    },
+    {
+      "case_id": "202402270015",
+      "doc_type": "购房合同",
+      "field": "建筑面积",
+      "expected": "108.25平方米",
+      "actual": "88.02",
+      "match_type": "wrong",
+      "pages": 7
+    },
+    {
+      "case_id": "202402280061",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "蚌埠市蚌山区解放路东侧、M-H-13(E)路南侧地块18幢1单元7层701号",
+      "actual": "安徽省蚌埠市固镇县新马桥镇卢渡村六组34号",
+      "match_type": "wrong",
+      "pages": 4
+    },
+    {
+      "case_id": "202402280061",
+      "doc_type": "购房合同",
+      "field": "建筑面积",
+      "expected": "124.18平方米",
+      "actual": "102.82",
+      "match_type": "wrong",
+      "pages": 4
+    },
+    {
+      "case_id": "202403080014",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "蚌山区解放路东侧、M-H-13(E)路南侧山水拾光小区5幢2单元3层302号",
+      "actual": "于蚌山区解放路东侧、M-H-13(E)路南侧地块的建设用地使用权。该地块【国有土地使用证号】为 皖（2023）蚌埠市不动产权第0118214号，土地使用权面积为 103565.22 平方米。买受人购买的商品房（以下简称该商品房）所占用的土地用途为 城镇住宅用地，土地使用权终止日期为2093 年 03 月 31 日。",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "202403080014",
+      "doc_type": "购房合同",
+      "field": "签订日期",
+      "expected": "2024.3.8",
+      "actual": "2093年03月31日",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "202403080014",
+      "doc_type": "购房合同",
+      "field": "建筑面积",
+      "expected": "116.90平方米",
+      "actual": "97.99",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "202403180015",
+      "doc_type": "购房合同",
+      "field": "买受人",
+      "expected": "王瑁",
+      "actual": "王强",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "202403180015",
+      "doc_type": "购房合同",
+      "field": "房屋地址",
+      "expected": "蚌山区解放路东侧、M-H-13(E)南侧山水拾光小区12幢1单元6层601号",
+      "actual": "安徽省蚌埠市蚌山区解放路东侧、M-H-13（E）路南侧",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "202403180015",
+      "doc_type": "购房合同",
+      "field": "建筑面积",
+      "expected": "110.30平方米",
+      "actual": "92.87",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "BBJZ-2025-1013085",
+      "doc_type": "资金监管协议",
+      "field": "监管金额",
+      "expected": "818000.00元",
+      "actual": "218000.00",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "存量房合同",
+      "field": "签订日期",
+      "expected": "2026年1月7日",
+      "actual": "2026年1月12日",
+      "match_type": "wrong",
+      "pages": 2
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "户口本",
+      "field": "户主姓名",
+      "expected": "王晨露",
+      "actual": "王子龙",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "BBJZ-2026-0107026",
+      "doc_type": "资金监管协议",
+      "field": "监管金额",
+      "expected": "200000.00元",
+      "actual": "40000.00",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "户口本",
+      "field": "户号",
+      "expected": "009119378",
+      "actual": "099119378",
+      "match_type": "wrong",
+      "pages": 5
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "结婚证",
+      "field": "男方身份证号",
+      "expected": "403211199305078253",
+      "actual": "",
+      "match_type": "missed",
+      "pages": 2
+    },
+    {
+      "case_id": "BBJZ-2026-0112065",
+      "doc_type": "结婚证",
+      "field": "结婚证字号",
+      "expected": "鄂340321-2022-000122",
+      "actual": "黔40321-2022-000122",
+      "match_type": "wrong",
+      "pages": 2
+    }
+  ]
+}

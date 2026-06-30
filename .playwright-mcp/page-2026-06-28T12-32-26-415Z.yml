@@ -1,0 +1,132 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "🔍 OCR三层混合架构" [level=1] [ref=e6]
+        - paragraph [ref=e7]: 规则层 + VLM层 + LLM层 | 分类准确率 99.2%
+      - generic [ref=e8]:
+        - generic [ref=e9]: ● GLM-OCR :8080
+        - generic [ref=e10]: ● Qwen3.5-4B :8081
+  - navigation [ref=e11]:
+    - generic [ref=e13]:
+      - button "📷 单图处理" [ref=e14] [cursor=pointer]
+      - button "📦 批量处理" [ref=e15] [cursor=pointer]
+      - button "📊 基线对比" [ref=e16] [cursor=pointer]
+      - button "📈 统计面板" [ref=e17] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e40]:
+      - generic [ref=e41]:
+        - heading "📦 批量处理" [level=3] [ref=e42]
+        - generic [ref=e44]:
+          - button "基线数据" [ref=e45] [cursor=pointer]
+          - button "指定目录" [ref=e46] [cursor=pointer]
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - button "sample-OCR" [ref=e53] [cursor=pointer]
+          - generic [ref=e83]:
+            - generic [ref=e84]: /
+            - button "增量房图片资料" [ref=e85] [cursor=pointer]
+        - generic [ref=e54]:
+          - button "📄 202402190050 10 张图片" [ref=e86] [cursor=pointer]:
+            - generic [ref=e87]:
+              - generic [ref=e88]: 📄
+              - generic [ref=e89]: "202402190050"
+            - generic [ref=e90]: 10 张图片
+          - button "📄 202402270015 15 张图片" [ref=e91] [cursor=pointer]:
+            - generic [ref=e92]:
+              - generic [ref=e93]: 📄
+              - generic [ref=e94]: "202402270015"
+            - generic [ref=e95]: 15 张图片
+          - button "📄 202402280061 16 张图片" [ref=e96] [cursor=pointer]:
+            - generic [ref=e97]:
+              - generic [ref=e98]: 📄
+              - generic [ref=e99]: "202402280061"
+            - generic [ref=e100]: 16 张图片
+          - button "📄 202403080014 11 张图片" [ref=e101] [cursor=pointer]:
+            - generic [ref=e102]:
+              - generic [ref=e103]: 📄
+              - generic [ref=e104]: "202403080014"
+            - generic [ref=e105]: 11 张图片
+          - button "📄 202403180015 10 张图片" [ref=e106] [cursor=pointer]:
+            - generic [ref=e107]:
+              - generic [ref=e108]: 📄
+              - generic [ref=e109]: "202403180015"
+            - generic [ref=e110]: 10 张图片
+          - button "📄 202404010024 34 张图片" [ref=e111] [cursor=pointer]:
+            - generic [ref=e112]:
+              - generic [ref=e113]: 📄
+              - generic [ref=e114]: "202404010024"
+            - generic [ref=e115]: 34 张图片
+          - button "📄 202404170016 24 张图片" [ref=e116] [cursor=pointer]:
+            - generic [ref=e117]:
+              - generic [ref=e118]: 📄
+              - generic [ref=e119]: "202404170016"
+            - generic [ref=e120]: 24 张图片
+          - button "📄 202404250008 13 张图片" [ref=e121] [cursor=pointer]:
+            - generic [ref=e122]:
+              - generic [ref=e123]: 📄
+              - generic [ref=e124]: "202404250008"
+            - generic [ref=e125]: 13 张图片
+          - button "📄 202404260010 4 张图片" [ref=e126] [cursor=pointer]:
+            - generic [ref=e127]:
+              - generic [ref=e128]: 📄
+              - generic [ref=e129]: "202404260010"
+            - generic [ref=e130]: 4 张图片
+          - button "📄 202406200020 18 张图片" [ref=e131] [cursor=pointer]:
+            - generic [ref=e132]:
+              - generic [ref=e133]: 📄
+              - generic [ref=e134]: "202406200020"
+            - generic [ref=e135]: 18 张图片
+          - button "📄 202406240010 57 张图片" [ref=e136] [cursor=pointer]:
+            - generic [ref=e137]:
+              - generic [ref=e138]: 📄
+              - generic [ref=e139]: "202406240010"
+            - generic [ref=e140]: 57 张图片
+          - button "📄 202407040017 23 张图片" [ref=e141] [cursor=pointer]:
+            - generic [ref=e142]:
+              - generic [ref=e143]: 📄
+              - generic [ref=e144]: "202407040017"
+            - generic [ref=e145]: 23 张图片
+          - button "📄 202407200006 11 张图片" [ref=e146] [cursor=pointer]:
+            - generic [ref=e147]:
+              - generic [ref=e148]: 📄
+              - generic [ref=e149]: "202407200006"
+            - generic [ref=e150]: 11 张图片
+          - button "📄 202408020050 22 张图片" [ref=e151] [cursor=pointer]:
+            - generic [ref=e152]:
+              - generic [ref=e153]: 📄
+              - generic [ref=e154]: "202408020050"
+            - generic [ref=e155]: 22 张图片
+          - button "📄 202410040008 18 张图片" [ref=e156] [cursor=pointer]:
+            - generic [ref=e157]:
+              - generic [ref=e158]: 📄
+              - generic [ref=e159]: "202410040008"
+            - generic [ref=e160]: 18 张图片
+          - button "📄 202410090006 11 张图片" [ref=e161] [cursor=pointer]:
+            - generic [ref=e162]:
+              - generic [ref=e163]: 📄
+              - generic [ref=e164]: "202410090006"
+            - generic [ref=e165]: 11 张图片
+          - button "📄 202410220008 12 张图片" [ref=e166] [cursor=pointer]:
+            - generic [ref=e167]:
+              - generic [ref=e168]: 📄
+              - generic [ref=e169]: "202410220008"
+            - generic [ref=e170]: 12 张图片
+          - button "📄 202411060009 58 张图片" [ref=e171] [cursor=pointer]:
+            - generic [ref=e172]:
+              - generic [ref=e173]: 📄
+              - generic [ref=e174]: "202411060009"
+            - generic [ref=e175]: 58 张图片
+          - button "📄 202411070032 5 张图片" [ref=e176] [cursor=pointer]:
+            - generic [ref=e177]:
+              - generic [ref=e178]: 📄
+              - generic [ref=e179]: "202411070032"
+            - generic [ref=e180]: 5 张图片
+          - button "📄 202502050035 12 张图片" [active] [ref=e181] [cursor=pointer]:
+            - generic [ref=e182]:
+              - generic [ref=e183]: 📄
+              - generic [ref=e184]: "202502050035"
+            - generic [ref=e185]: 12 张图片
+        - generic [ref=e80]:
+          - generic [ref=e81]: "当前: /Users/dongsun/Github/sample-OCR/增量房图片资料/202502050035"
+          - button "开始处理" [ref=e82] [cursor=pointer]

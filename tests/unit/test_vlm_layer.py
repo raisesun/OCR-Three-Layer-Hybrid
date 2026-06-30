@@ -24,9 +24,11 @@ class TestVLMExtractionLayerUnit:
 
     def test_supported_doc_types(self):
         layer = self._create_layer()
+        # VLM层支持所有文档类型（有专用Prompt的用专用，无的用通用模板）
         assert DocumentType.HOUSEHOLD_REGISTER in layer.supported_doc_types
         assert DocumentType.UNKNOWN in layer.supported_doc_types  # VLM兜底支持UNKNOWN
-        assert DocumentType.ID_CARD not in layer.supported_doc_types
+        assert DocumentType.ID_CARD in layer.supported_doc_types  # 已扩展支持所有类型
+        assert DocumentType.PURCHASE_CONTRACT in layer.supported_doc_types
 
     def test_can_process_household_register(self):
         layer = self._create_layer()

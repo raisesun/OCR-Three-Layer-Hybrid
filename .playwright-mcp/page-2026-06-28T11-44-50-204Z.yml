@@ -1,0 +1,136 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "🔍 OCR三层混合架构" [level=1] [ref=e6]
+        - paragraph [ref=e7]: 规则层 + VLM层 + LLM层 | 分类准确率 99.2%
+      - generic [ref=e8]:
+        - generic [ref=e9]: ● GLM-OCR :8080
+        - generic [ref=e10]: ● Qwen3.5-4B :8081
+  - navigation [ref=e11]:
+    - generic [ref=e13]:
+      - button "📷 单图处理" [ref=e14] [cursor=pointer]
+      - button "📦 批量处理" [ref=e15] [cursor=pointer]
+      - button "📊 基线对比" [ref=e16] [cursor=pointer]
+      - button "📈 统计面板" [ref=e17] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e139]:
+      - generic [ref=e140]:
+        - heading "📦 批量处理" [level=3] [ref=e141]
+        - generic [ref=e142]:
+          - combobox [ref=e143]:
+            - option "选择业务Case..."
+            - option "202402190050 (增量房, 10张)" [selected]
+            - option "202402270015 (增量房, 15张)"
+            - option "202402280061 (增量房, 16张)"
+            - option "202403080014 (增量房, 11张)"
+            - option "202403180015 (增量房, 10张)"
+            - option "BBJZ-2025-1013085 (存量房, 26张)"
+            - option "BBJZ-2026-0107026 (存量房, 24张)"
+            - option "BBJZ-2026-0112065 (存量房, 25张)"
+          - button "开始处理" [ref=e144] [cursor=pointer]
+      - generic [ref=e147]: "已处理: 10 / 10"
+      - table [ref=e151]:
+        - rowgroup [ref=e152]:
+          - row "图片 期望类型 实际类型 路由 提取层 耗时 结果" [ref=e153]:
+            - columnheader "图片" [ref=e154]
+            - columnheader "期望类型" [ref=e155]
+            - columnheader "实际类型" [ref=e156]
+            - columnheader "路由" [ref=e157]
+            - columnheader "提取层" [ref=e158]
+            - columnheader "耗时" [ref=e159]
+            - columnheader "结果" [ref=e160]
+        - rowgroup [ref=e161]:
+          - row "购房合同 VLM分类兜底 rule 754.3ms ✗" [ref=e162]:
+            - cell [ref=e163]
+            - cell [ref=e164]
+            - cell "购房合同" [ref=e165]
+            - cell "VLM分类兜底" [ref=e166]
+            - cell "rule" [ref=e167]
+            - cell "754.3ms" [ref=e168]
+            - cell "✗" [ref=e169]
+          - 'row "身份证 阶段1: 标准证件强信号 rule 0ms ✗" [ref=e170]':
+            - cell [ref=e171]
+            - cell [ref=e172]
+            - cell "身份证" [ref=e173]
+            - 'cell "阶段1: 标准证件强信号" [ref=e174]'
+            - cell "rule" [ref=e175]
+            - cell "0ms" [ref=e176]
+            - cell "✗" [ref=e177]
+          - 'row "购房合同 阶段0: 多文档冲突检测 rule 0ms ✗" [ref=e178]':
+            - cell [ref=e179]
+            - cell [ref=e180]
+            - cell "购房合同" [ref=e181]
+            - 'cell "阶段0: 多文档冲突检测" [ref=e182]'
+            - cell "rule" [ref=e183]
+            - cell "0ms" [ref=e184]
+            - cell "✗" [ref=e185]
+          - 'row "身份证 阶段1: 标准证件强信号 rule 0ms ✗" [ref=e186]':
+            - cell [ref=e187]
+            - cell [ref=e188]
+            - cell "身份证" [ref=e189]
+            - 'cell "阶段1: 标准证件强信号" [ref=e190]'
+            - cell "rule" [ref=e191]
+            - cell "0ms" [ref=e192]
+            - cell "✗" [ref=e193]
+          - 'row "发票 阶段2: 弱信号组合 rule 0ms ✗" [ref=e194]':
+            - cell [ref=e195]
+            - cell [ref=e196]
+            - cell "发票" [ref=e197]
+            - 'cell "阶段2: 弱信号组合" [ref=e198]'
+            - cell "rule" [ref=e199]
+            - cell "0ms" [ref=e200]
+            - cell "✗" [ref=e201]
+          - 'row "户口本 阶段1: 标准证件强信号 rule 0ms ✗" [ref=e202]':
+            - cell [ref=e203]
+            - cell [ref=e204]
+            - cell "户口本" [ref=e205]
+            - 'cell "阶段1: 标准证件强信号" [ref=e206]'
+            - cell "rule" [ref=e207]
+            - cell "0ms" [ref=e208]
+            - cell "✗" [ref=e209]
+          - 'row "户口本 阶段1.5: 备选强信号 rule 0ms ✗" [ref=e210]':
+            - cell [ref=e211]
+            - cell [ref=e212]
+            - cell "户口本" [ref=e213]
+            - 'cell "阶段1.5: 备选强信号" [ref=e214]'
+            - cell "rule" [ref=e215]
+            - cell "0ms" [ref=e216]
+            - cell "✗" [ref=e217]
+          - 'row "购房合同 阶段0: 多文档冲突检测 rule 0ms ✗" [ref=e218]':
+            - cell [ref=e219]
+            - cell [ref=e220]
+            - cell "购房合同" [ref=e221]
+            - 'cell "阶段0: 多文档冲突检测" [ref=e222]'
+            - cell "rule" [ref=e223]
+            - cell "0ms" [ref=e224]
+            - cell "✗" [ref=e225]
+          - 'row "购房合同 阶段0: 多文档冲突检测 rule 0ms ✗" [ref=e226]':
+            - cell [ref=e227]
+            - cell [ref=e228]
+            - cell "购房合同" [ref=e229]
+            - 'cell "阶段0: 多文档冲突检测" [ref=e230]'
+            - cell "rule" [ref=e231]
+            - cell "0ms" [ref=e232]
+            - cell "✗" [ref=e233]
+          - 'row "购房合同 阶段0: 多文档冲突检测 rule 0ms ✗" [ref=e234]':
+            - cell [ref=e235]
+            - cell [ref=e236]
+            - cell "购房合同" [ref=e237]
+            - 'cell "阶段0: 多文档冲突检测" [ref=e238]'
+            - cell "rule" [ref=e239]
+            - cell "0ms" [ref=e240]
+            - cell "✗" [ref=e241]
+      - generic [ref=e242]:
+        - generic [ref=e243]:
+          - generic [ref=e244]: "10"
+          - generic [ref=e245]: 总数
+        - generic [ref=e246]:
+          - generic [ref=e247]: 0%
+          - generic [ref=e248]: 准确率
+        - generic [ref=e249]:
+          - generic [ref=e250]: 75.5ms
+          - generic [ref=e251]: 平均耗时
+        - generic [ref=e252]:
+          - generic [ref=e253]: 0.75s
+          - generic [ref=e254]: 总耗时
