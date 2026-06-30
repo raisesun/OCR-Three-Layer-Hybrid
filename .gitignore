@@ -33,12 +33,14 @@ simple_ocr_test_results.json
 
 # Test cache files
 tests/batch_test_*.json
+!tests/batch_test_50_samples.json
 tests/batch_test_*.log
 tests/batch_test_*.cache.json
 tests/*.ocr_cache.json
 
-# Archives
+# Archives (but keep tests/archive/)
 archive/
+!tests/archive/
 
 # Debug scripts (root level only)
 debug_*.py
