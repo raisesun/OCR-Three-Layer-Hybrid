@@ -364,12 +364,12 @@ def main():
     # 测试的引擎（可以先测试 PP-StructureV3，GLM-OCR 可能不稳定）
     engines = ["PP-StructureV3"]  # , "PaddleOCR-VL", "GLM-OCR"]
 
-    # 加载测试样本
+    # 加载测试样本（先测试 3 张验证）
     if not samples_file.exists():
         logger.error(f"找不到样本文件: {samples_file}")
         return
 
-    samples = load_test_samples(str(samples_file), count=10)
+    samples = load_test_samples(str(samples_file), count=3)
 
     # 运行对比测试
     results = run_comparison_test(samples, engines)
