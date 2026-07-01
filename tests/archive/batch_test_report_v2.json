@@ -1,0 +1,2366 @@
+{
+  "evaluation_time": "2026-06-28",
+  "ground_truth_source": "doubao-seed-2.0-pro",
+  "classifier": {
+    "total": 50,
+    "correct": 18,
+    "wrong": 32,
+    "accuracy": 0.36,
+    "details": [
+      {
+        "image": "6ef5f1c4453b4010897e",
+        "expected": "id_card_front",
+        "inferred_type": "DIVORCE_CERTIFICATE",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "e25491d291254874bf85",
+        "expected": "id_card_front",
+        "inferred_type": "UNKNOWN",
+        "actual": "UNKNOWN",
+        "correct": false
+      },
+      {
+        "image": "4d9fd39863044a649884",
+        "expected": "id_card_front",
+        "inferred_type": "UNKNOWN",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "aa43339a989f596ebc70",
+        "expected": "id_card_front",
+        "inferred_type": "UNKNOWN",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "d128307774a04c9fa147",
+        "expected": "id_card_front",
+        "inferred_type": "UNKNOWN",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "84f68919b9da48cdb2ca",
+        "expected": "id_card_front",
+        "inferred_type": "UNKNOWN",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "027aa4151f75424c8529",
+        "expected": "id_card_front",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "7c61d257538e41cab0e1",
+        "expected": "id_card_front",
+        "inferred_type": "UNKNOWN",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "2157b6e08c7143e3b03b",
+        "expected": "id_card_front",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "5cfff66a056c4baa95e1",
+        "expected": "id_card_front",
+        "inferred_type": "UNKNOWN",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "60434e6aacfb41fabafc",
+        "expected": "id_card_back",
+        "inferred_type": "ID_CARD_BACK",
+        "actual": "UNKNOWN",
+        "correct": false
+      },
+      {
+        "image": "2fb6cd4b67014477a635",
+        "expected": "id_card_back",
+        "inferred_type": "ID_CARD_BACK",
+        "actual": "ID_CARD",
+        "correct": true
+      },
+      {
+        "image": "2ae3836f341a8943eadc",
+        "expected": "id_card_back",
+        "inferred_type": "ID_CARD_BACK",
+        "actual": "UNKNOWN",
+        "correct": false
+      },
+      {
+        "image": "169c2ae3c7d1132eb6c1",
+        "expected": "id_card_back",
+        "inferred_type": "ID_CARD_FRONT",
+        "actual": "ID_CARD",
+        "correct": true
+      },
+      {
+        "image": "8a04a10a10f44328b57a",
+        "expected": "id_card_back",
+        "inferred_type": "ID_CARD_BACK",
+        "actual": "ID_CARD",
+        "correct": true
+      },
+      {
+        "image": "bc254b4fef8c41caaaf7",
+        "expected": "marriage",
+        "inferred_type": "MARRIAGE_CERTIFICATE",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "fccde46a90d642e79466",
+        "expected": "marriage",
+        "inferred_type": "MARRIAGE_CERTIFICATE",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "4032f69b8c0d4c3e9d4b",
+        "expected": "marriage",
+        "inferred_type": "MARRIAGE_CERTIFICATE",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": true
+      },
+      {
+        "image": "17938b5ed94a4789a753",
+        "expected": "marriage",
+        "inferred_type": "DIVORCE_CERTIFICATE",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": true
+      },
+      {
+        "image": "76f20eea31d045f39672",
+        "expected": "marriage",
+        "inferred_type": "MARRIAGE_CERTIFICATE",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "147d9a19313a4594afb3",
+        "expected": "marriage",
+        "inferred_type": "DIVORCE_CERTIFICATE",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": true
+      },
+      {
+        "image": "115b0f26466a4b76b1cb",
+        "expected": "marriage",
+        "inferred_type": "MARRIAGE_CERTIFICATE",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": true
+      },
+      {
+        "image": "3f101385b95f452882e6",
+        "expected": "marriage",
+        "inferred_type": "MARRIAGE_CERTIFICATE",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": true
+      },
+      {
+        "image": "590357bd74744208856c",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "233407adbfd09977056f",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "c34f94843f4d4f29ba21",
+        "expected": "hukou",
+        "inferred_type": "UNKNOWN",
+        "actual": "HOUSEHOLD_REGISTER",
+        "correct": false
+      },
+      {
+        "image": "1dba4be9c720462f9327",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "fff184b8d65b45efb3bd",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "HOUSEHOLD_REGISTER",
+        "correct": true
+      },
+      {
+        "image": "f1513c2721954c0389f7",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "310f98d8c8654cea8b7f",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "d0acb8b0db4643828e2e",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "d31de234db7e442c9afb",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "49d3a5c10ca748f0a719",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "HOUSEHOLD_REGISTER",
+        "correct": true
+      },
+      {
+        "image": "35608642705846be8840",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "cc1b63ce8572495f880c",
+        "expected": "hukou",
+        "inferred_type": "HOUSEHOLD_REGISTER",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "2b7aee7102a44d579ea9",
+        "expected": "purchase_contract",
+        "inferred_type": "PURCHASE_CONTRACT",
+        "actual": "PURCHASE_CONTRACT",
+        "correct": true
+      },
+      {
+        "image": "ac7d32cfbee24cae8ef2",
+        "expected": "purchase_contract",
+        "inferred_type": "PURCHASE_CONTRACT",
+        "actual": "PURCHASE_CONTRACT",
+        "correct": true
+      },
+      {
+        "image": "d871f7f0785045e5a150",
+        "expected": "purchase_contract",
+        "inferred_type": "PURCHASE_CONTRACT",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "2bf5dbfd12c64176a3fd",
+        "expected": "purchase_contract",
+        "inferred_type": "PURCHASE_CONTRACT",
+        "actual": "PURCHASE_CONTRACT",
+        "correct": true
+      },
+      {
+        "image": "3418882883ff47809543",
+        "expected": "purchase_contract",
+        "inferred_type": "PURCHASE_CONTRACT",
+        "actual": "PURCHASE_CONTRACT",
+        "correct": true
+      },
+      {
+        "image": "25fc387ef8df4a068b6b",
+        "expected": "purchase_contract",
+        "inferred_type": "PURCHASE_CONTRACT",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "21721add1dee4fc6a9c2",
+        "expected": "purchase_contract",
+        "inferred_type": "PURCHASE_CONTRACT",
+        "actual": "PURCHASE_CONTRACT",
+        "correct": true
+      },
+      {
+        "image": "942b7e1a18664ee2ab54",
+        "expected": "purchase_contract",
+        "inferred_type": "PURCHASE_CONTRACT",
+        "actual": "MARRIAGE_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "e9505e57b2d646b9a06c",
+        "expected": "property",
+        "inferred_type": "UNKNOWN",
+        "actual": "STOCK_CONTRACT",
+        "correct": false
+      },
+      {
+        "image": "061e171a8b6e41bbbf2b",
+        "expected": "property",
+        "inferred_type": "FUND_SUPERVISION",
+        "actual": "ID_CARD",
+        "correct": false
+      },
+      {
+        "image": "a81d1cfaf102418f848c",
+        "expected": "property",
+        "inferred_type": "UNKNOWN",
+        "actual": "PROPERTY_CERTIFICATE",
+        "correct": false
+      },
+      {
+        "image": "bd1015fe78b84ec6bfa7",
+        "expected": "property",
+        "inferred_type": "PROPERTY_CERTIFICATE",
+        "actual": "PROPERTY_CERTIFICATE",
+        "correct": true
+      },
+      {
+        "image": "2f04ef2a8b5244c9b2ff",
+        "expected": "property",
+        "inferred_type": "PROPERTY_CERTIFICATE",
+        "actual": "PROPERTY_CERTIFICATE",
+        "correct": true
+      },
+      {
+        "image": "0d7b511c1e7144f4bad4",
+        "expected": "property",
+        "inferred_type": "PROPERTY_CERTIFICATE",
+        "actual": "PROPERTY_CERTIFICATE",
+        "correct": true
+      },
+      {
+        "image": "34314ee9baa24b398305",
+        "expected": "property",
+        "inferred_type": "PROPERTY_CERTIFICATE",
+        "actual": "STOCK_CONTRACT",
+        "correct": false
+      }
+    ]
+  },
+  "rule_layer": {
+    "total_samples": 23,
+    "avg_accuracy": 0.0625
+  },
+  "vlm_layer": {
+    "total_samples": 12,
+    "avg_accuracy": 0.05555555555555555
+  },
+  "llm_layer": {
+    "total_samples": 15,
+    "avg_accuracy": 0.18222222222222223
+  },
+  "extraction_details": [
+    {
+      "image": "6ef5f1c4453b4010897e0e6cb1b69552.jpeg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "：崔永恒",
+        "性别": "男",
+        "民族": "",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "340321199312264695",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "e25491d291254874bf854b12515f701f.jpeg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "",
+        "性别": "男",
+        "民族": "汉",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "340322199403014698",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "4d9fd39863044a649884db86a1b1ecbf.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "陈春燕",
+        "性别": "女",
+        "民族": "汉",
+        "出生": "1969年5月8日",
+        "住址": "安徽省蚌埠市禹会区钓鱼",
+        "公民身份号码": "340304196905080648",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "aa43339a989f596ebc70a08875ad8a7.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "张珂",
+        "性别": "男",
+        "民族": "汉",
+        "出生": "1999年1月10日",
+        "住址": "安徽省蚌埠市禹会区长青",
+        "公民身份号码": "340311199901100012",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "d128307774a04c9fa147570438fb6824.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "杨磊",
+        "性别": "男",
+        "民族": "汉",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "340302199407081817",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "84f68919b9da48cdb2ca95c2862313d2.jpeg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "性别男",
+        "性别": "男",
+        "民族": "汉",
+        "出生": "2000年8月10日",
+        "住址": "山路118号2栋1单元17号",
+        "公民身份号码": "34030420000810061X",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "027aa4151f75424c8529755ada5e6064.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 4,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "|  | 宗教信仰 |  |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "|  | 宗教信仰 |  |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "",
+        "性别": "女",
+        "民族": "",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "341122201808301222",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "7c61d257538e41cab0e1fc7c52993f89.jpeg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "性别男",
+        "性别": "男",
+        "民族": "汉",
+        "出生": "1981年8月7日",
+        "住址": "安徽省蚌埠市固镇县城关",
+        "公民身份号码": "340323198108076214",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "2157b6e08c7143e3b03b14f77bfe30b8.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 4,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "| | 宗教信仰 | |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "| | 宗教信仰 | |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "",
+        "性别": "男",
+        "民族": "",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "330122198101181311",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "5cfff66a056c4baa95e10b9901523f2d.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_front",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "宗浩浩",
+        "性别": "男",
+        "民族": "汉",
+        "出生": "",
+        "住址": "安徽省怀远县褚集镇三湖",
+        "公民身份号码": "340321198809107033",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "60434e6aacfb41fabafcbfd140687321.jpeg",
+      "layer": "RULE",
+      "cert_code": "id_card_back",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "签发机关",
+            "expected": "蚌埠市公安局蚌山分局",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "有效期限",
+            "expected": "2024.06.21-2044.06.21",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "签发机关": "蚌埠市公安局蚌山分局",
+        "有效期限": "2024.06.21-2044.06.21"
+      },
+      "extracted_fields": {
+        "姓名": "",
+        "性别": "",
+        "民族": "",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "2fb6cd4b67014477a635700b9295cbd8.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_back",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "签发机关",
+            "expected": "蚌埠市公安局龙子湖分局",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "有效期限",
+            "expected": "2021.07.15-2041.07.15",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "签发机关": "蚌埠市公安局龙子湖分局",
+        "有效期限": "2021.07.15-2041.07.15"
+      },
+      "extracted_fields": {
+        "姓名": "",
+        "性别": "",
+        "民族": "",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "2ae3836f341a8943eadc83706340720.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_back",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "签发机关",
+            "expected": "蚌埠市公安局禹会分局",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "有效期限",
+            "expected": "2019.09.20-2029.09.20",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "签发机关": "蚌埠市公安局禹会分局",
+        "有效期限": "2019.09.20-2029.09.20"
+      },
+      "extracted_fields": {
+        "姓名": "",
+        "性别": "",
+        "民族": "",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "169c2ae3c7d1132eb6c153ef88c604c.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_back",
+      "comparison": {
+        "total_fields": 8,
+        "matched": 3,
+        "partial": 1,
+        "missed": 3,
+        "wrong": 1,
+        "accuracy": 0.4375,
+        "details": [
+          {
+            "field": "姓名",
+            "expected": "王琼",
+            "actual": "工琼",
+            "status": "wrong"
+          },
+          {
+            "field": "性别",
+            "expected": "男",
+            "actual": "男",
+            "status": "exact"
+          },
+          {
+            "field": "民族",
+            "expected": "汉",
+            "actual": "汉",
+            "status": "exact"
+          },
+          {
+            "field": "出生日期",
+            "expected": "2003年6月16日",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "住址",
+            "expected": "安徽省固镇县王庄镇河东村北王组73号",
+            "actual": "安徽省固镇县王庄镇河东",
+            "status": "partial"
+          },
+          {
+            "field": "公民身份号码",
+            "expected": "34032320030616491X",
+            "actual": "34032320030616491X",
+            "status": "exact"
+          },
+          {
+            "field": "签发机关",
+            "expected": "固镇县公安局",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "有效期限",
+            "expected": "2023.06.25-2033.06.25",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "姓名": "王琼",
+        "性别": "男",
+        "民族": "汉",
+        "出生日期": "2003年6月16日",
+        "住址": "安徽省固镇县王庄镇河东村北王组73号",
+        "公民身份号码": "34032320030616491X",
+        "签发机关": "固镇县公安局",
+        "有效期限": "2023.06.25-2033.06.25"
+      },
+      "extracted_fields": {
+        "姓名": "工琼",
+        "性别": "男",
+        "民族": "汉",
+        "出生": "2003年6月16日",
+        "住址": "安徽省固镇县王庄镇河东",
+        "公民身份号码": "34032320030616491X",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "8a04a10a10f44328b57a32e5b50ac98c.jpg",
+      "layer": "RULE",
+      "cert_code": "id_card_back",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "签发机关",
+            "expected": "蚌埠市公安局蚌山分局",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "有效期限",
+            "expected": "2016.10.11-长期",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "签发机关": "蚌埠市公安局蚌山分局",
+        "有效期限": "2016.10.11-长期"
+      },
+      "extracted_fields": {
+        "姓名": "",
+        "性别": "",
+        "民族": "",
+        "出生": "",
+        "住址": "",
+        "公民身份号码": "",
+        "签发机关": "",
+        "有效期限": ""
+      }
+    },
+    {
+      "image": "bc254b4fef8c41caaaf7cab0f42ec553.jpeg",
+      "layer": "RULE",
+      "cert_code": "marriage",
+      "comparison": {
+        "total_fields": 5,
+        "matched": 2,
+        "partial": 0,
+        "missed": 3,
+        "wrong": 0,
+        "accuracy": 0.4,
+        "details": [
+          {
+            "field": "持证人",
+            "expected": "张梅梅",
+            "actual": "张梅梅",
+            "status": "exact"
+          },
+          {
+            "field": "登记日期",
+            "expected": "2020年08月25日",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "结婚证字号",
+            "expected": "340321-2020-006301",
+            "actual": "340321-2020-006301",
+            "status": "exact"
+          },
+          {
+            "field": "姓名_男方",
+            "expected": "年夫愿",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名_女方",
+            "expected": "张梅梅",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "持证人": "张梅梅",
+        "登记日期": "2020年08月25日",
+        "结婚证字号": "340321-2020-006301",
+        "姓名_男方": "年夫愿",
+        "姓名_女方": "张梅梅"
+      },
+      "extracted_fields": {
+        "持证人": "张梅梅",
+        "登记日期": "",
+        "结婚证字号": "340321-2020-006301",
+        "男方姓名": "",
+        "女方姓名": "张梅梅"
+      }
+    },
+    {
+      "image": "fccde46a90d642e79466e101cab848e5.jpeg",
+      "layer": "RULE",
+      "cert_code": "marriage",
+      "comparison": {
+        "total_fields": 5,
+        "matched": 3,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.6,
+        "details": [
+          {
+            "field": "持证人",
+            "expected": "张强",
+            "actual": "张强",
+            "status": "exact"
+          },
+          {
+            "field": "登记日期",
+            "expected": "2013年01月08日",
+            "actual": "2013年01月08日",
+            "status": "exact"
+          },
+          {
+            "field": "结婚证字号",
+            "expected": "J340321-2013-000653",
+            "actual": "J340321-2013-000653",
+            "status": "exact"
+          },
+          {
+            "field": "姓名_男方",
+            "expected": "张强",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名_女方",
+            "expected": "路凯红",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "持证人": "张强",
+        "登记日期": "2013年01月08日",
+        "结婚证字号": "J340321-2013-000653",
+        "姓名_男方": "张强",
+        "姓名_女方": "路凯红"
+      },
+      "extracted_fields": {
+        "持证人": "张强",
+        "登记日期": "2013年01月08日",
+        "结婚证字号": "J340321-2013-000653",
+        "男方姓名": "张强",
+        "女方姓名": ""
+      }
+    },
+    {
+      "image": "4032f69b8c0d4c3e9d4bbdee64f2963b.jpg",
+      "layer": "RULE",
+      "cert_code": "marriage",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "持证人": "",
+        "登记日期": "",
+        "结婚证字号": "",
+        "男方姓名": "",
+        "女方姓名": ""
+      }
+    },
+    {
+      "image": "17938b5ed94a4789a753211c272d3b3a.jpg",
+      "layer": "RULE",
+      "cert_code": "marriage",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "持证人": "",
+        "登记日期": "",
+        "结婚证字号": "",
+        "男方姓名": "",
+        "女方姓名": ""
+      }
+    },
+    {
+      "image": "76f20eea31d045f396720cb5b13968e2.jpeg",
+      "layer": "RULE",
+      "cert_code": "marriage",
+      "comparison": {
+        "total_fields": 5,
+        "matched": 0,
+        "partial": 0,
+        "missed": 5,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "持证人",
+            "expected": "刘印俊",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "登记日期",
+            "expected": "2014年05月21日",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "结婚证字号",
+            "expected": "J340304-2014-002214",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名_男方",
+            "expected": "刘印俊",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名_女方",
+            "expected": "潘晨晨",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "持证人": "刘印俊",
+        "登记日期": "2014年05月21日",
+        "结婚证字号": "J340304-2014-002214",
+        "姓名_男方": "刘印俊",
+        "姓名_女方": "潘晨晨"
+      },
+      "extracted_fields": {
+        "持证人": "",
+        "登记日期": "",
+        "结婚证字号": "",
+        "男方姓名": "",
+        "女方姓名": ""
+      }
+    },
+    {
+      "image": "147d9a19313a4594afb35bffd7e3f2e0.jpg",
+      "layer": "RULE",
+      "cert_code": "marriage",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "持证人": "",
+        "登记日期": "",
+        "结婚证字号": "",
+        "男方姓名": "",
+        "女方姓名": ""
+      }
+    },
+    {
+      "image": "115b0f26466a4b76b1cb1b11b031e757.jpg",
+      "layer": "RULE",
+      "cert_code": "marriage",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "持证人": "",
+        "登记日期": "",
+        "结婚证字号": "",
+        "男方姓名": "",
+        "女方姓名": ""
+      }
+    },
+    {
+      "image": "3f101385b95f452882e655e39d36cb9b.jpg",
+      "layer": "RULE",
+      "cert_code": "marriage",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "持证人": "",
+        "登记日期": "",
+        "结婚证字号": "",
+        "男方姓名": "",
+        "女方姓名": ""
+      }
+    },
+    {
+      "image": "590357bd74744208856cfe64d8d0726b.jpg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 2,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "|  | 宗教信仰 | 无宗教信仰 |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "程秀",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "汉",
+            "status": "wrong"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "|  | 宗教信仰 | 无宗教信仰 |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "程秀",
+        "户主": "",
+        "出生日期": "",
+        "民族": "汉",
+        "住址": ""
+      }
+    },
+    {
+      "image": "233407adbfd09977056fc72703fd423.jpg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 6,
+        "matched": 1,
+        "partial": 0,
+        "missed": 4,
+        "wrong": 1,
+        "accuracy": 0.16666666666666666,
+        "details": [
+          {
+            "field": "户主",
+            "expected": "王文山",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "户籍地址",
+            "expected": "安徽省固镇县王庄镇河东村北王组73号",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "王文山",
+            "actual": "王琼",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "子",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "性别",
+            "expected": "男",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "汉族",
+            "actual": "汉族",
+            "status": "exact"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户主": "王文山",
+        "户籍地址": "安徽省固镇县王庄镇河东村北王组73号",
+        "姓名": "王文山",
+        "与户主关系": "子",
+        "性别": "男",
+        "民族": "汉族"
+      },
+      "extracted_fields": {
+        "姓名": "王琼",
+        "户主": "",
+        "出生日期": "2003.06.16",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "c34f94843f4d4f29ba21448b075448cc.jpeg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "姓名": "史海龙",
+        "户主": "",
+        "出生日期": "",
+        "民族": "",
+        "住址": ""
+      }
+    },
+    {
+      "image": "1dba4be9c720462f932733f4d4bdfa2d.jpg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 2,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "|  | 宗教信仰 | 无 |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "吴雷雷",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "汉族",
+            "status": "wrong"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "|  | 宗教信仰 | 无 |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "吴雷雷",
+        "户主": "",
+        "出生日期": "1993年05月10日",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "fff184b8d65b45efb3bd0010f3aa9bdd.jpeg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 4,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "| （无）                   | 宗教信仰             | （无）               |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "| （无）                   | 宗教信仰             | （无）               |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "",
+        "户主": "",
+        "出生日期": "",
+        "民族": "",
+        "住址": ""
+      }
+    },
+    {
+      "image": "f1513c2721954c0389f7ce0184e47baf.jpg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 2,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "|  | 宗教信仰 |  |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "丁学正",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "汉族",
+            "status": "wrong"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "|  | 宗教信仰 |  |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "丁学正",
+        "户主": "",
+        "出生日期": "1962年12月23日",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "310f98d8c8654cea8b7f3ad4ef2b3d93.jpeg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 2,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "| | 宗教信仰 | |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "张玉德",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "汉族",
+            "status": "wrong"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "| | 宗教信仰 | |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "张玉德",
+        "户主": "",
+        "出生日期": "2004年08月03日",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "d0acb8b0db4643828e2e984aec682346.jpg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 2,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "|  | 宗教信仰 |  |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "陆阳",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "汉族",
+            "status": "wrong"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "|  | 宗教信仰 |  |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "陆阳",
+        "户主": "",
+        "出生日期": "1997年07月16日",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "d31de234db7e442c9afb918004759878.jpeg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 2,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "|  | 宗教信仰 | 无宗教信仰 |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "贾晨可",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "汉族",
+            "status": "wrong"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "|  | 宗教信仰 | 无宗教信仰 |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "贾晨可",
+        "户主": "",
+        "出生日期": "2018年06月15日",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "49d3a5c10ca748f0a7197b62e478e947.jpg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 2,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "|  | 宗教信仰 |  |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "董健",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "汉族",
+            "status": "wrong"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "|  | 宗教信仰 |  |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "董健",
+        "户主": "",
+        "出生日期": "1996年01月01日",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "35608642705846be88406d5b3db558bd.jpeg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 4,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 2,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "|  | 宗教信仰 |  |",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "|",
+            "actual": "年夫愿",
+            "status": "wrong"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "|",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "民族",
+            "expected": "|",
+            "actual": "汉族",
+            "status": "wrong"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "|  | 宗教信仰 |  |",
+        "姓名": "|",
+        "与户主关系": "|",
+        "民族": "|"
+      },
+      "extracted_fields": {
+        "姓名": "年夫愿",
+        "户主": "",
+        "出生日期": "1988年06月26日",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "cc1b63ce8572495f880c50b3d3b217a3.jpeg",
+      "layer": "VLM",
+      "cert_code": "hukou",
+      "comparison": {
+        "total_fields": 6,
+        "matched": 3,
+        "partial": 0,
+        "missed": 3,
+        "wrong": 0,
+        "accuracy": 0.5,
+        "details": [
+          {
+            "field": "户籍地址",
+            "expected": "宗教信仰：",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "姓名",
+            "expected": "韩金运",
+            "actual": "韩金运",
+            "status": "exact"
+          },
+          {
+            "field": "与户主关系",
+            "expected": "户主",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "性别",
+            "expected": "男",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "出生日期",
+            "expected": "1972年08月05日",
+            "actual": "1972年08月05日",
+            "status": "exact"
+          },
+          {
+            "field": "民族",
+            "expected": "汉族",
+            "actual": "汉族",
+            "status": "exact"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "户籍地址": "宗教信仰：",
+        "姓名": "韩金运",
+        "与户主关系": "户主",
+        "性别": "男",
+        "出生日期": "1972年08月05日",
+        "民族": "汉族"
+      },
+      "extracted_fields": {
+        "姓名": "韩金运",
+        "户主": "户主",
+        "出生日期": "1972年08月05日",
+        "民族": "汉族",
+        "住址": ""
+      }
+    },
+    {
+      "image": "2b7aee7102a44d579ea92d011dc9995a.jpeg",
+      "layer": "LLM",
+      "cert_code": "purchase_contract",
+      "comparison": {
+        "total_fields": 3,
+        "matched": 3,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 1.0,
+        "details": [
+          {
+            "field": "合同编号",
+            "expected": "202406240010",
+            "actual": "202406240010",
+            "status": "exact"
+          },
+          {
+            "field": "买受人",
+            "expected": "秦国庆",
+            "actual": "秦国庆",
+            "status": "exact"
+          },
+          {
+            "field": "出卖人",
+            "expected": "蚌埠宏翔置业有限公司",
+            "actual": "蚌埠宏翔置业有限公司",
+            "status": "exact"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "合同编号": "202406240010",
+        "买受人": "秦国庆",
+        "出卖人": "蚌埠宏翔置业有限公司"
+      },
+      "extracted_fields": {
+        "合同编号": "202406240010",
+        "买受人": "秦国庆",
+        "出卖人": "蚌埠宏翔置业有限公司",
+        "房屋坐落": "",
+        "建筑面积": "",
+        "总价款": ""
+      }
+    },
+    {
+      "image": "ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+      "layer": "LLM",
+      "cert_code": "purchase_contract",
+      "comparison": {
+        "total_fields": 3,
+        "matched": 2,
+        "partial": 1,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0.8333333333333334,
+        "details": [
+          {
+            "field": "合同编号",
+            "expected": "202404010024",
+            "actual": "202404010024",
+            "status": "exact"
+          },
+          {
+            "field": "买受人",
+            "expected": "贾杏旺",
+            "actual": "贾杏旺，王娜",
+            "status": "partial"
+          },
+          {
+            "field": "出卖人",
+            "expected": "蚌埠宏翔置业有限公司",
+            "actual": "蚌埠宏翔置业有限公司",
+            "status": "exact"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "合同编号": "202404010024",
+        "买受人": "贾杏旺",
+        "出卖人": "蚌埠宏翔置业有限公司"
+      },
+      "extracted_fields": {
+        "合同编号": "202404010024",
+        "买受人": "贾杏旺，王娜",
+        "出卖人": "蚌埠宏翔置业有限公司",
+        "房屋坐落": "",
+        "建筑面积": "",
+        "总价款": ""
+      }
+    },
+    {
+      "image": "d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+      "layer": "LLM",
+      "cert_code": "purchase_contract",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "买受人",
+            "expected": "出售其开发建设的房屋",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "出卖人",
+            "expected": "向买受人出售其开发建设的房屋",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "买受人": "出售其开发建设的房屋",
+        "出卖人": "向买受人出售其开发建设的房屋"
+      },
+      "extracted_fields": {
+        "合同编号": "",
+        "买受人": "",
+        "出卖人": "",
+        "房屋坐落": "",
+        "建筑面积": "",
+        "总价款": ""
+      }
+    },
+    {
+      "image": "2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+      "layer": "LLM",
+      "cert_code": "purchase_contract",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "买受人",
+            "expected": "已向出卖人支付定金_人民币_（币种）_贰万元整_",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "出卖人",
+            "expected": "支付定金_人民币_（币种）_贰万元整_",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "买受人": "已向出卖人支付定金_人民币_（币种）_贰万元整_",
+        "出卖人": "支付定金_人民币_（币种）_贰万元整_"
+      },
+      "extracted_fields": {
+        "合同编号": "",
+        "买受人": "",
+        "出卖人": "",
+        "房屋坐落": "",
+        "建筑面积": "",
+        "总价款": "680000元（大写陆拾捌万元整）"
+      }
+    },
+    {
+      "image": "3418882883ff478095435aa96e25a272.jpeg",
+      "layer": "LLM",
+      "cert_code": "purchase_contract",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "买受人",
+            "expected": "应当在 × 前分 × 期支付该商品房全部价款",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "出卖人",
+            "expected": "支付逾期应付款万分之一的违约金。",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "买受人": "应当在 × 前分 × 期支付该商品房全部价款",
+        "出卖人": "支付逾期应付款万分之一的违约金。"
+      },
+      "extracted_fields": {
+        "合同编号": "",
+        "买受人": "",
+        "出卖人": "",
+        "房屋坐落": "",
+        "建筑面积": "",
+        "总价款": "580,000元（大写：伍拾捌万元整）"
+      }
+    },
+    {
+      "image": "25fc387ef8df4a068b6b70967873302e.jpeg",
+      "layer": "LLM",
+      "cert_code": "purchase_contract",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "买受人",
+            "expected": "出售其开发建设的房屋",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "出卖人",
+            "expected": "向买受人出售其开发建设的房屋",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "买受人": "出售其开发建设的房屋",
+        "出卖人": "向买受人出售其开发建设的房屋"
+      },
+      "extracted_fields": {
+        "合同编号": "",
+        "买受人": "",
+        "出卖人": "",
+        "房屋坐落": "",
+        "建筑面积": "",
+        "总价款": ""
+      }
+    },
+    {
+      "image": "21721add1dee4fc6a9c2ff37dc6c5d45.jpeg",
+      "layer": "LLM",
+      "cert_code": "purchase_contract",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "买受人",
+            "expected": "责任、排除买受人主要权利内容的",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "出卖人",
+            "expected": "承担的责任",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "买受人": "责任、排除买受人主要权利内容的",
+        "出卖人": "承担的责任"
+      },
+      "extracted_fields": {
+        "合同编号": "",
+        "买受人": "",
+        "出卖人": "",
+        "房屋坐落": "",
+        "建筑面积": "",
+        "总价款": ""
+      }
+    },
+    {
+      "image": "942b7e1a18664ee2ab542c98410cfd79.jpeg",
+      "layer": "LLM",
+      "cert_code": "purchase_contract",
+      "comparison": {
+        "total_fields": 2,
+        "matched": 0,
+        "partial": 0,
+        "missed": 2,
+        "wrong": 0,
+        "accuracy": 0.0,
+        "details": [
+          {
+            "field": "买受人",
+            "expected": "以外的其他人；",
+            "actual": "",
+            "status": "missed"
+          },
+          {
+            "field": "出卖人",
+            "expected": "对该商品房享有合法权利；",
+            "actual": "",
+            "status": "missed"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "买受人": "以外的其他人；",
+        "出卖人": "对该商品房享有合法权利；"
+      },
+      "extracted_fields": {
+        "合同编号": "",
+        "买受人": "",
+        "出卖人": "",
+        "房屋坐落": "",
+        "建筑面积": "",
+        "总价款": "1540000000"
+      }
+    },
+    {
+      "image": "e9505e57b2d646b9a06c121fe96a8a4a.jpg",
+      "layer": "LLM",
+      "cert_code": "property",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "权利人": "",
+        "共有情况": "",
+        "坐落": "",
+        "不动产单元号": "",
+        "面积": "",
+        "用途": ""
+      }
+    },
+    {
+      "image": "061e171a8b6e41bbbf2b1b562ec5aa26.jpg",
+      "layer": "LLM",
+      "cert_code": "property",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "权利人": "蚌埠市城市开发建设集团有限公司",
+        "共有情况": "",
+        "坐落": "绿地世纪城·柏仕公馆6号楼2单元8层2号",
+        "不动产单元号": "",
+        "面积": "84.00m²",
+        "用途": ""
+      }
+    },
+    {
+      "image": "a81d1cfaf102418f848c0626ad1b5eb6.jpg",
+      "layer": "LLM",
+      "cert_code": "property",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "权利人": "",
+        "共有情况": "",
+        "坐落": "",
+        "不动产单元号": "",
+        "面积": "",
+        "用途": ""
+      }
+    },
+    {
+      "image": "bd1015fe78b84ec6bfa743504ca4a63c.jpg",
+      "layer": "LLM",
+      "cert_code": "property",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "权利人": "",
+        "共有情况": "",
+        "坐落": "",
+        "不动产单元号": "",
+        "面积": "",
+        "用途": ""
+      }
+    },
+    {
+      "image": "2f04ef2a8b5244c9b2ff926aa1d0e92b.jpeg",
+      "layer": "LLM",
+      "cert_code": "property",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "权利人": "吴晓彤",
+        "共有情况": "",
+        "坐落": "安徽省蚌埠市蚌山区解放路东侧、M-H-13(E)路南侧",
+        "不动产单元号": "-； 土地增值税项目编号：-； 核定计税价格：-； 附赠车位R005",
+        "面积": "107.66平方米",
+        "用途": ""
+      }
+    },
+    {
+      "image": "0d7b511c1e7144f4bad4f60335aa1226.jpg",
+      "layer": "LLM",
+      "cert_code": "property",
+      "comparison": {
+        "total_fields": 5,
+        "matched": 4,
+        "partial": 1,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0.9,
+        "details": [
+          {
+            "field": "权利人",
+            "expected": "周保根",
+            "actual": "周保根",
+            "status": "exact"
+          },
+          {
+            "field": "共有情况",
+            "expected": "共同共有",
+            "actual": "共同共有",
+            "status": "exact"
+          },
+          {
+            "field": "坐落",
+            "expected": "绿地世纪城·柏仕公馆6号楼2单元8层2号",
+            "actual": "绿地世纪城·柏仕公馆6号楼2单元8层2号",
+            "status": "exact"
+          },
+          {
+            "field": "不动产单元号",
+            "expected": "340304",
+            "actual": "340304 014005 GB00065 F00060095",
+            "status": "partial"
+          },
+          {
+            "field": "用途",
+            "expected": "城镇住宅用地/住宅",
+            "actual": "城镇住宅用地/住宅",
+            "status": "exact"
+          }
+        ]
+      },
+      "cloud_fields": {
+        "权利人": "周保根",
+        "共有情况": "共同共有",
+        "坐落": "绿地世纪城·柏仕公馆6号楼2单元8层2号",
+        "不动产单元号": "340304",
+        "用途": "城镇住宅用地/住宅"
+      },
+      "extracted_fields": {
+        "权利人": "周保根",
+        "共有情况": "共同共有",
+        "坐落": "绿地世纪城·柏仕公馆6号楼2单元8层2号",
+        "不动产单元号": "340304 014005 GB00065 F00060095",
+        "面积": "84.00m²",
+        "用途": "城镇住宅用地/住宅"
+      }
+    },
+    {
+      "image": "34314ee9baa24b398305efa8e1cc7ee7.jpg",
+      "layer": "LLM",
+      "cert_code": "property",
+      "comparison": {
+        "total_fields": 0,
+        "matched": 0,
+        "partial": 0,
+        "missed": 0,
+        "wrong": 0,
+        "accuracy": 0,
+        "details": []
+      },
+      "cloud_fields": {},
+      "extracted_fields": {
+        "权利人": "",
+        "共有情况": "",
+        "坐落": "",
+        "不动产单元号": "",
+        "面积": "",
+        "用途": ""
+      }
+    }
+  ]
+}

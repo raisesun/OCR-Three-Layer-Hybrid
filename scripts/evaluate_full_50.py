@@ -31,17 +31,13 @@ CERT_CODE_TO_CHINESE = {
 
 def load_test_data():
     print("加载测试数据...")
-    baseline_file = Path('/Users/dongsun/Github/sample-OCR/test_base_V2.0_full50.json')
     samples_file = Path('/Users/dongsun/github/OCR-Three-Layer-Hybrid/tests/batch_test_50_samples.json')
 
-    with open(baseline_file, 'r', encoding='utf-8') as f:
-        baseline = json.load(f)
     with open(samples_file, 'r', encoding='utf-8') as f:
         samples = json.load(f)
 
-    print(f"  基线数据: {len(baseline)} 条")
     print(f"  样本数据: {len(samples)} 条")
-    return baseline, samples
+    return samples
 
 def main():
     print("=" * 70)
@@ -50,7 +46,7 @@ def main():
     print()
 
     # 加载数据
-    baseline, samples = load_test_data()
+    samples = load_test_data()
     print()
 
     # 创建配置
