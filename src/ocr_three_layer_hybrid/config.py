@@ -58,7 +58,7 @@ class LLMServiceConfig:
     - LLM提取层 (llm_layer.py) — 通过 paddleocr PPChatOCRv4 间接调用
     """
     base_url: str = "http://localhost:11434/v1"
-    model_name: str = "qwen2.5:1.5b"
+    model_name: str = "qwen3.5:4b"  # 默认使用 Qwen3.5-4B（理解能力强）
     api_key: str = "ollama"
     timeout: float = 180.0
     embed_model: str = "nomic-embed-text"
