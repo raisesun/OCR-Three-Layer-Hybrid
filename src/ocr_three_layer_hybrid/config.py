@@ -26,6 +26,19 @@ class VLMServiceConfig:
 
 
 @dataclass
+class QwenVLServiceConfig:
+    """Qwen2.5-VL-7B 视觉模型服务配置（端口8082）
+
+    用于：
+    - VLM提取层 (vlm_layer.py) — 字段提取（备选）
+    """
+    base_url: str = "http://localhost:8082/v1"
+    model_name: str = "qwen2.5-vl-7b"
+    timeout: float = 120.0
+    api_key: str = "not-needed"
+
+
+@dataclass
 class ClassificationServiceConfig:
     """Qwen VLM 分类服务配置（端口8081）
 
@@ -67,6 +80,7 @@ class OCRConfig:
         config.vlm_service.base_url = "http://custom-host:8080/v1"
     """
     vlm_service: VLMServiceConfig = field(default_factory=VLMServiceConfig)
+    qwen_vl_service: QwenVLServiceConfig = field(default_factory=QwenVLServiceConfig)
     classification: ClassificationServiceConfig = field(default_factory=ClassificationServiceConfig)
     llm_service: LLMServiceConfig = field(default_factory=LLMServiceConfig)
     enable_vlm_fallback: bool = True
@@ -82,6 +96,13 @@ class OCRConfig:
     # - ppocr: PP-OCRv6（推荐，41.5秒/张，准确率70%）
     # - paddleocr_vl: PaddleOCR-VL（备用，151秒/张，精度高）
     # - structure_v3: PP-StructureV3（已弃用，性能不稳定）
+
+    # VLM 提取引擎配置（Phase 3 新增）
+    # 用于字段提取阶段，支持多种 VLM 模型
+    vlm_extraction_engine: str = "glm_ocr"  # "glm_ocr" | "qwen2_5_vl_7b"
+    # 说明：
+    # - glm_ocr: GLM-OCR（当前默认，端口8080）
+    # - qwen2_5_vl_7b: Qwen2.5-VL-7B（待测试，端口8082）
 
     @classmethod
     def from_env(cls) -> "OCRConfig":
