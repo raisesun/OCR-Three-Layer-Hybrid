@@ -74,8 +74,9 @@ class OCRConfig:
     enable_vlm_field_fallback: bool = True   # 启用字段级VLM兜底（校验失败时触发）
 
     # OCR 引擎配置（Phase 2 新增）
-    ocr_engine: str = "ppocr"  # "glm_ocr" | "ppocr" | "paddleocr_vl" | "structure_v3"
+    ocr_engine: str = "tiered"  # "tiered" | "glm_ocr" | "ppocr" | "paddleocr_vl" | "structure_v3"
     # 说明：
+    # - tiered: 分层策略（推荐，先用 PP-OCRv6，失败再用 PaddleOCR-VL）
     # - glm_ocr: GLM-OCR（当前生产环境，27秒/张）
     # - ppocr: PP-OCRv6（推荐，11.88秒/张，稳定）
     # - paddleocr_vl: PaddleOCR-VL（备用，151秒/张，精度高）

@@ -214,7 +214,10 @@ class OCRService:
 
         try:
             # 根据配置选择 OCR 引擎
-            if engine_name == "glm_ocr":
+            if engine_name == "tiered":
+                # 使用分层策略
+                return self.run_ocr_tiered(image_path)
+            elif engine_name == "glm_ocr":
                 # 使用 GLM-OCR（原有逻辑）
                 text = self._vlm_client.call(
                     prompt="请仔细识别图片中的所有文字内容，直接输出识别到的文字。",
@@ -261,6 +264,100 @@ class OCRService:
             logger.error(
                 "[OCR] 失败 | %s | 引擎=%s | 耗时=%.2fs | 错误=%s",
                 Path(image_path).name, engine_name, ocr_time, e,
+            )
+            return ""
+
+    # ========== 分层 OCR（Phase 2 优化） ==========
+
+    def run_ocr_tiered(self, image_path: str) -> str:
+        """
+        分层 OCR 策略：先用 PP-OCRv6（快速），如果效果不好再用 PaddleOCR-VL（精度高）
+
+        策略：
+        1. 第一阶段：使用 PP-OCRv6（~12秒）
+        2. 第二阶段：如果 OCR 文本过短（<100字），使用 PaddleOCR-VL 重新识别
+        3. 第三阶段：返回最终结果
+
+        优势：
+        - 大部分文档使用 PP-OCRv6（快速）
+        - 困难文档使用 PaddleOCR-VL（精度高）
+        - 兼顾速度和准确率
+
+        Args:
+            image_path: 图片路径
+
+        Returns:
+            OCR识别的文本
+        """
+        from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
+
+        ocr_start = time.time()
+        img_name = Path(image_path).name
+
+        try:
+            # 第一阶段：使用 PP-OCRv6（快速）
+            logger.info(f"[分层OCR] {img_name} | 阶段1: PP-OCRv6")
+            if not hasattr(self, "_paddleocr_wrapper_ppocr"):
+                self._paddleocr_wrapper_ppocr = PaddleOCRWrapper(
+                    device="cpu",
+                    default_engine="ppocr",
+                )
+
+            stage1_start = time.time()
+            result_ppocr = self._paddleocr_wrapper_ppocr.run_ocr(image_path)
+            text_ppocr = result_ppocr.full_text
+            stage1_time = time.time() - stage1_start
+
+            logger.info(
+                f"[分层OCR] {img_name} | 阶段1完成 | 耗时={stage1_time:.1f}s | 文本长度={len(text_ppocr)}字"
+            )
+
+            # 第二阶段：判断是否需要使用 PaddleOCR-VL
+            # 条件：文本过短（<100字）或为空
+            if len(text_ppocr) < 100:
+                logger.info(
+                    f"[分层OCR] {img_name} | 阶段2: PaddleOCR-VL (文本过短: {len(text_ppocr)}字 < 100字)"
+                )
+
+                if not hasattr(self, "_paddleocr_wrapper_vlm"):
+                    self._paddleocr_wrapper_vlm = PaddleOCRWrapper(
+                        device="cpu",
+                        default_engine="vlm",
+                    )
+
+                stage2_start = time.time()
+                result_vlm = self._paddleocr_wrapper_vlm.run_ocr(image_path)
+                text_vlm = result_vlm.full_text
+                stage2_time = time.time() - stage2_start
+
+                logger.info(
+                    f"[分层OCR] {img_name} | 阶段2完成 | 耗时={stage2_time:.1f}s | 文本长度={len(text_vlm)}字"
+                )
+
+                # 使用 PaddleOCR-VL 的结果
+                final_text = text_vlm
+                final_engine = "paddleocr_vl"
+                total_time = time.time() - ocr_start
+
+                logger.info(
+                    f"[分层OCR] {img_name} | 最终结果 | 引擎={final_engine} | 耗时={total_time:.1f}s | 文本长度={len(final_text)}字"
+                )
+                return final_text
+            else:
+                # PP-OCRv6 结果足够好，直接返回
+                final_text = text_ppocr
+                final_engine = "ppocr"
+                total_time = time.time() - ocr_start
+
+                logger.info(
+                    f"[分层OCR] {img_name} | 最终结果 | 引擎={final_engine} | 耗时={total_time:.1f}s | 文本长度={len(final_text)}字"
+                )
+                return final_text
+
+        except Exception as e:
+            ocr_time = time.time() - ocr_start
+            logger.error(
+                f"[分层OCR] 失败 | {img_name} | 耗时={ocr_time:.1f}s | 错误={e}"
             )
             return ""
 
