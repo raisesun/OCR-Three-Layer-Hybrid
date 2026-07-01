@@ -76,10 +76,10 @@ class PlanEPlusPipeline:
         DocumentType.ID_CARD: ProcessingLayer.RULE,
         DocumentType.MARRIAGE_CERTIFICATE: ProcessingLayer.RULE,
         DocumentType.HOUSEHOLD_REGISTER: ProcessingLayer.RULE,  # 已添加到规则层
-        DocumentType.PROPERTY_CERTIFICATE: ProcessingLayer.RULE,  # 已添加到规则层
+        DocumentType.PROPERTY_CERTIFICATE: ProcessingLayer.LLM,  # 不动产权证书使用 LLM 层
         DocumentType.INVOICE: ProcessingLayer.RULE,  # 新增：发票由规则层处理
-        DocumentType.PURCHASE_CONTRACT: ProcessingLayer.RULE,  # 已添加到规则层
-        DocumentType.STOCK_CONTRACT: ProcessingLayer.RULE,  # 已添加到规则层
+        DocumentType.PURCHASE_CONTRACT: ProcessingLayer.LLM,  # 购房合同使用 LLM 层
+        DocumentType.STOCK_CONTRACT: ProcessingLayer.LLM,  # 存量房合同使用 LLM 层
         DocumentType.FUND_SUPERVISION: ProcessingLayer.RULE,  # 新增：资金监管协议由规则层处理
         DocumentType.DIVORCE_CERTIFICATE: ProcessingLayer.VLM,  # 离婚证由VLM层处理
         DocumentType.DIVORCE_AGREEMENT: ProcessingLayer.RULE,  # 离婚协议由规则层处理
@@ -236,7 +236,7 @@ class PlanEPlusPipeline:
                 model_name = getattr(self.vlm_layer, 'model_name', 'GLM-OCR')
         elif target_layer == ProcessingLayer.LLM:
             if self.llm_layer:
-                model_name = "qwen2.5:1.5b(PP-ChatOCRv4)"
+                model_name = "Qwen3.5-4B(PP-ChatOCRv4)"
 
         logger.info(
             "[提取] %s | 层=%s | 模型=%s | 文档类型=%s",
@@ -250,6 +250,25 @@ class PlanEPlusPipeline:
             "[提取] %s | 完成 | 成功=%s | 字段数=%d | 耗时=%.2fs",
             Path(image_path).name, result.success, len([v for v in result.fields.values() if v]), extract_time
         )
+
+        # 第2.1层：LLM 兜底（如果规则层或VLM层提取失败）
+        if not result.success and self.llm_layer and target_layer != ProcessingLayer.LLM:
+            llm_fallback_start = time.time()
+            logger.info(
+                "[LLM兜底] %s | 触发 | 原因=提取失败 | 文档类型=%s",
+                Path(image_path).name, doc_info.doc_type.value
+            )
+
+            llm_layer = self._get_layer(ProcessingLayer.LLM)
+            if llm_layer and llm_layer.can_process(doc_info):
+                result = llm_layer.extract(doc_info, key_list)
+                llm_fallback_time = time.time() - llm_fallback_start
+
+                logger.info(
+                    "[LLM兜底] %s | 完成 | 成功=%s | 字段数=%d | 耗时=%.2fs",
+                    Path(image_path).name, result.success,
+                    len([v for v in result.fields.values() if v]), llm_fallback_time
+                )
 
         # 第2.5层：VLM字段级兜底（校验失败时触发）
         if self.vlm_fallback_handler and result.success:

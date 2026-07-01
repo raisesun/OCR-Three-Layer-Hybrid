@@ -29,7 +29,7 @@ class PPChatOCRv4Layer(IExtractionLayer):
     # 默认LLM配置
     DEFAULT_CHAT_BOT_CONFIG = {
         "api_type": "openai",
-        "model_name": "qwen2.5:1.5b",
+        "model_name": "qwen3.5:4b",  # 默认使用 Qwen3.5-4B
         "base_url": "http://localhost:11434/v1",
         "api_key": "ollama",
     }
