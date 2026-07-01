@@ -154,7 +154,32 @@ class PlanEPlusPipeline:
 
         # 第1层：文档分类（如果未提供预计算结果）
         if doc_info is None:
+            classify_start = time.time()
             doc_info = self.classifier.classify(image_path, ocr_texts)
+            classify_time = time.time() - classify_start
+
+            # 记录分类方法
+            classifier_type = type(self.classifier).__name__
+            route = doc_info.metadata.get("route", "unknown")
+            vlm_result = doc_info.metadata.get("vlm_result", "")
+
+            if "Hybrid" in classifier_type:
+                # 混合分类器：判断是规则层还是 VLM 兜底
+                if route == "vlm_classification":
+                    logger.info(
+                        "[分类] %s | 方法=VLM兜底 | 模型=%s | 结果=%s | 耗时=%.2fs",
+                        Path(image_path).name, "Qwen3.5-4B", doc_info.doc_type.value, classify_time
+                    )
+                else:
+                    logger.info(
+                        "[分类] %s | 方法=规则层 | 路由=%s | 结果=%s | 耗时=%.2fs",
+                        Path(image_path).name, route, doc_info.doc_type.value, classify_time
+                    )
+            else:
+                logger.info(
+                    "[分类] %s | 方法=%s | 结果=%s | 耗时=%.2fs",
+                    Path(image_path).name, classifier_type, doc_info.doc_type.value, classify_time
+                )
 
         # 附属页面检查：如果VLM识别为附属页面，跳过提取
         # 例外：如果文档类型已被明确识别（非UNKNOWN），则不视为附属页面，继续提取
@@ -196,11 +221,47 @@ class PlanEPlusPipeline:
                 error_message=f"没有可用的{target_layer.value}层处理器",
             )
 
+        # 记录提取方法
+        extract_start = time.time()
+        layer_name = target_layer.value
+        model_name = ""
+
+        if target_layer == ProcessingLayer.RULE:
+            model_name = "正则表达式"
+            if self.rule_layer and hasattr(self.rule_layer, '_position_extractor') and self.rule_layer._position_extractor:
+                if doc_info.doc_type == DocumentType.HOUSEHOLD_REGISTER:
+                    model_name = "位置标注提取器(PaddleOCR)"
+        elif target_layer == ProcessingLayer.VLM:
+            if self.vlm_layer:
+                model_name = getattr(self.vlm_layer, 'model_name', 'GLM-OCR')
+        elif target_layer == ProcessingLayer.LLM:
+            if self.llm_layer:
+                model_name = "qwen2.5:1.5b(PP-ChatOCRv4)"
+
+        logger.info(
+            "[提取] %s | 层=%s | 模型=%s | 文档类型=%s",
+            Path(image_path).name, layer_name, model_name, doc_info.doc_type.value
+        )
+
         result = layer.extract(doc_info, key_list)
+        extract_time = time.time() - extract_start
+
+        logger.info(
+            "[提取] %s | 完成 | 成功=%s | 字段数=%d | 耗时=%.2fs",
+            Path(image_path).name, result.success, len([v for v in result.fields.values() if v]), extract_time
+        )
 
         # 第2.5层：VLM字段级兜底（校验失败时触发）
         if self.vlm_fallback_handler and result.success:
+            fallback_start = time.time()
             result = self._apply_vlm_fallback(image_path, result, doc_info)
+            fallback_time = time.time() - fallback_start
+
+            if fallback_time > 0.1:  # 只有实际触发兜底时才记录
+                logger.info(
+                    "[VLM兜底] %s | 完成 | 耗时=%.2fs",
+                    Path(image_path).name, fallback_time
+                )
 
         result.time_cost = time.time() - start_time  # 包含分类时间
         return result
