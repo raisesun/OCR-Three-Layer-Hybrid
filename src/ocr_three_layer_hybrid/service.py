@@ -227,11 +227,17 @@ class OCRService:
 
                 # 延迟初始化 PaddleOCRWrapper
                 if not hasattr(self, "_paddleocr_wrapper"):
+                    # 引擎名称映射：service 配置 → paddleocr_wrapper
+                    engine_map = {
+                        "ppocr": "ppocr",           # PP-OCRv6
+                        "paddleocr_vl": "vlm",      # PaddleOCR-VL
+                        "structure_v3": "structure_v3",  # PP-StructureV3（弃用）
+                    }
                     self._paddleocr_wrapper = PaddleOCRWrapper(
                         device="cpu",
-                        default_engine=engine_name if engine_name != "ppocr" else "auto",
+                        default_engine=engine_map.get(engine_name, "auto"),
                     )
-                    logger.info(f"PaddleOCR 引擎已初始化: {engine_name}")
+                    logger.info(f"PaddleOCR 引擎已初始化: {engine_name} → {engine_map.get(engine_name)}")
 
                 # 运行 OCR
                 result = self._paddleocr_wrapper.run_ocr(image_path)
