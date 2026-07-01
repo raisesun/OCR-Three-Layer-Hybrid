@@ -99,10 +99,10 @@ class OCRConfig:
 
     # VLM 提取引擎配置（Phase 3 新增）
     # 用于字段提取阶段，支持多种 VLM 模型
-    vlm_extraction_engine: str = "glm_ocr"  # "glm_ocr" | "qwen2_5_vl_7b"
+    vlm_extraction_engine: str = "qwen2_5_vl_7b"  # "glm_ocr" | "qwen2_5_vl_7b"
     # 说明：
-    # - glm_ocr: GLM-OCR（当前默认，端口8080）
-    # - qwen2_5_vl_7b: Qwen2.5-VL-7B（待测试，端口8082）
+    # - qwen2_5_vl_7b: Qwen2.5-VL-7B（默认，端口8082，理解能力强）
+    # - glm_ocr: GLM-OCR（备选，端口8080，速度快）
 
     @classmethod
     def from_env(cls) -> "OCRConfig":
