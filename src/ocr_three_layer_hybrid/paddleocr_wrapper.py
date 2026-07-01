@@ -303,7 +303,15 @@ class PPStructureV3Engine:
         logger.info(f"PP-StructureV3 开始推理: {input_desc}")
         start = time.time()
 
-        output = self._pipeline.predict(input_data)
+        # 图片预处理：缩放到 4000px 以内（避免性能问题）
+        processed_input = input_data
+        if isinstance(input_data, str) and os.path.exists(input_data):
+            from ocr_three_layer_hybrid.image_preprocessor import ensure_max_size
+            processed_input = ensure_max_size(input_data, max_side=4000)
+            if processed_input != input_data:
+                logger.info(f"图片已预处理（缩放）")
+
+        output = self._pipeline.predict(processed_input)
         results = []
 
         for res in output:
