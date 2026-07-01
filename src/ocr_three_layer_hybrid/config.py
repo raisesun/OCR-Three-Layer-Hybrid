@@ -73,12 +73,13 @@ class OCRConfig:
     enable_position_extraction: bool = True  # 启用位置标注提取（户口本首页）
     enable_vlm_field_fallback: bool = True   # 启用字段级VLM兜底（校验失败时触发）
 
-    # OCR 引擎配置（Phase 2 新增）
-    ocr_engine: str = "tiered"  # "tiered" | "glm_ocr" | "ppocr" | "paddleocr_vl" | "structure_v3"
+    # OCR 引擎配置（Phase 2 优化）
+    # 注意：分层策略（tiered）测试失败，准确率下降且速度变慢，不推荐使用
+    ocr_engine: str = "ppocr"  # "tiered" | "glm_ocr" | "ppocr" | "paddleocr_vl" | "structure_v3"
     # 说明：
-    # - tiered: 分层策略（推荐，先用 PP-OCRv6，失败再用 PaddleOCR-VL）
-    # - glm_ocr: GLM-OCR（当前生产环境，27秒/张）
-    # - ppocr: PP-OCRv6（推荐，11.88秒/张，稳定）
+    # - tiered: 分层策略（不推荐，准确率68%，速度66.9秒）
+    # - glm_ocr: GLM-OCR（当前生产环境，27秒/张，准确率66%）
+    # - ppocr: PP-OCRv6（推荐，41.5秒/张，准确率70%）
     # - paddleocr_vl: PaddleOCR-VL（备用，151秒/张，精度高）
     # - structure_v3: PP-StructureV3（已弃用，性能不稳定）
 
