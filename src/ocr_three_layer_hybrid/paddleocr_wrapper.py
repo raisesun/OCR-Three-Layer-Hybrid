@@ -310,17 +310,24 @@ class PPStructureV3Engine:
             j = res.json
             inner = j.get("res", j) if isinstance(j, dict) else {}
 
-            # 提取文本
+            # 提取文本（PP-StructureV3 的输出结构）
             rec_texts = []
             rec_scores = []
             rec_polys = []
 
-            # 从 OCR 结果中提取文本
-            ocr_res = inner.get("ocr_res", {})
-            if ocr_res:
-                rec_texts = ocr_res.get("rec_texts", []) or []
-                rec_scores = ocr_res.get("rec_scores", []) or []
-                rec_polys = ocr_res.get("rec_polys", []) or []
+            # 从 parsing_res_list 中提取文本（PP-StructureV3 的主要输出）
+            parsing_res_list = inner.get("parsing_res_list", [])
+            if parsing_res_list:
+                for block in parsing_res_list:
+                    block_content = block.get("block_content", "")
+                    block_label = block.get("block_label", "")
+
+                    # 只提取文本类型的块
+                    if block_content and block_label in ["text", "title", "table"]:
+                        rec_texts.append(block_content)
+                        rec_scores.append(1.0)  # PP-StructureV3 没有单块置信度
+                        # PP-StructureV3 没有提供多边形坐标
+                        rec_polys.append([])
 
             input_path = inner.get(
                 "input_path",
