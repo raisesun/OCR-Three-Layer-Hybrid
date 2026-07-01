@@ -2,9 +2,15 @@
 PaddleOCR 包装器模块
 
 提供统一的 PaddleOCR 接口，支持：
-1. PP-OCRv6 标准引擎（快速，适合 A/B 级文档）
-2. PaddleOCR-VL 视觉语言模型引擎（精度高，适合 C/D 级文档）
-3. 版面分析（PP-DocLayoutV3，可选）
+1. PP-StructureV3 引擎（快速，适合 A/B 级文档，0.5-2秒/张）
+2. PaddleOCR-VL 视觉语言模型引擎（精度高，适合 C/D 级文档，5-8秒/张）
+3. 自动根据文档类型选择最佳引擎
+
+分层策略（技术方案）：
+- A 级文档（身份证、结婚证等）→ PP-StructureV3（0.5-2秒）
+- B 级文档（户口本、发票等）→ PP-StructureV3（0.5-2秒）
+- C 级文档（合同、协议等）→ PaddleOCR-VL（5-8秒）
+- D 级文档（病历、处方等）→ PaddleOCR-VL（5-8秒）
 
 模型路径：
 - 默认使用 ~/.paddlex/official_models/ 中的模型
@@ -222,7 +228,153 @@ class OCRResult:
         return json.dumps(self.to_dict(), indent=indent, ensure_ascii=ensure_ascii)
 
 
-# ============== OCR 引擎 ==============
+# ============== PP-StructureV3 引擎 ==============
+
+class PPStructureV3Engine:
+    """
+    PP-StructureV3 引擎（技术方案推荐）
+
+    一次调用完成：
+    - 版面分析（PP-DocLayoutV3）
+    - 文本检测 + 识别（PP-OCRv6）
+    - 表格识别（SLANet_plus）
+    - 公式识别（PP-FormulaNet）
+
+    优势：
+    - 速度快（0.5-2秒/张）
+    - 支持复杂文档（表格、多栏、公式）
+    - 输出结构化结果（HTML/Markdown）
+
+    适用场景：
+    - A 级文档（身份证、结婚证等）
+    - B 级文档（户口本、发票等）
+
+    参数：
+        device: 推理设备（默认 "cpu"）
+        use_layout: 是否启用版面分析
+        use_table: 是否启用表格识别
+        use_formula: 是否启用公式识别
+    """
+
+    def __init__(
+        self,
+        device: str = "cpu",
+        use_layout: bool = True,
+        use_table: bool = True,
+        use_formula: bool = False,
+    ):
+        self.device = device
+        self.use_layout = use_layout
+        self.use_table = use_table
+        self.use_formula = use_formula
+        self._pipeline = None
+
+    def _ensure_pipeline(self):
+        """延迟加载 PP-StructureV3 pipeline"""
+        if self._pipeline is None:
+            from paddlex import create_pipeline
+            logger.info(f"初始化 PP-StructureV3 pipeline (device={self.device})...")
+            start = time.time()
+            self._pipeline = create_pipeline(
+                pipeline="PP-StructureV3",
+                device=self.device,
+                use_layout_detection=self.use_layout,
+                use_table_recognition=self.use_table,
+                use_formula_recognition=self.use_formula,
+            )
+            logger.info(f"PP-StructureV3 pipeline 初始化完成，耗时: {time.time()-start:.1f}s")
+
+    def predict(
+        self,
+        input_data: Union[str, np.ndarray],
+    ) -> List[OCRResult]:
+        """
+        识别图片/PDF
+
+        Args:
+            input_data: 图片/PDF 文件路径或 ndarray
+
+        Returns:
+            OCRResult 列表
+        """
+        self._ensure_pipeline()
+
+        input_desc = input_data if isinstance(input_data, str) else "ndarray"
+        logger.info(f"PP-StructureV3 开始推理: {input_desc}")
+        start = time.time()
+
+        output = self._pipeline.predict(input_data)
+        results = []
+
+        for res in output:
+            j = res.json
+            inner = j.get("res", j) if isinstance(j, dict) else {}
+
+            # 提取文本
+            rec_texts = []
+            rec_scores = []
+            rec_polys = []
+
+            # 从 OCR 结果中提取文本
+            ocr_res = inner.get("ocr_res", {})
+            if ocr_res:
+                rec_texts = ocr_res.get("rec_texts", []) or []
+                rec_scores = ocr_res.get("rec_scores", []) or []
+                rec_polys = ocr_res.get("rec_polys", []) or []
+
+            input_path = inner.get(
+                "input_path",
+                str(input_data) if isinstance(input_data, str) else "ndarray"
+            )
+
+            ocr_result = OCRResult(
+                input_path=input_path,
+                rec_texts=rec_texts,
+                rec_scores=rec_scores,
+                rec_polys=rec_polys,
+                raw_result=inner,
+            )
+            results.append(ocr_result)
+
+        elapsed = time.time() - start
+        logger.info(f"PP-StructureV3 推理完成，耗时: {elapsed:.1f}s，共{len(results)}页")
+
+        return results
+
+    def predict_to_json(
+        self,
+        input_data: Union[str, np.ndarray],
+        save_path: Optional[str] = None,
+    ) -> dict:
+        """识别并返回 JSON 格式结果"""
+        results = self.predict(input_data)
+
+        output = {
+            "success": True,
+            "input": str(input_data) if isinstance(input_data, str) else "ndarray",
+            "total_pages": len(results),
+            "pages": [r.to_dict() for r in results],
+        }
+
+        if save_path:
+            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(output, f, indent=2, ensure_ascii=False)
+            logger.info(f"结果已保存到: {save_path}")
+
+        return output
+
+    def close(self):
+        """关闭引擎，释放资源"""
+        if self._pipeline is not None:
+            try:
+                self._pipeline.close()
+            except Exception:
+                pass
+            self._pipeline = None
+
+
+# ============== OCR 引擎（标准 PP-OCRv6） ==============
 
 class PaddleOCREngine:
     """
@@ -628,8 +780,8 @@ class PaddleOCRWrapper:
     PaddleOCR 统一包装器
 
     提供统一的接口，自动根据文档类型选择最佳引擎：
-    - A/B 级文档 → PaddleOCREngine（PP-OCRv6，快速）
-    - C/D 级文档 → PaddleOCRVLLEngine（VLM，精度高）
+    - A/B 级文档 → PP-StructureV3（快速，0.5-2秒/张）
+    - C/D 级文档 → PaddleOCR-VL（精度高，5-8秒/张）
 
     使用示例：
         wrapper = PaddleOCRWrapper()
@@ -653,31 +805,36 @@ class PaddleOCRWrapper:
     def __init__(
         self,
         device: str = "cpu",
-        use_layout: bool = False,
-        default_engine: str = "auto",  # "auto", "ppocr", "vlm"
+        default_engine: str = "auto",  # "auto", "structure_v3", "ppocr", "vlm"
     ):
         """
         初始化包装器
 
         Args:
             device: 推理设备（"cpu" 或 "gpu"）
-            use_layout: 是否启用版面分析
             default_engine: 默认引擎（"auto" 根据文档类型自动选择）
         """
         self.device = device
-        self.use_layout = use_layout
         self.default_engine = default_engine
 
         # 延迟初始化引擎
+        self._structure_v3_engine = None
         self._ppocr_engine = None
         self._vlm_engine = None
 
+    def _get_structure_v3_engine(self) -> PPStructureV3Engine:
+        """获取 PP-StructureV3 引擎（延迟初始化）"""
+        if self._structure_v3_engine is None:
+            self._structure_v3_engine = PPStructureV3Engine(
+                device=self.device,
+            )
+        return self._structure_v3_engine
+
     def _get_ppocr_engine(self) -> PaddleOCREngine:
-        """获取 PP-OCR 引擎（延迟初始化）"""
+        """获取 PP-OCR 引擎（延迟初始化，备选）"""
         if self._ppocr_engine is None:
             self._ppocr_engine = PaddleOCREngine(
                 device=self.device,
-                use_layout=self.use_layout,
             )
         return self._ppocr_engine
 
@@ -690,14 +847,24 @@ class PaddleOCRWrapper:
         return self._vlm_engine
 
     def _select_engine(self, doc_type: Optional[str] = None) -> str:
-        """选择引擎"""
+        """
+        选择引擎（技术方案分层）
+
+        Args:
+            doc_type: 文档类型
+
+        Returns:
+            引擎名称："structure_v3", "vlm", 或 "ppocr"
+        """
         if self.default_engine != "auto":
             return self.default_engine
 
-        # 根据文档类型选择
+        # 根据文档类型选择（技术方案分层）
         if doc_type and doc_type in self.FAST_DOC_TYPES:
-            return "ppocr"
+            # A/B 级文档 → PP-StructureV3（快速）
+            return "structure_v3"
         else:
+            # C/D 级文档 → PaddleOCR-VL（精度高）
             return "vlm"
 
     def run_ocr(
@@ -712,16 +879,18 @@ class PaddleOCRWrapper:
         Args:
             image_path: 图片路径
             doc_type: 文档类型（用于自动选择引擎）
-            engine: 指定引擎（"ppocr" 或 "vlm"），None 表示自动选择
+            engine: 指定引擎（"structure_v3", "ppocr", "vlm"），None 表示自动选择
 
         Returns:
             OCRResult
         """
         engine_name = engine or self._select_engine(doc_type)
 
-        if engine_name == "ppocr":
+        if engine_name == "structure_v3":
+            ocr_engine = self._get_structure_v3_engine()
+        elif engine_name == "ppocr":
             ocr_engine = self._get_ppocr_engine()
-        else:
+        else:  # vlm
             ocr_engine = self._get_vlm_engine()
 
         results = ocr_engine.predict(image_path)
@@ -749,6 +918,9 @@ class PaddleOCRWrapper:
 
     def close(self):
         """关闭所有引擎，释放资源"""
+        if self._structure_v3_engine:
+            self._structure_v3_engine.close()
+            self._structure_v3_engine = None
         if self._ppocr_engine:
             self._ppocr_engine.close()
             self._ppocr_engine = None

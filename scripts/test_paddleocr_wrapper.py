@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from ocr_three_layer_hybrid.paddleocr_wrapper import (
     PaddleOCRWrapper,
+    PPStructureV3Engine,
     PaddleOCREngine,
     PaddleOCRVLLEngine,
     _DEFAULT_DET_MODEL,
@@ -57,6 +58,51 @@ def check_model_paths():
             all_exist = False
 
     return all_exist
+
+
+def test_structure_v3_engine(image_path: str):
+    """测试 PP-StructureV3 引擎"""
+    print("\n" + "="*70)
+    print("测试 PP-StructureV3 引擎（技术方案推荐）")
+    print("="*70)
+
+    print(f"测试图片: {image_path}")
+    print("初始化引擎...")
+
+    engine = PPStructureV3Engine(
+        device="cpu",
+        use_layout=True,
+        use_table=True,
+        use_formula=False,
+    )
+
+    print("开始推理...")
+    start = time.time()
+
+    try:
+        results = engine.predict(image_path)
+        elapsed = time.time() - start
+
+        if results:
+            result = results[0]
+            print(f"\n✅ 推理成功！")
+            print(f"耗时: {elapsed:.2f}秒")
+            print(f"识别文本块数: {len(result.rec_texts)}")
+            print(f"文本长度: {len(result.full_text)} 字符")
+            print(f"\n前 200 字符:")
+            print(result.full_text[:200])
+
+            return True, elapsed
+        else:
+            print(f"❌ 推理失败：无结果")
+            return False, elapsed
+
+    except Exception as e:
+        elapsed = time.time() - start
+        print(f"❌ 推理失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, elapsed
 
 
 def test_ppocr_engine(image_path: str):
@@ -227,22 +273,30 @@ def main():
 
     print(f"\n使用测试图片: {image_path}")
 
-    # 3. 测试 PP-OCRv6 引擎
+    # 3. 测试 PP-StructureV3 引擎（技术方案推荐）
+    success_v3, time_v3 = test_structure_v3_engine(image_path)
+
+    # 4. 测试 PP-OCRv6 引擎（备选）
     success_ppocr, time_ppocr = test_ppocr_engine(image_path)
 
-    # 4. 测试 VLM 引擎（可选，可能较慢）
+    # 5. 测试 VLM 引擎（可选，可能较慢）
     # success_vlm, time_vlm = test_vlm_engine(image_path)
 
-    # 5. 测试统一包装器
+    # 6. 测试统一包装器
     test_wrapper(image_path)
 
-    # 6. 输出总结
+    # 7. 输出总结
     print("\n" + "="*70)
     print("测试总结")
     print("="*70)
 
+    if success_v3:
+        print(f"✅ PP-StructureV3 引擎: 正常 ({time_v3:.2f}秒) ← 技术方案推荐")
+    else:
+        print(f"❌ PP-StructureV3 引擎: 失败")
+
     if success_ppocr:
-        print(f"✅ PP-OCRv6 引擎: 正常 ({time_ppocr:.2f}秒)")
+        print(f"✅ PP-OCRv6 引擎: 正常 ({time_ppocr:.2f}秒) ← 备选方案")
     else:
         print(f"❌ PP-OCRv6 引擎: 失败")
 
