@@ -73,6 +73,14 @@ class OCRConfig:
     enable_position_extraction: bool = True  # 启用位置标注提取（户口本首页）
     enable_vlm_field_fallback: bool = True   # 启用字段级VLM兜底（校验失败时触发）
 
+    # OCR 引擎配置（Phase 2 新增）
+    ocr_engine: str = "ppocr"  # "glm_ocr" | "ppocr" | "paddleocr_vl" | "structure_v3"
+    # 说明：
+    # - glm_ocr: GLM-OCR（当前生产环境，27秒/张）
+    # - ppocr: PP-OCRv6（推荐，11.88秒/张，稳定）
+    # - paddleocr_vl: PaddleOCR-VL（备用，151秒/张，精度高）
+    # - structure_v3: PP-StructureV3（已弃用，性能不稳定）
+
     @classmethod
     def from_env(cls) -> "OCRConfig":
         """从环境变量加载配置，未设置则使用默认值"""

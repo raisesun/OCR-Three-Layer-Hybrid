@@ -195,7 +195,13 @@ class OCRService:
 
     def run_ocr(self, image_path: str) -> str:
         """
-        调用GLM-OCR进行纯文本提取（不做字段解析）
+        调用OCR引擎进行纯文本提取（不做字段解析）
+
+        支持多种引擎（通过 config.ocr_engine 配置）：
+        - glm_ocr: GLM-OCR（当前生产环境，27秒/张）
+        - ppocr: PP-OCRv6（推荐，11.88秒/张，稳定）
+        - paddleocr_vl: PaddleOCR-VL（备用，151秒/张，精度高）
+        - structure_v3: PP-StructureV3（已弃用，性能不稳定）
 
         Args:
             image_path: 图片路径
@@ -204,23 +210,51 @@ class OCRService:
             OCR识别的文本，失败返回空字符串
         """
         ocr_start = time.time()
+        engine_name = self.config.ocr_engine
+
         try:
-            text = self._vlm_client.call(
-                prompt="请仔细识别图片中的所有文字内容，直接输出识别到的文字。",
-                image_path=image_path,
-                max_tokens=2048,
-            )
+            # 根据配置选择 OCR 引擎
+            if engine_name == "glm_ocr":
+                # 使用 GLM-OCR（原有逻辑）
+                text = self._vlm_client.call(
+                    prompt="请仔细识别图片中的所有文字内容，直接输出识别到的文字。",
+                    image_path=image_path,
+                    max_tokens=2048,
+                )
+            elif engine_name in ["ppocr", "paddleocr_vl", "structure_v3"]:
+                # 使用 PaddleOCR 系列引擎
+                from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
+
+                # 延迟初始化 PaddleOCRWrapper
+                if not hasattr(self, "_paddleocr_wrapper"):
+                    self._paddleocr_wrapper = PaddleOCRWrapper(
+                        device="cpu",
+                        default_engine=engine_name if engine_name != "ppocr" else "auto",
+                    )
+                    logger.info(f"PaddleOCR 引擎已初始化: {engine_name}")
+
+                # 运行 OCR
+                result = self._paddleocr_wrapper.run_ocr(image_path)
+                text = result.full_text
+            else:
+                logger.error(f"未知的 OCR 引擎: {engine_name}，使用默认 ppocr")
+                from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
+                if not hasattr(self, "_paddleocr_wrapper"):
+                    self._paddleocr_wrapper = PaddleOCRWrapper(device="cpu")
+                result = self._paddleocr_wrapper.run_ocr(image_path)
+                text = result.full_text
+
             ocr_time = time.time() - ocr_start
             logger.info(
-                "[OCR] %s | 耗时=%.2fs | 文本长度=%d字",
-                Path(image_path).name, ocr_time, len(text),
+                "[OCR] %s | 引擎=%s | 耗时=%.2fs | 文本长度=%d字",
+                Path(image_path).name, engine_name, ocr_time, len(text),
             )
             return text
         except Exception as e:
             ocr_time = time.time() - ocr_start
             logger.error(
-                "[OCR] 失败 | %s | 耗时=%.2fs | 错误=%s",
-                Path(image_path).name, ocr_time, e,
+                "[OCR] 失败 | %s | 引擎=%s | 耗时=%.2fs | 错误=%s",
+                Path(image_path).name, engine_name, ocr_time, e,
             )
             return ""
 
