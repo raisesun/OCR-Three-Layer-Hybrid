@@ -2,15 +2,17 @@
 PaddleOCR 包装器模块
 
 提供统一的 PaddleOCR 接口，支持：
-1. PP-StructureV3 引擎（快速，适合 A/B 级文档，0.5-2秒/张）
-2. PaddleOCR-VL 视觉语言模型引擎（精度高，适合 C/D 级文档，5-8秒/张）
+1. PP-OCRv6 引擎（快速、稳定，适合 A/B 级文档，11.88秒/张）
+2. PaddleOCR-VL 视觉语言模型引擎（精度高，适合 C/D 级文档，151秒/张）
 3. 自动根据文档类型选择最佳引擎
 
-分层策略（技术方案）：
-- A 级文档（身份证、结婚证等）→ PP-StructureV3（0.5-2秒）
-- B 级文档（户口本、发票等）→ PP-StructureV3（0.5-2秒）
-- C 级文档（合同、协议等）→ PaddleOCR-VL（5-8秒）
-- D 级文档（病历、处方等）→ PaddleOCR-VL（5-8秒）
+分层策略（Phase 1 调整后）：
+- A 级文档（身份证、结婚证等）→ PP-OCRv6（11.88秒）
+- B 级文档（户口本、发票等）→ PP-OCRv6（11.88秒）
+- C 级文档（合同、协议等）→ PaddleOCR-VL（151秒）
+- D 级文档（病历、处方等）→ PaddleOCR-VL（151秒）
+
+注意：PP-StructureV3 已弃用（性能不稳定，某些图片 692秒）
 
 模型路径：
 - 默认使用 ~/.paddlex/official_models/ 中的模型
@@ -863,21 +865,22 @@ class PaddleOCRWrapper:
 
     def _select_engine(self, doc_type: Optional[str] = None) -> str:
         """
-        选择引擎（技术方案分层）
+        选择引擎（Phase 1 调整后的分层策略）
 
         Args:
             doc_type: 文档类型
 
         Returns:
-            引擎名称："structure_v3", "vlm", 或 "ppocr"
+            引擎名称："ppocr", "vlm", 或 "structure_v3"
         """
         if self.default_engine != "auto":
             return self.default_engine
 
-        # 根据文档类型选择（技术方案分层）
+        # 根据文档类型选择（Phase 1 调整后的分层策略）
         if doc_type and doc_type in self.FAST_DOC_TYPES:
-            # A/B 级文档 → PP-StructureV3（快速）
-            return "structure_v3"
+            # A/B 级文档 → PP-OCRv6（快速、稳定）
+            # 注意：PP-StructureV3 性能不稳定，已弃用
+            return "ppocr"
         else:
             # C/D 级文档 → PaddleOCR-VL（精度高）
             return "vlm"
