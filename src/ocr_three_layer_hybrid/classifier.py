@@ -28,6 +28,18 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             "离婚证字号",        # 离婚证独有
             "离婚证",            # 离婚证标题
         ],
+        DocumentType.NOTARY_CERTIFICATE: [
+            "公证书",            # 公证书标题
+            "公证字第",          # 公证书编号特征
+        ],
+        DocumentType.POWER_OF_ATTORNEY: [
+            "委托书",            # 委托书标题
+            "委托人",            # 委托书特征
+            "受托人",            # 委托书特征
+        ],
+        DocumentType.DIVORCE_AGREEMENT: [
+            "离婚协议书",        # 离婚协议书标题
+        ],
         DocumentType.ID_CARD: [
             "公民身份号码",      # 身份证独有
             "签发机关",          # 身份证反面独有
@@ -305,6 +317,40 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             else:
                 return PageType.UNKNOWN
 
+        # === 合同页面类型识别（购房合同/存量房合同）===
+        if doc_type in [DocumentType.PURCHASE_CONTRACT, DocumentType.STOCK_CONTRACT,
+                        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE, DocumentType.PURCHASE_CONTRACT_CONTENT,
+                        DocumentType.PURCHASE_CONTRACT_STAMP, DocumentType.STOCK_CONTRACT_FIRST_PAGE,
+                        DocumentType.STOCK_CONTRACT_CONTENT, DocumentType.STOCK_CONTRACT_STAMP]:
+            # 签署页特征：合同签订日期、合同签订地址、签字/盖章
+            has_stamp_signals = any(kw in full_text for kw in [
+                "合同签订日期", "合同签订地址", "签字", "盖章", "签章"
+            ])
+            # 注意：监管协议的签章页也有这些特征，需要排除
+            is_fund_supervision = any(kw in full_text for kw in [
+                "资金监管", "监管协议", "监管凭证", "监管资金"
+            ])
+
+            # 首页特征：买卖合同、合同编号 + 卖方/买方/房屋坐落
+            has_contract_title = any(kw in full_text for kw in ["买卖合同", "存量房买卖合同"])
+            has_contract_no = "合同编号" in full_text
+            has_first_page_fields = any(kw in full_text for kw in ["卖方", "买方", "房屋坐落"])
+
+            # 内容页特征：房屋基本情况、付款方式、装修价款
+            has_content_fields = any(kw in full_text for kw in [
+                "房屋基本情况", "付款方式", "装修价款"
+            ])
+
+            # 签署页优先（但要排除监管协议）
+            if has_stamp_signals and not is_fund_supervision:
+                return PageType.STAMP
+            elif has_contract_title and has_first_page_fields:
+                return PageType.FIRST_PAGE
+            elif has_content_fields:
+                return PageType.CONTENT
+            else:
+                return PageType.UNKNOWN
+
         # 默认返回内容页（对于合同、协议等）
         return PageType.CONTENT
 
@@ -368,6 +414,24 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 return DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE
             elif page_type == PageType.STAMP:
                 return DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP
+
+        # 购房合同细化
+        elif doc_type == DocumentType.PURCHASE_CONTRACT:
+            if page_type == PageType.FIRST_PAGE:
+                return DocumentType.PURCHASE_CONTRACT_FIRST_PAGE
+            elif page_type == PageType.CONTENT:
+                return DocumentType.PURCHASE_CONTRACT_CONTENT
+            elif page_type == PageType.STAMP:
+                return DocumentType.PURCHASE_CONTRACT_STAMP
+
+        # 存量房合同细化
+        elif doc_type == DocumentType.STOCK_CONTRACT:
+            if page_type == PageType.FIRST_PAGE:
+                return DocumentType.STOCK_CONTRACT_FIRST_PAGE
+            elif page_type == PageType.CONTENT:
+                return DocumentType.STOCK_CONTRACT_CONTENT
+            elif page_type == PageType.STAMP:
+                return DocumentType.STOCK_CONTRACT_STAMP
 
         return doc_type
 

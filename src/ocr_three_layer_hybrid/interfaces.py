@@ -41,13 +41,28 @@ class DocumentType(str, Enum):
 
     # 第三类：合同/协议
     PURCHASE_CONTRACT = "购房合同"
+    PURCHASE_CONTRACT_FIRST_PAGE = "购房合同-首页"
+    PURCHASE_CONTRACT_CONTENT = "购房合同-内容页"
+    PURCHASE_CONTRACT_STAMP = "购房合同-签署页"
+
     STOCK_CONTRACT = "存量房合同"
+    STOCK_CONTRACT_FIRST_PAGE = "存量房合同-首页"
+    STOCK_CONTRACT_CONTENT = "存量房合同-内容页"
+    STOCK_CONTRACT_STAMP = "存量房合同-签署页"
+
+    # 公证书
+    NOTARY_CERTIFICATE = "公证书"
+
+    # 委托书
+    POWER_OF_ATTORNEY = "委托书"
+
+    # 离婚协议书
+    DIVORCE_AGREEMENT = "离婚协议书"
     FUND_SUPERVISION = "资金监管协议"
     FUND_SUPERVISION_AGREEMENT_FIRST_PAGE = "资金监管协议-首页"
     FUND_SUPERVISION_AGREEMENT_INFO_PAGE = "资金监管协议-信息页"
     FUND_SUPERVISION_AGREEMENT_STAMP = "资金监管协议-签章页"
     FUND_SUPERVISION_CERTIFICATE = "资金监管凭证"
-    DIVORCE_AGREEMENT = "离婚协议"
 
     UNKNOWN = "未知"
 

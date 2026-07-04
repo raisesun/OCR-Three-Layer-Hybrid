@@ -148,6 +148,22 @@ class RuleExtractionLayer(IExtractionLayer):
                 fields = self._extract_fund_supervision_certificate(full_text, key_list)
             elif doc_info.doc_type == DocumentType.DIVORCE_AGREEMENT:
                 fields = self._extract_divorce_agreement(full_text, key_list)
+            elif doc_info.doc_type in [
+                DocumentType.PURCHASE_CONTRACT_FIRST_PAGE,
+                DocumentType.PURCHASE_CONTRACT_CONTENT,
+                DocumentType.STOCK_CONTRACT_FIRST_PAGE,
+                DocumentType.STOCK_CONTRACT_CONTENT,
+            ]:
+                # 合同首页和内容页暂时使用通用合同提取逻辑
+                fields = self._extract_contract(full_text, key_list, doc_info.doc_type)
+            elif doc_info.doc_type in [
+                DocumentType.PURCHASE_CONTRACT_STAMP,
+                DocumentType.STOCK_CONTRACT_STAMP,
+                DocumentType.NOTARY_CERTIFICATE,
+                DocumentType.POWER_OF_ATTORNEY,
+            ]:
+                # 签署页、公证书、委托书不需要提取字段
+                fields = {k: "" for k in key_list}
             else:
                 fields = {}
 

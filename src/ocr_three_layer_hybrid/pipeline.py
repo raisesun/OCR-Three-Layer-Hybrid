@@ -63,9 +63,29 @@ class PlanEPlusPipeline:
             "合同编号", "买受人", "出卖人", "总价款",
             "签订日期", "房屋地址", "建筑面积",
         ],
+        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: [
+            "合同编号", "买受人", "出卖人", "房屋坐落",
+        ],
+        DocumentType.PURCHASE_CONTRACT_CONTENT: [
+            "合同编号", "买受人", "出卖人", "总价款",
+            "签订日期", "房屋地址", "建筑面积",
+        ],
+        DocumentType.PURCHASE_CONTRACT_STAMP: [
+            # 签署页通常不需要提取字段
+        ],
         DocumentType.STOCK_CONTRACT: [
             "合同编号", "买受人", "出卖人", "总价款",
             "签订日期", "房屋地址", "建筑面积",
+        ],
+        DocumentType.STOCK_CONTRACT_FIRST_PAGE: [
+            "合同编号", "买受人", "出卖人", "房屋坐落",
+        ],
+        DocumentType.STOCK_CONTRACT_CONTENT: [
+            "合同编号", "买受人", "出卖人", "总价款",
+            "签订日期", "房屋地址", "建筑面积",
+        ],
+        DocumentType.STOCK_CONTRACT_STAMP: [
+            # 签署页通常不需要提取字段
         ],
         DocumentType.FUND_SUPERVISION: [
             # 协议首页字段
@@ -113,6 +133,14 @@ class PlanEPlusPipeline:
             "男方姓名", "男方身份证号", "女方姓名", "女方身份证号",
             "离婚日期", "财产分割约定", "子女抚养", "债务处理", "其他约定",
         ],
+        # 公证书（不需要提取字段，只需分类）
+        DocumentType.NOTARY_CERTIFICATE: [
+            "公证书编号", "公证日期", "公证事项",
+        ],
+        # 委托书（不需要提取字段，只需分类）
+        DocumentType.POWER_OF_ATTORNEY: [
+            "委托人", "受托人", "委托事项", "委托日期",
+        ],
         # UNKNOWN文档的通用字段列表（覆盖所有可能的字段）
         DocumentType.UNKNOWN: [
             # 通用字段
@@ -158,9 +186,9 @@ class PlanEPlusPipeline:
         DocumentType.HOUSEHOLD_REGISTER_CONTENT: ProcessingLayer.RULE,  # 个人页用规则层
 
         # 不动产权证书
-        DocumentType.PROPERTY_CERTIFICATE: ProcessingLayer.VLM,
+        DocumentType.PROPERTY_CERTIFICATE: ProcessingLayer.RULE,  # 改为规则层（已实现100%完成率）
         DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE: ProcessingLayer.RULE,  # 首页用规则层（返回空）
-        DocumentType.PROPERTY_CERTIFICATE_CONTENT: ProcessingLayer.VLM,
+        DocumentType.PROPERTY_CERTIFICATE_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层（100%完成率）
         DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT: ProcessingLayer.RULE,  # 附图页用规则层（返回空）
 
         # 发票
@@ -168,13 +196,23 @@ class PlanEPlusPipeline:
 
         # 合同/协议
         DocumentType.PURCHASE_CONTRACT: ProcessingLayer.VLM,
+        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: ProcessingLayer.VLM,  # 首页用VLM
+        DocumentType.PURCHASE_CONTRACT_CONTENT: ProcessingLayer.VLM,  # 内容页用VLM
+        DocumentType.PURCHASE_CONTRACT_STAMP: ProcessingLayer.RULE,  # 签署页用规则层（返回空）
         DocumentType.STOCK_CONTRACT: ProcessingLayer.VLM,
+        DocumentType.STOCK_CONTRACT_FIRST_PAGE: ProcessingLayer.VLM,  # 首页用VLM
+        DocumentType.STOCK_CONTRACT_CONTENT: ProcessingLayer.VLM,  # 内容页用VLM
+        DocumentType.STOCK_CONTRACT_STAMP: ProcessingLayer.RULE,  # 签署页用规则层（返回空）
         DocumentType.FUND_SUPERVISION: ProcessingLayer.RULE,
         DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE: ProcessingLayer.RULE,  # 协议首页用规则层
         DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE: ProcessingLayer.RULE,  # 协议信息页用规则层
         DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP: ProcessingLayer.RULE,  # 签章页用规则层（返回空）
         DocumentType.FUND_SUPERVISION_CERTIFICATE: ProcessingLayer.RULE,  # 凭证用规则层
         DocumentType.DIVORCE_AGREEMENT: ProcessingLayer.RULE,
+
+        # 公证书、委托书（只需要分类，不需要提取）
+        DocumentType.NOTARY_CERTIFICATE: ProcessingLayer.RULE,  # 返回空字段
+        DocumentType.POWER_OF_ATTORNEY: ProcessingLayer.RULE,  # 返回空字段
 
         # 未知
         DocumentType.UNKNOWN: ProcessingLayer.VLM,
