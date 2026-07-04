@@ -5,10 +5,11 @@
 
 封装所有对外部模型的 HTTP 调用，消除各模块中重复的请求代码。
 
-- VLMClient: GLM-OCR 视觉模型（端口8080），用于字段提取和纯OCR
-- ClassificationClient: Qwen VLM 分类模型（端口8081），用于文档分类
+- VLMClient: GLM-OCR / Qwen2.5-VL-7B 视觉模型，用于字段提取和纯OCR
 
-注: llm_layer.py 通过 paddleocr 间接调用 Ollama，不走此客户端。
+v2.0 简化：
+- 移除 ClassificationClient（VLM分类兜底已移除）
+- 移除 LLMClient（LLM层已移除）
 """
 
 import base64
@@ -17,7 +18,7 @@ from typing import Optional
 
 import requests
 
-from .config import VLMServiceConfig, ClassificationServiceConfig
+from .config import VLMServiceConfig
 
 
 def encode_image_base64(image_path: str) -> str:
@@ -90,67 +91,3 @@ class VLMClient:
             return ""
 
         return choices[0].get("message", {}).get("content", "")
-
-
-class ClassificationClient:
-    """Qwen VLM 分类客户端
-
-    封装对 llama-server (Qwen3.5-4B) 的 OpenAI 兼容 API 调用。
-    用于：
-    - VLMDocumentClassifier: 文档分类兜底
-    """
-
-    def __init__(self, config: Optional[ClassificationServiceConfig] = None):
-        self.config = config or ClassificationServiceConfig()
-
-    def classify(self, prompt: str, image_path: str) -> str:
-        """
-        发送图片分类请求，返回模型响应文本
-
-        Args:
-            prompt: 分类提示词
-            image_path: 图片文件路径
-
-        Returns:
-            模型响应文本（分类结果）
-
-        Raises:
-            requests.exceptions.RequestException: HTTP 请求失败
-            FileNotFoundError: 图片文件不存在
-        """
-        if not Path(image_path).exists():
-            raise FileNotFoundError(f"图片不存在: {image_path}")
-
-        image_b64 = encode_image_base64(image_path)
-
-        payload = {
-            "model": self.config.model_name,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"},
-                        },
-                    ],
-                }
-            ],
-            "temperature": 0.1,
-            "max_tokens": 50,  # 分类任务只需少量 token
-        }
-
-        resp = requests.post(
-            f"{self.config.base_url}/chat/completions",
-            json=payload,
-            timeout=self.config.timeout,
-        )
-        resp.raise_for_status()
-
-        data = resp.json()
-        choices = data.get("choices", [])
-        if not choices:
-            return ""
-
-        return choices[0].get("message", {}).get("content", "").strip()

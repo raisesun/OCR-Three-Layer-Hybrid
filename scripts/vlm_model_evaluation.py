@@ -12,6 +12,10 @@ VLM 模型多维度评测脚本
 - GLM-OCR（端口8080）
 - Qwen2.5-VL-7B（端口8082）
 
+增强功能：
+- 多页文档支持：购房合同、存量房合同按文件夹处理
+- 性能优化：选择性处理关键页面（前15页）
+
 使用方法：
     python scripts/vlm_model_evaluation.py
 """
@@ -19,6 +23,7 @@ VLM 模型多维度评测脚本
 import sys
 import json
 import time
+import os
 from pathlib import Path
 from typing import Dict, List, Any
 from collections import defaultdict
@@ -28,6 +33,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from ocr_three_layer_hybrid.config import OCRConfig
 from ocr_three_layer_hybrid.service import OCRService
 
+# 多页文档类型（需要处理整个文件夹）
+MULTI_PAGE_DOC_TYPES = {'purchase_contract', 'stock_contract'}
+
+# 多页文档最大处理页数（性能优化）
+MAX_PAGES_PER_CONTRACT = 15
+
 # 期望字段映射（用于准确率评估）
 EXPECTED_FIELDS = {
     "身份证": ["姓名", "性别", "民族", "出生", "住址", "公民身份号码"],
@@ -36,6 +47,7 @@ EXPECTED_FIELDS = {
     "离婚证": ["持证人", "登记日期", "离婚证字号"],
     "发票": ["发票代码", "发票号码", "开票日期", "价税合计"],
     "购房合同": ["合同编号", "买受人", "出卖人", "总价款"],
+    "存量房合同": ["合同编号", "买受人", "出卖人", "总价款"],
 }
 
 
@@ -45,6 +57,85 @@ def load_test_samples() -> List[Dict]:
     with open(samples_file, 'r', encoding='utf-8') as f:
         samples = json.load(f)
     return samples
+
+
+def process_multi_page_document(
+    folder_path: str,
+    service: OCRService,
+    max_pages: int = MAX_PAGES_PER_CONTRACT
+) -> Dict[str, Any]:
+    """
+    处理多页文档（购房合同、存量房合同）
+
+    Args:
+        folder_path: 文档文件夹路径
+        service: OCR服务实例
+        max_pages: 最大处理页数（性能优化）
+
+    Returns:
+        合并后的提取结果
+    """
+    # 获取所有图片文件
+    images = sorted([
+        f for f in os.listdir(folder_path)
+        if f.lower().endswith(('.jpeg', '.jpg', '.png'))
+    ])
+
+    if not images:
+        return {
+            'success': False,
+            'fields': {},
+            'pages_processed': 0,
+            'total_time': 0.0,
+        }
+
+    # 限制处理页数（性能优化）
+    images_to_process = images[:max_pages]
+
+    # 合并所有页面的字段
+    merged_fields = {}
+    total_time = 0.0
+    pages_processed = 0
+    layers_used = defaultdict(int)
+
+    for img_name in images_to_process:
+        img_path = os.path.join(folder_path, img_name)
+
+        # OCR
+        ocr_start = time.time()
+        ocr_text = service.run_ocr(img_path)
+        ocr_time = time.time() - ocr_start
+
+        # 提取
+        extract_start = time.time()
+        result = service.process_single(img_path, ocr_text)
+        extract_time = time.time() - extract_start
+
+        page_time = ocr_time + extract_time
+        total_time += page_time
+        pages_processed += 1
+
+        # 记录使用的层
+        layer = result.get('extraction', {}).get('layer', 'unknown')
+        layers_used[layer] += 1
+
+        # 合并字段（只保留非空值，优先保留更长的值）
+        fields = result.get('extraction', {}).get('fields', {})
+        for key, value in fields.items():
+            if value and value.strip():
+                if key not in merged_fields or len(value) > len(merged_fields[key]):
+                    merged_fields[key] = value
+
+    # 统计非空字段数
+    non_empty_fields = {k: v for k, v in merged_fields.items() if v and v.strip()}
+
+    return {
+        'success': len(non_empty_fields) > 0,
+        'fields': merged_fields,
+        'pages_processed': pages_processed,
+        'total_time': total_time,
+        'layers_used': dict(layers_used),
+    }
 
 
 def evaluate_vlm_model(
@@ -127,24 +218,55 @@ def evaluate_vlm_model(
         results['by_doc_type'][doc_type]['count'] += 1
 
         try:
-            # 先 OCR
-            ocr_start = time.time()
-            ocr_text = service.run_ocr(image_path)
-            ocr_time = time.time() - ocr_start
+            # 检查是否为多页文档
+            is_multi_page = expected_type_cn in MULTI_PAGE_DOC_TYPES
 
-            # 再提取
-            extract_start = time.time()
-            result = service.process_single(image_path, ocr_text)
-            extract_time = time.time() - extract_start
-            total_time = ocr_time + extract_time
+            if is_multi_page:
+                # 多页文档处理：处理整个文件夹
+                folder_path = str(Path(image_path).parent)
+                multi_result = process_multi_page_document(folder_path, service)
+
+                total_time = multi_result['total_time']
+                extracted_fields = multi_result['fields']
+                extraction_success = multi_result['success']
+                extraction_layer = 'multi-page'
+
+                # 输出进度
+                status = "✅" if extraction_success else "❌"
+                field_count = len([v for v in extracted_fields.values() if v])
+                pages_processed = multi_result['pages_processed']
+                print(f"[{i+1}/{test_count}] {status} {doc_type} | "
+                      f"字段={field_count} | "
+                      f"页数={pages_processed} | "
+                      f"耗时={total_time:.1f}s")
+            else:
+                # 单页文档处理：只处理当前图片
+                # 先 OCR
+                ocr_start = time.time()
+                ocr_text = service.run_ocr(image_path)
+                ocr_time = time.time() - ocr_start
+
+                # 再提取
+                extract_start = time.time()
+                result = service.process_single(image_path, ocr_text)
+                extract_time = time.time() - extract_start
+                total_time = ocr_time + extract_time
+
+                # 统计提取结果
+                extracted_fields = result.get('extraction', {}).get('fields', {})
+                extraction_success = result.get('extraction', {}).get('success', False)
+                extraction_layer = result.get('extraction', {}).get('layer', 'unknown')
+
+                # 输出进度
+                status = "✅" if extraction_success else "❌"
+                field_count = len([v for v in extracted_fields.values() if v])
+                print(f"[{i+1}/{test_count}] {status} {doc_type} | "
+                      f"字段={field_count} | "
+                      f"层={extraction_layer} | "
+                      f"耗时={total_time:.1f}s")
 
             results['total_time'] += total_time
             results['by_doc_type'][doc_type]['time'] += total_time
-
-            # 统计提取结果
-            extracted_fields = result.get('extraction', {}).get('fields', {})
-            extraction_success = result.get('extraction', {}).get('success', False)
-            extraction_layer = result.get('extraction', {}).get('layer', 'unknown')
 
             if extraction_success:
                 results['successful_extractions'] += 1
@@ -165,17 +287,12 @@ def evaluate_vlm_model(
                 results['correct_fields'] += correct
                 results['by_doc_type'][doc_type]['correct_fields'] += correct
 
-            # 输出进度
-            status = "✅" if extraction_success else "❌"
-            print(f"[{i+1}/{test_count}] {status} {doc_type} | "
-                  f"字段={field_count} | "
-                  f"层={extraction_layer} | "
-                  f"耗时={total_time:.1f}s")
-
         except Exception as e:
+            import traceback
             error_msg = f"{doc_type}: {str(e)}"
             results['errors'].append(error_msg)
-            print(f"[{i+1}/{test_count}] ❌ {doc_type} | 错误: {str(e)[:50]}")
+            print(f"[{i+1}/{test_count}] ❌ {doc_type} | 错误: {str(e)[:100]}")
+            print(f"   详细错误: {traceback.format_exc()}")
 
     # 计算指标
     total_samples = results['total_samples']
@@ -280,7 +397,7 @@ def main():
     print(f"加载测试样本: {len(samples)} 个")
 
     # 评测参数
-    max_samples = 10  # 每个模型测试 10 个样本
+    max_samples = 50  # 每个模型测试 50 个样本（全量测试）
 
     # 评测 GLM-OCR
     glm_results = evaluate_vlm_model('glm_ocr', samples, max_samples)

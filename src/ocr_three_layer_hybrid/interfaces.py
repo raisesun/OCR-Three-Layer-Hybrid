@@ -14,10 +14,27 @@ class DocumentType(str, Enum):
     """支持的文档类型"""
     # 第一类：标准证件
     ID_CARD = "身份证"
+    ID_CARD_FRONT = "身份证-正面"
+    ID_CARD_BACK = "身份证-背面"
+
     MARRIAGE_CERTIFICATE = "结婚证"
+    MARRIAGE_CERTIFICATE_COVER = "结婚证-封面"
+    MARRIAGE_CERTIFICATE_CONTENT = "结婚证-内容页"
+    MARRIAGE_CERTIFICATE_STAMP = "结婚证-盖章页"
+
     DIVORCE_CERTIFICATE = "离婚证"
+    DIVORCE_CERTIFICATE_COVER = "离婚证-封面"
+    DIVORCE_CERTIFICATE_CONTENT = "离婚证-内容页"
+    DIVORCE_CERTIFICATE_STAMP = "离婚证-盖章页"
+
     HOUSEHOLD_REGISTER = "户口本"
+    HOUSEHOLD_REGISTER_COVER = "户口本-首页"
+    HOUSEHOLD_REGISTER_CONTENT = "户口本-个人页"
+
     PROPERTY_CERTIFICATE = "不动产权证书"
+    PROPERTY_CERTIFICATE_FIRST_PAGE = "不动产权证书-首页"
+    PROPERTY_CERTIFICATE_CONTENT = "不动产权证书-内容页"
+    PROPERTY_CERTIFICATE_ATTACHMENT = "不动产权证书-附图页"
 
     # 第二类：标准单证
     INVOICE = "发票"
@@ -26,9 +43,25 @@ class DocumentType(str, Enum):
     PURCHASE_CONTRACT = "购房合同"
     STOCK_CONTRACT = "存量房合同"
     FUND_SUPERVISION = "资金监管协议"
+    FUND_SUPERVISION_AGREEMENT_FIRST_PAGE = "资金监管协议-首页"
+    FUND_SUPERVISION_AGREEMENT_INFO_PAGE = "资金监管协议-信息页"
+    FUND_SUPERVISION_AGREEMENT_STAMP = "资金监管协议-签章页"
+    FUND_SUPERVISION_CERTIFICATE = "资金监管凭证"
     DIVORCE_AGREEMENT = "离婚协议"
 
     UNKNOWN = "未知"
+
+
+class PageType(str, Enum):
+    """页面类型"""
+    COVER = "封面页"           # 证件封面（如：离婚证红色封面）
+    CONTENT = "内容页"         # 核心内容页（如：离婚证内页，包含双方信息）
+    STAMP = "盖章页"           # 盖章页（如：结婚证登记机关章）
+    ATTACHMENT = "附件页"      # 附件页（如：房产证附图）
+    BACK = "封底页"            # 封底页
+    FIRST_PAGE = "首页"        # 户口本首页
+    PERSONAL_PAGE = "个人页"   # 户口本个人页
+    UNKNOWN = "未知页"         # 无法识别
 
 
 class ProcessingLayer(str, Enum):
@@ -43,9 +76,22 @@ class DocumentInfo:
     """文档信息"""
     image_path: str
     doc_type: DocumentType = DocumentType.UNKNOWN
+    page_type: PageType = PageType.UNKNOWN
     ocr_texts: List[str] = field(default_factory=list)
     confidence: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def should_extract(self) -> bool:
+        """是否需要进行字段提取（封面页、封底页跳过）"""
+        return self.page_type not in [PageType.COVER, PageType.BACK]
+
+    def is_content_page(self) -> bool:
+        """是否是内容页（核心数据页）"""
+        return self.page_type in [
+            PageType.CONTENT,
+            PageType.FIRST_PAGE,
+            PageType.PERSONAL_PAGE,
+        ]
 
 
 @dataclass

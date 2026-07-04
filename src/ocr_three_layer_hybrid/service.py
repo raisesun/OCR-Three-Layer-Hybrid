@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-OCR三层混合架构 — 正式服务层
+OCR三层混合架构 v2.0 — 正式服务层
 
 提供对外统一的服务接口，封装 Pipeline 的分类+提取完整流程。
 
@@ -24,10 +24,6 @@ from ocr_three_layer_hybrid.config import OCRConfig
 from ocr_three_layer_hybrid.external_services import VLMClient
 from ocr_three_layer_hybrid.interfaces import DocumentType, ProcessingLayer
 from ocr_three_layer_hybrid.classifier import KeywordDocumentClassifier
-from ocr_three_layer_hybrid.vlm_classifier import (
-    VLMDocumentClassifier,
-    HybridDocumentClassifier,
-)
 from ocr_three_layer_hybrid.vlm_layer import VLMExtractionLayer
 from ocr_three_layer_hybrid.pipeline import PlanEPlusPipeline
 
@@ -44,7 +40,6 @@ ROUTE_NAMES = {
     "standard_document_weak": "阶段2: 弱信号组合",
     "contract_field_combination": "阶段3: 合同字段组合",
     "vlm_fallback_required": "阶段4: VLM兜底",
-    "vlm_classification": "VLM分类兜底",
 }
 
 # Pipeline阶段列表（用于流程图显示）
@@ -55,14 +50,12 @@ PIPELINE_STAGES = [
     {"id": "stage1_6", "name": "阶段1.6", "title": "更多备选信号", "keywords": "户别+户主姓名、结婚证+登记机关"},
     {"id": "stage2", "name": "阶段2", "title": "标准单证强信号", "keywords": "发票代码+发票号码"},
     {"id": "stage3", "name": "阶段3", "title": "合同字段组合", "keywords": "买受人+出卖人+价款"},
-    {"id": "stage4", "name": "阶段4", "title": "VLM分类兜底", "keywords": "Qwen3.5-4B视觉识别"},
 ]
 
 # 提取层颜色映射
 LAYER_COLORS = {
     "rule": "#10b981",    # 绿色
     "vlm": "#3b82f6",     # 蓝色
-    "llm": "#8b5cf6",     # 紫色
     "none": "#6b7280",    # 灰色
 }
 
@@ -105,42 +98,30 @@ def setup_logging(level: str = "INFO", log_file: Optional[str] = None):
 
 
 class OCRService:
-    """OCR三层混合架构 — 统一服务接口
+    """OCR三层混合架构 v2.0 — 统一服务接口
 
     整合分类器、Pipeline、VLM客户端，提供完整的文档处理服务。
     分类器只创建一次，同时注入到Pipeline中避免重复分类。
 
-    增强（v2）：
-    - 位置标注提取（户口本首页，通过PaddleOCR坐标）
-    - VLM字段级兜底（校验失败时触发VLM重新提取）
+    v2.0 简化：
+    - 移除 VLM 分类兜底
+    - 移除 LLM 层（PP-ChatOCRv4）
+    - 移除 PaddleOCR-VL 备用引擎
+    - VLM 层增强：支持类型识别+提取、多页文档处理
     """
 
-    def __init__(self, config: Optional[OCRConfig] = None, enable_vlm_fallback: bool = True):
+    def __init__(self, config: Optional[OCRConfig] = None):
         """
         初始化服务
 
         Args:
             config: 服务配置，不传则使用默认配置
-            enable_vlm_fallback: 是否启用VLM分类兜底（向后兼容参数）
         """
         self.config = config or OCRConfig()
-        self.config.enable_vlm_fallback = enable_vlm_fallback
         self._vlm_client = VLMClient(self.config.vlm_service)
 
-        # 分类器：只创建一次
-        self._rule_classifier = KeywordDocumentClassifier()
-        self._vlm_classifier = VLMDocumentClassifier(
-            base_url=self.config.classification.base_url,
-            model=self.config.classification.model_name,
-            timeout=self.config.classification.timeout,
-        )
-
-        if self.config.enable_vlm_fallback:
-            self._classifier = HybridDocumentClassifier(
-                self._rule_classifier, self._vlm_classifier
-            )
-        else:
-            self._classifier = self._rule_classifier
+        # 分类器：只使用规则分类器
+        self._classifier = KeywordDocumentClassifier()
 
         # 位置标注提取器（延迟初始化PaddleOCR）
         self._position_extractor = None
@@ -175,7 +156,7 @@ class OCRService:
             vlm_service_config = self.config.vlm_service
             logger.info(f"VLM 提取层使用: GLM-OCR ({vlm_service_config.base_url})")
 
-        # Pipeline：注入所有组件
+        # Pipeline：注入规则层和VLM层（无LLM层）
         self._pipeline = PlanEPlusPipeline(
             classifier=self._classifier,
             rule_layer=rule_layer,
@@ -184,13 +165,11 @@ class OCRService:
                 model_name=vlm_service_config.model_name,
                 timeout=vlm_service_config.timeout,
             ),
-            enable_vlm_classification_fallback=self.config.enable_vlm_fallback,
             vlm_fallback_handler=self._vlm_fallback_handler,
         )
         logger.info(
-            "OCRService 初始化 | VLM提取=%s | 分类=%s | 位置标注=%s | VLM兜底=%s",
+            "OCRService v2.0 初始化 | VLM提取=%s | 位置标注=%s | VLM兜底=%s",
             vlm_service_config.base_url,
-            self.config.classification.base_url,
             "启用" if self._position_extractor else "禁用",
             "启用" if self._vlm_fallback_handler else "禁用",
         )
@@ -206,11 +185,8 @@ class OCRService:
         """
         调用OCR引擎进行纯文本提取（不做字段解析）
 
-        支持多种引擎（通过 config.ocr_engine 配置）：
-        - glm_ocr: GLM-OCR（当前生产环境，27秒/张）
-        - ppocr: PP-OCRv6（推荐，11.88秒/张，稳定）
-        - paddleocr_vl: PaddleOCR-VL（备用，151秒/张，精度高）
-        - structure_v3: PP-StructureV3（已弃用，性能不稳定）
+        v2.0 简化：只使用 PP-OCRv6
+        v4.0 新增：可选的图像预处理
 
         Args:
             image_path: 图片路径
@@ -219,154 +195,60 @@ class OCRService:
             OCR识别的文本，失败返回空字符串
         """
         ocr_start = time.time()
-        engine_name = self.config.ocr_engine
 
         try:
-            # 根据配置选择 OCR 引擎
-            if engine_name == "tiered":
-                # 使用分层策略
-                return self.run_ocr_tiered(image_path)
-            elif engine_name == "glm_ocr":
-                # 使用 GLM-OCR（原有逻辑）
-                text = self._vlm_client.call(
-                    prompt="请仔细识别图片中的所有文字内容，直接输出识别到的文字。",
-                    image_path=image_path,
-                    max_tokens=2048,
+            from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
+
+            # 延迟初始化 PaddleOCRWrapper
+            if not hasattr(self, "_paddleocr_wrapper"):
+                self._paddleocr_wrapper = PaddleOCRWrapper(
+                    device="cpu",
+                    default_engine="ppocr",
                 )
-            elif engine_name in ["ppocr", "paddleocr_vl", "structure_v3"]:
-                # 使用 PaddleOCR 系列引擎
-                from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
+                logger.info("PaddleOCR 引擎已初始化: PP-OCRv6")
 
-                # 延迟初始化 PaddleOCRWrapper
-                if not hasattr(self, "_paddleocr_wrapper"):
-                    # 引擎名称映射：service 配置 → paddleocr_wrapper
-                    engine_map = {
-                        "ppocr": "ppocr",           # PP-OCRv6
-                        "paddleocr_vl": "vlm",      # PaddleOCR-VL
-                        "structure_v3": "structure_v3",  # PP-StructureV3（弃用）
-                    }
-                    self._paddleocr_wrapper = PaddleOCRWrapper(
-                        device="cpu",
-                        default_engine=engine_map.get(engine_name, "auto"),
+            # 图像预处理（如果启用）
+            preprocess_path = None
+            if self.config.enable_image_preprocessing:
+                try:
+                    from ocr_three_layer_hybrid.image_preprocessor import enhance_image
+                    preprocess_start = time.time()
+                    preprocess_path = enhance_image(
+                        image_path,
+                        enable_denoise=self.config.preprocessing_denoise,
+                        enable_deskew=self.config.preprocessing_deskew,
+                        enable_contrast=self.config.preprocessing_contrast,
+                        enable_binarize=self.config.preprocessing_binarize,
                     )
-                    logger.info(f"PaddleOCR 引擎已初始化: {engine_name} → {engine_map.get(engine_name)}")
-
-                # 运行 OCR
-                result = self._paddleocr_wrapper.run_ocr(image_path)
-                text = result.full_text
+                    preprocess_time = time.time() - preprocess_start
+                    logger.info(
+                        "[预处理] %s | 耗时=%.2fs",
+                        Path(image_path).name, preprocess_time,
+                    )
+                    # 使用预处理后的图片进行 OCR
+                    ocr_image_path = preprocess_path
+                except Exception as e:
+                    logger.warning(f"[预处理] 失败，使用原图: {e}")
+                    ocr_image_path = image_path
             else:
-                logger.error(f"未知的 OCR 引擎: {engine_name}，使用默认 ppocr")
-                from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
-                if not hasattr(self, "_paddleocr_wrapper"):
-                    self._paddleocr_wrapper = PaddleOCRWrapper(device="cpu")
-                result = self._paddleocr_wrapper.run_ocr(image_path)
-                text = result.full_text
+                ocr_image_path = image_path
+
+            # 运行 OCR
+            result = self._paddleocr_wrapper.run_ocr(ocr_image_path)
+            text = result.full_text
 
             ocr_time = time.time() - ocr_start
             logger.info(
-                "[OCR] %s | 引擎=%s | 耗时=%.2fs | 文本长度=%d字",
-                Path(image_path).name, engine_name, ocr_time, len(text),
+                "[OCR] %s | 引擎=ppocr | 耗时=%.2fs | 文本长度=%d字 | 预处理=%s",
+                Path(image_path).name, ocr_time, len(text),
+                "是" if self.config.enable_image_preprocessing else "否",
             )
             return text
         except Exception as e:
             ocr_time = time.time() - ocr_start
             logger.error(
-                "[OCR] 失败 | %s | 引擎=%s | 耗时=%.2fs | 错误=%s",
-                Path(image_path).name, engine_name, ocr_time, e,
-            )
-            return ""
-
-    # ========== 分层 OCR（Phase 2 优化） ==========
-
-    def run_ocr_tiered(self, image_path: str) -> str:
-        """
-        分层 OCR 策略：先用 PP-OCRv6（快速），如果效果不好再用 PaddleOCR-VL（精度高）
-
-        策略：
-        1. 第一阶段：使用 PP-OCRv6（~12秒）
-        2. 第二阶段：如果 OCR 文本过短（<100字），使用 PaddleOCR-VL 重新识别
-        3. 第三阶段：返回最终结果
-
-        优势：
-        - 大部分文档使用 PP-OCRv6（快速）
-        - 困难文档使用 PaddleOCR-VL（精度高）
-        - 兼顾速度和准确率
-
-        Args:
-            image_path: 图片路径
-
-        Returns:
-            OCR识别的文本
-        """
-        from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
-
-        ocr_start = time.time()
-        img_name = Path(image_path).name
-
-        try:
-            # 第一阶段：使用 PP-OCRv6（快速）
-            logger.info(f"[分层OCR] {img_name} | 阶段1: PP-OCRv6")
-            if not hasattr(self, "_paddleocr_wrapper_ppocr"):
-                self._paddleocr_wrapper_ppocr = PaddleOCRWrapper(
-                    device="cpu",
-                    default_engine="ppocr",
-                )
-
-            stage1_start = time.time()
-            result_ppocr = self._paddleocr_wrapper_ppocr.run_ocr(image_path)
-            text_ppocr = result_ppocr.full_text
-            stage1_time = time.time() - stage1_start
-
-            logger.info(
-                f"[分层OCR] {img_name} | 阶段1完成 | 耗时={stage1_time:.1f}s | 文本长度={len(text_ppocr)}字"
-            )
-
-            # 第二阶段：判断是否需要使用 PaddleOCR-VL
-            # 条件：文本过短（<100字）或为空
-            if len(text_ppocr) < 100:
-                logger.info(
-                    f"[分层OCR] {img_name} | 阶段2: PaddleOCR-VL (文本过短: {len(text_ppocr)}字 < 100字)"
-                )
-
-                if not hasattr(self, "_paddleocr_wrapper_vlm"):
-                    self._paddleocr_wrapper_vlm = PaddleOCRWrapper(
-                        device="cpu",
-                        default_engine="vlm",
-                    )
-
-                stage2_start = time.time()
-                result_vlm = self._paddleocr_wrapper_vlm.run_ocr(image_path)
-                text_vlm = result_vlm.full_text
-                stage2_time = time.time() - stage2_start
-
-                logger.info(
-                    f"[分层OCR] {img_name} | 阶段2完成 | 耗时={stage2_time:.1f}s | 文本长度={len(text_vlm)}字"
-                )
-
-                # 使用 PaddleOCR-VL 的结果
-                final_text = text_vlm
-                final_engine = "paddleocr_vl"
-                total_time = time.time() - ocr_start
-
-                logger.info(
-                    f"[分层OCR] {img_name} | 最终结果 | 引擎={final_engine} | 耗时={total_time:.1f}s | 文本长度={len(final_text)}字"
-                )
-                return final_text
-            else:
-                # PP-OCRv6 结果足够好，直接返回
-                final_text = text_ppocr
-                final_engine = "ppocr"
-                total_time = time.time() - ocr_start
-
-                logger.info(
-                    f"[分层OCR] {img_name} | 最终结果 | 引擎={final_engine} | 耗时={total_time:.1f}s | 文本长度={len(final_text)}字"
-                )
-                return final_text
-
-        except Exception as e:
-            ocr_time = time.time() - ocr_start
-            logger.error(
-                f"[分层OCR] 失败 | {img_name} | 耗时={ocr_time:.1f}s | 错误={e}"
+                "[OCR] 失败 | %s | 引擎=ppocr | 耗时=%.2fs | 错误=%s",
+                Path(image_path).name, ocr_time, e,
             )
             return ""
 
@@ -435,6 +317,172 @@ class OCRService:
 
     # 向后兼容别名
     process_image = process_single
+
+    # ========== 多页文档处理 ==========
+
+    def process_multi_page(
+        self,
+        image_paths: List[str],
+        max_pages: int = 15,
+    ) -> Dict[str, Any]:
+        """
+        处理多页文档：分类 + 多页提取 + 字段合并
+
+        适用于购房合同、存量房合同、房产证等多页文档。
+        先对第一页进行分类，如果是多页文档类型则使用VLM层的多页提取功能。
+
+        Args:
+            image_paths: 图片路径列表（按页码排序）
+            max_pages: 最大处理页数（默认15页，性能优化）
+
+        Returns:
+            包含分类结果、合并后的提取结果、处理详情的字典
+        """
+        if not image_paths:
+            return {
+                "classification": {"doc_type": "未知", "confidence": 0},
+                "extraction": {"success": False, "layer": "none", "fields": {}, "error_message": "没有图片"},
+                "timing": {"total_ms": 0},
+            }
+
+        total_start = time.time()
+        pages_to_process = image_paths[:max_pages]
+
+        # 1. 对第一页进行OCR和分类
+        first_page_text = self.run_ocr(pages_to_process[0])
+        first_page_texts = [first_page_text] if first_page_text else []
+
+        classify_start = time.time()
+        doc_info = self._classifier.classify(pages_to_process[0], first_page_texts)
+        classify_time = time.time() - classify_start
+
+        doc_type = doc_info.doc_type
+        logger.info(
+            "[多页] 文档类型=%s | 总页数=%d | 处理页数=%d",
+            doc_type.value, len(image_paths), len(pages_to_process),
+        )
+
+        # 2. 根据文档类型选择提取策略
+        multi_page_types = {
+            DocumentType.PURCHASE_CONTRACT,
+            DocumentType.STOCK_CONTRACT,
+            DocumentType.PROPERTY_CERTIFICATE,
+            DocumentType.UNKNOWN,  # UNKNOWN文档也使用VLM多页提取（VLM会识别类型+提取）
+        }
+
+        if doc_type in multi_page_types and len(pages_to_process) > 1:
+            # 多页文档：使用VLM层的多页提取
+            result = self._extract_multi_page_vlm(pages_to_process, doc_type)
+        else:
+            # 单页文档或不需要多页合并：逐页处理并合并
+            result = self._extract_multi_page_merge(pages_to_process, doc_info)
+
+        extract_time = time.time() - total_start - classify_time
+        total_time = time.time() - total_start
+
+        logger.info(
+            "[多页] 完成 | 类型=%s | 页数=%d | 成功字段=%d | 分类=%.1fms | 提取=%.1fms | 总计=%.1fms",
+            doc_type.value,
+            len(pages_to_process),
+            len([v for v in result.fields.values() if v and v.strip()]),
+            round(classify_time * 1000, 1),
+            round(extract_time * 1000, 1),
+            round(total_time * 1000, 1),
+        )
+
+        return {
+            "classification": self._build_classification_dict(doc_info),
+            "extraction": {
+                "success": result.success,
+                "layer": result.layer.value if result.layer else "none",
+                "fields": result.fields,
+                "error_message": result.error_message,
+            },
+            "multi_page": {
+                "total_pages": len(image_paths),
+                "processed_pages": len(pages_to_process),
+                "doc_type": doc_type.value,
+            },
+            "timing": {
+                "classify_ms": round(classify_time * 1000, 1),
+                "extract_ms": round(extract_time * 1000, 1),
+                "total_ms": round(total_time * 1000, 1),
+            },
+            "image_paths": image_paths,
+        }
+
+    def _extract_multi_page_vlm(
+        self,
+        image_paths: List[str],
+        doc_type: DocumentType,
+    ) -> Any:
+        """使用VLM层的多页提取功能"""
+        # 获取VLM层和字段列表
+        vlm_layer = self._pipeline._get_layer(ProcessingLayer.VLM)
+        if vlm_layer is None:
+            from ocr_three_layer_hybrid.interfaces import ExtractionResult
+            return ExtractionResult(
+                doc_type=doc_type,
+                layer=ProcessingLayer.VLM,
+                fields={},
+                success=False,
+                error_message="VLM层不可用",
+            )
+
+        # 获取文档类型的默认字段列表
+        key_list = self._pipeline.key_lists.get(doc_type, [])
+
+        # 调用多页提取
+        return vlm_layer.extract_multi_page(
+            image_paths=image_paths,
+            key_list=key_list,
+            doc_type=doc_type,
+            max_pages=15,
+        )
+
+    def _extract_multi_page_merge(
+        self,
+        image_paths: List[str],
+        doc_info: Any,
+    ) -> Any:
+        """逐页处理并合并结果（适用于非多页专用文档类型）"""
+        from ocr_three_layer_hybrid.interfaces import ExtractionResult
+
+        merged_fields = {}
+        all_success = True
+        total_time = 0.0
+        last_layer = ProcessingLayer.VLM
+        last_error = ""
+
+        for img_path in image_paths:
+            # 对每页进行OCR和处理
+            ocr_text = self.run_ocr(img_path)
+            ocr_texts = [ocr_text] if ocr_text else []
+
+            result = self._pipeline.process(img_path, ocr_texts, doc_info=doc_info)
+
+            if result.success:
+                # 合并字段（取第一个非空值）
+                for key, value in result.fields.items():
+                    if value and value.strip() and not merged_fields.get(key):
+                        merged_fields[key] = value
+            else:
+                all_success = False
+                last_error = result.error_message
+
+            last_layer = result.layer
+            total_time += result.time_cost
+
+        success = len([v for v in merged_fields.values() if v and v.strip()]) > 0
+
+        return ExtractionResult(
+            doc_type=doc_info.doc_type,
+            layer=last_layer,
+            fields=merged_fields,
+            success=success,
+            time_cost=total_time,
+            error_message=last_error if not success else "",
+        )
 
     # ========== 批量处理 ==========
 
@@ -635,7 +683,7 @@ class OCRService:
         elif route == "contract_field_combination":
             active_stage = "stage3"
             stage_match_info = "合同字段匹配"
-        elif route in ("vlm_fallback_required", "vlm_classification"):
+        elif route == "vlm_fallback_required":
             active_stage = "stage4"
             stage_match_info = doc_info.metadata.get("vlm_result", "")
 

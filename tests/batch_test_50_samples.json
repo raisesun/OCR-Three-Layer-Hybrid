@@ -85,7 +85,7 @@
     "case_id": "BBJZ-2026-0119050",
     "image": "027aa4151f75424c8529755ada5e6064.jpg",
     "image_path": "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2026-0119050/027aa4151f75424c8529755ada5e6064.jpg",
-    "cert_code": "id_card_front",
+    "cert_code": "household_register",
     "ref_fields": {
       "姓名": "吴可",
       "民族": "汉族",
@@ -547,10 +547,14 @@
     "case_id": "BBJZ-2026-0129058",
     "image": "061e171a8b6e41bbbf2b1b562ec5aa26.jpg",
     "image_path": "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2026-0129058/061e171a8b6e41bbbf2b1b562ec5aa26.jpg",
-    "cert_code": "property",
+    "cert_code": "fund_supervision_certificate",
     "ref_fields": {
-      "坐落": "绿地世纪城·柏仕公馆6号楼2单元8层2号",
-      "面积": "84.00 m²"
+      "协议编号": "2026013000010949",
+      "买房人": "周保根",
+      "卖房人": "杜佳龙",
+      "监管总额": "45000",
+      "房屋坐落": "绿地世纪城·柏仕公馆6号楼2单元8层2号",
+      "建筑面积": "84.00 m²"
     }
   },
   {

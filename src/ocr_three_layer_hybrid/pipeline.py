@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-方案E+编排管道
-将文档分类器、规则层、VLM层、LLM层组合成完整流程
+OCR三层混合架构 v2.0 — 编排管道
+将文档分类器、规则层、VLM层组合成完整流程
 
-增强：VLM兜底层（字段校验失败时触发）
+v2.0 简化：
+- 移除 LLM 层
+- 移除 VLM 分类兜底
+- 合同类文档路由到 VLM 层
 """
 
 import logging
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 from ocr_three_layer_hybrid.interfaces import (
@@ -20,14 +24,13 @@ from ocr_three_layer_hybrid.interfaces import (
     IExtractionLayer,
 )
 from ocr_three_layer_hybrid.classifier import KeywordDocumentClassifier
-from ocr_three_layer_hybrid.vlm_classifier import VLMDocumentClassifier, HybridDocumentClassifier
 from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
 
 logger = logging.getLogger(__name__)
 
 
 class PlanEPlusPipeline:
-    """方案E+三层混合架构管道"""
+    """OCR三层混合架构 v2.0 管道"""
 
     # 文档类型到默认字段的映射
     DEFAULT_KEY_LISTS: Dict[DocumentType, List[str]] = {
@@ -44,8 +47,12 @@ class PlanEPlusPipeline:
             "与户主关系", "性别", "公民身份号码",
         ],
         DocumentType.PROPERTY_CERTIFICATE: [
-            "证书号", "权利人", "共有情况", "不动产单元号",
-            "房屋地址", "建筑面积", "用途",
+            "不动产编号", "权利人", "共有情况", "坐落",
+            "不动产单元号", "权利类型", "权利性质", "用途", "面积", "使用期限",
+        ],
+        DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE: [
+            # 首页字段（通常不需要提取，但可以记录）
+            "登记机构", "编号", "登记日期",
         ],
         DocumentType.INVOICE: [
             "发票代码", "发票号码", "开票日期", "价税合计",
@@ -61,29 +68,116 @@ class PlanEPlusPipeline:
             "签订日期", "房屋地址", "建筑面积",
         ],
         DocumentType.FUND_SUPERVISION: [
-            "监管金额", "买方", "卖方", "监管机构"
+            # 协议首页字段
+            "编号", "甲方", "乙方", "丙方",
+            "签署日期", "网上签约备案合同号",
+            "房屋地址", "建筑面积", "不动产权证号",
+            "购房款", "购房款(大写)", "购房款(小写)",
+            "贷款(大写)", "贷款(小写)",  # 可选字段，空值表示无贷款
+            # 协议信息页字段
+            "甲方姓名", "甲方身份证号", "甲方银行", "甲方账号",
+            "乙方姓名", "乙方身份证号", "乙方银行", "乙方账号",
+            # 兼容旧字段
+            "监管金额", "监管账户", "买方", "买方身份证号",
+            "卖方", "卖方身份证号", "监管机构", "监管期限",
+            "合同编号", "签订日期",
+        ],
+        DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE: [
+            "编号", "甲方", "乙方", "丙方",
+            "签署日期", "网上签约备案合同号",
+            "房屋地址", "建筑面积", "不动产权证号",
+            "购房款", "购房款(大写)", "购房款(小写)",
+            "贷款(大写)", "贷款(小写)",  # 可选字段，空值表示无贷款
+        ],
+        DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE: [
+            "甲方姓名", "甲方身份证号", "甲方银行", "甲方账号",
+            "乙方姓名", "乙方身份证号", "乙方银行", "乙方账号",
+        ],
+        DocumentType.FUND_SUPERVISION_CERTIFICATE: [
+            "协议编号", "日期",
+            "买房人", "买房人姓名", "身份证号",
+            "房屋坐落", "建筑面积",
+            "监管总额",
         ],
         DocumentType.DIVORCE_CERTIFICATE: [
-            "持证人", "登记日期", "离婚证字号"
+            # 离婚证基本信息
+            "离婚证字号", "登记日期",
+            # 持证人信息
+            "持证人", "持证人性别", "持证人民族", "持证人出生日期", "持证人身份证件号",
+            # 原配偶信息
+            "原配偶姓名", "原配偶性别", "原配偶民族", "原配偶出生日期", "原配偶身份证件号",
+            # 其他
+            "备注",
         ],
         DocumentType.DIVORCE_AGREEMENT: [
-            "男方姓名", "女方姓名", "离婚日期", "财产分割约定", "子女抚养"
+            "男方姓名", "男方身份证号", "女方姓名", "女方身份证号",
+            "离婚日期", "财产分割约定", "子女抚养", "债务处理", "其他约定",
+        ],
+        # UNKNOWN文档的通用字段列表（覆盖所有可能的字段）
+        DocumentType.UNKNOWN: [
+            # 通用字段
+            "文档类型", "编号", "日期", "金额",
+            # 人员信息
+            "姓名", "身份证号", "买方", "卖方", "权利人",
+            # 房屋信息
+            "房屋地址", "建筑面积", "用途",
+            # 合同信息
+            "合同编号", "买受人", "出卖人", "总价款", "签订日期",
+            # 证件信息
+            "证书号", "不动产单元号", "共有情况",
+            # 发票信息
+            "发票代码", "发票号码", "开票日期", "价税合计",
+            "购买方名称", "销售方名称",
+            # 其他
+            "监管金额", "监管机构",
         ],
     }
 
-    # 文档类型到默认处理层的映射
+    # 文档类型到默认处理层的映射（v2.1：规则层优先，封面页跳过）
     DEFAULT_LAYER_ROUTING: Dict[DocumentType, ProcessingLayer] = {
+        # 身份证
         DocumentType.ID_CARD: ProcessingLayer.RULE,
+        DocumentType.ID_CARD_FRONT: ProcessingLayer.RULE,
+        DocumentType.ID_CARD_BACK: ProcessingLayer.RULE,
+
+        # 结婚证
         DocumentType.MARRIAGE_CERTIFICATE: ProcessingLayer.RULE,
-        DocumentType.HOUSEHOLD_REGISTER: ProcessingLayer.RULE,  # 已添加到规则层
-        DocumentType.PROPERTY_CERTIFICATE: ProcessingLayer.LLM,  # 不动产权证书使用 LLM 层
-        DocumentType.INVOICE: ProcessingLayer.RULE,  # 新增：发票由规则层处理
-        DocumentType.PURCHASE_CONTRACT: ProcessingLayer.LLM,  # 购房合同使用 LLM 层
-        DocumentType.STOCK_CONTRACT: ProcessingLayer.LLM,  # 存量房合同使用 LLM 层
-        DocumentType.FUND_SUPERVISION: ProcessingLayer.RULE,  # 新增：资金监管协议由规则层处理
-        DocumentType.DIVORCE_CERTIFICATE: ProcessingLayer.VLM,  # 离婚证由VLM层处理
-        DocumentType.DIVORCE_AGREEMENT: ProcessingLayer.RULE,  # 离婚协议由规则层处理
-        DocumentType.UNKNOWN: ProcessingLayer.VLM,  # VLM兜底
+        DocumentType.MARRIAGE_CERTIFICATE_COVER: ProcessingLayer.RULE,  # 封面页用规则层（返回空）
+        DocumentType.MARRIAGE_CERTIFICATE_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层
+        DocumentType.MARRIAGE_CERTIFICATE_STAMP: ProcessingLayer.RULE,  # 盖章页用规则层
+
+        # 离婚证
+        DocumentType.DIVORCE_CERTIFICATE: ProcessingLayer.VLM,
+        DocumentType.DIVORCE_CERTIFICATE_COVER: ProcessingLayer.RULE,  # 封面页用规则层（返回空）
+        DocumentType.DIVORCE_CERTIFICATE_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层
+        DocumentType.DIVORCE_CERTIFICATE_STAMP: ProcessingLayer.RULE,  # 盖章页用规则层
+
+        # 户口本
+        DocumentType.HOUSEHOLD_REGISTER: ProcessingLayer.RULE,
+        DocumentType.HOUSEHOLD_REGISTER_COVER: ProcessingLayer.RULE,  # 首页用规则层
+        DocumentType.HOUSEHOLD_REGISTER_CONTENT: ProcessingLayer.RULE,  # 个人页用规则层
+
+        # 不动产权证书
+        DocumentType.PROPERTY_CERTIFICATE: ProcessingLayer.VLM,
+        DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE: ProcessingLayer.RULE,  # 首页用规则层（返回空）
+        DocumentType.PROPERTY_CERTIFICATE_CONTENT: ProcessingLayer.VLM,
+        DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT: ProcessingLayer.RULE,  # 附图页用规则层（返回空）
+
+        # 发票
+        DocumentType.INVOICE: ProcessingLayer.RULE,
+
+        # 合同/协议
+        DocumentType.PURCHASE_CONTRACT: ProcessingLayer.VLM,
+        DocumentType.STOCK_CONTRACT: ProcessingLayer.VLM,
+        DocumentType.FUND_SUPERVISION: ProcessingLayer.RULE,
+        DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE: ProcessingLayer.RULE,  # 协议首页用规则层
+        DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE: ProcessingLayer.RULE,  # 协议信息页用规则层
+        DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP: ProcessingLayer.RULE,  # 签章页用规则层（返回空）
+        DocumentType.FUND_SUPERVISION_CERTIFICATE: ProcessingLayer.RULE,  # 凭证用规则层
+        DocumentType.DIVORCE_AGREEMENT: ProcessingLayer.RULE,
+
+        # 未知
+        DocumentType.UNKNOWN: ProcessingLayer.VLM,
     }
 
     def __init__(
@@ -91,39 +185,26 @@ class PlanEPlusPipeline:
         classifier: Optional[IDocumentClassifier] = None,
         rule_layer: Optional[IExtractionLayer] = None,
         vlm_layer: Optional[IExtractionLayer] = None,
-        llm_layer: Optional[IExtractionLayer] = None,
         key_lists: Optional[Dict[DocumentType, List[str]]] = None,
         layer_routing: Optional[Dict[DocumentType, ProcessingLayer]] = None,
-        enable_vlm_classification_fallback: bool = True,
         vlm_fallback_handler=None,  # VLM字段级兜底处理器
     ):
         """
-        初始化方案E+管道
+        初始化管道
 
         Args:
-            classifier: 文档分类器（如果不传，默认使用混合分类器）
+            classifier: 文档分类器（如果不传，默认使用规则分类器）
             rule_layer: 规则层
             vlm_layer: VLM层
-            llm_layer: LLM层
             key_lists: 各文档类型的默认字段列表
             layer_routing: 文档类型到处理层的映射
-            enable_vlm_classification_fallback: 是否启用VLM分类兜底（默认True）
             vlm_fallback_handler: VLM字段级兜底处理器（校验失败时触发）
         """
-        # 如果没有指定分类器，创建混合分类器（规则优先，VLM兜底）
-        if classifier is None:
-            rule_clf = KeywordDocumentClassifier()
-            if enable_vlm_classification_fallback:
-                vlm_clf = VLMDocumentClassifier()
-                self.classifier = HybridDocumentClassifier(rule_clf, vlm_clf)
-            else:
-                self.classifier = rule_clf
-        else:
-            self.classifier = classifier
+        # v2.0: 只使用规则分类器
+        self.classifier = classifier or KeywordDocumentClassifier()
 
         self.rule_layer = rule_layer or RuleExtractionLayer()
         self.vlm_layer = vlm_layer
-        self.llm_layer = llm_layer
         self.vlm_fallback_handler = vlm_fallback_handler
 
         self.key_lists = key_lists or self.DEFAULT_KEY_LISTS.copy()
@@ -158,31 +239,15 @@ class PlanEPlusPipeline:
             doc_info = self.classifier.classify(image_path, ocr_texts)
             classify_time = time.time() - classify_start
 
-            # 记录分类方法
-            classifier_type = type(self.classifier).__name__
-            route = doc_info.metadata.get("route", "unknown")
-            vlm_result = doc_info.metadata.get("vlm_result", "")
+            logger.info(
+                "[分类] %s | 方法=规则分类器 | 路由=%s | 结果=%s | 耗时=%.2fs",
+                Path(image_path).name,
+                doc_info.metadata.get("route", "unknown"),
+                doc_info.doc_type.value,
+                classify_time
+            )
 
-            if "Hybrid" in classifier_type:
-                # 混合分类器：判断是规则层还是 VLM 兜底
-                if route == "vlm_classification":
-                    logger.info(
-                        "[分类] %s | 方法=VLM兜底 | 模型=%s | 结果=%s | 耗时=%.2fs",
-                        Path(image_path).name, "Qwen3.5-4B", doc_info.doc_type.value, classify_time
-                    )
-                else:
-                    logger.info(
-                        "[分类] %s | 方法=规则层 | 路由=%s | 结果=%s | 耗时=%.2fs",
-                        Path(image_path).name, route, doc_info.doc_type.value, classify_time
-                    )
-            else:
-                logger.info(
-                    "[分类] %s | 方法=%s | 结果=%s | 耗时=%.2fs",
-                    Path(image_path).name, classifier_type, doc_info.doc_type.value, classify_time
-                )
-
-        # 附属页面检查：如果VLM识别为附属页面，跳过提取
-        # 例外：如果文档类型已被明确识别（非UNKNOWN），则不视为附属页面，继续提取
+        # 附属页面检查：如果识别为附属页面，跳过提取
         if doc_info.metadata.get("is_attachment") and doc_info.doc_type == DocumentType.UNKNOWN:
             return ExtractionResult(
                 doc_type=doc_info.doc_type,
@@ -199,7 +264,7 @@ class PlanEPlusPipeline:
 
         # 选择处理层
         target_layer = force_layer or self.layer_routing.get(
-            doc_info.doc_type, ProcessingLayer.LLM
+            doc_info.doc_type, ProcessingLayer.VLM  # v2.0: 默认使用 VLM 层
         )
 
         # 回退逻辑：规则层提取依赖OCR文本，若无文本则回退到VLM提取
@@ -233,10 +298,7 @@ class PlanEPlusPipeline:
                     model_name = "位置标注提取器(PaddleOCR)"
         elif target_layer == ProcessingLayer.VLM:
             if self.vlm_layer:
-                model_name = getattr(self.vlm_layer, 'model_name', 'GLM-OCR')
-        elif target_layer == ProcessingLayer.LLM:
-            if self.llm_layer:
-                model_name = "Qwen3.5-4B(PP-ChatOCRv4)"
+                model_name = getattr(self.vlm_layer, 'model_name', 'Qwen2.5-VL-7B')
 
         logger.info(
             "[提取] %s | 层=%s | 模型=%s | 文档类型=%s",
@@ -250,25 +312,6 @@ class PlanEPlusPipeline:
             "[提取] %s | 完成 | 成功=%s | 字段数=%d | 耗时=%.2fs",
             Path(image_path).name, result.success, len([v for v in result.fields.values() if v]), extract_time
         )
-
-        # 第2.1层：LLM 兜底（如果规则层或VLM层提取失败）
-        if not result.success and self.llm_layer and target_layer != ProcessingLayer.LLM:
-            llm_fallback_start = time.time()
-            logger.info(
-                "[LLM兜底] %s | 触发 | 原因=提取失败 | 文档类型=%s",
-                Path(image_path).name, doc_info.doc_type.value
-            )
-
-            llm_layer = self._get_layer(ProcessingLayer.LLM)
-            if llm_layer and llm_layer.can_process(doc_info):
-                result = llm_layer.extract(doc_info, key_list)
-                llm_fallback_time = time.time() - llm_fallback_start
-
-                logger.info(
-                    "[LLM兜底] %s | 完成 | 成功=%s | 字段数=%d | 耗时=%.2fs",
-                    Path(image_path).name, result.success,
-                    len([v for v in result.fields.values() if v]), llm_fallback_time
-                )
 
         # 第2.5层：VLM字段级兜底（校验失败时触发）
         if self.vlm_fallback_handler and result.success:
@@ -291,7 +334,7 @@ class PlanEPlusPipeline:
         """
         对提取结果进行校验，失败字段触发VLM兜底
 
-        仅对启用VLM兜底的文档类型生效（当前：户口本、结婚证）
+        仅对启用VLM兜底的文档类型生效（当前：户口本、结婚证、身份证）
         """
         # 只对特定文档类型启用VLM字段级兜底
         fallback_enabled_types = {
@@ -330,10 +373,9 @@ class PlanEPlusPipeline:
             return self.rule_layer
         elif layer == ProcessingLayer.VLM:
             return self.vlm_layer
-        elif layer == ProcessingLayer.LLM:
-            return self.llm_layer
+        # v2.0: 移除 LLM 层
         return None
 
     def get_layer_for_doc_type(self, doc_type: DocumentType) -> ProcessingLayer:
         """获取文档类型对应的默认处理层"""
-        return self.layer_routing.get(doc_type, ProcessingLayer.LLM)
+        return self.layer_routing.get(doc_type, ProcessingLayer.VLM)

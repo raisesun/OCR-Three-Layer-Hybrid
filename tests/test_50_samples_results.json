@@ -1,0 +1,506 @@
+{
+  "config": "默认配置（2000px, 75%, 无预处理）",
+  "total_samples": 50,
+  "results": [
+    {
+      "image": "6ef5f1c4453b4010897e0e6cb1b69552.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "离婚协议",
+      "confidence": 0.85,
+      "extraction_success": true,
+      "field_count": 5,
+      "field_accuracy": null,
+      "elapsed": 44.25273084640503
+    },
+    {
+      "image": "e25491d291254874bf854b12515f701f.jpeg",
+      "expected_type": "id_card_front",
+      "actual_type": "身份证",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 6,
+      "field_accuracy": 83.33333333333334,
+      "elapsed": 32.93112897872925
+    },
+    {
+      "image": "4d9fd39863044a649884db86a1b1ecbf.jpg",
+      "expected_type": "id_card_front",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 6,
+      "field_accuracy": 83.33333333333334,
+      "elapsed": 18.025625944137573
+    },
+    {
+      "image": "aa43339a989f596ebc70a08875ad8a7.jpg",
+      "expected_type": "id_card_front",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 6,
+      "field_accuracy": 80.0,
+      "elapsed": 31.37412190437317
+    },
+    {
+      "image": "d128307774a04c9fa147570438fb6824.jpg",
+      "expected_type": "id_card_front",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 6,
+      "field_accuracy": 83.33333333333334,
+      "elapsed": 34.34001183509827
+    },
+    {
+      "image": "84f68919b9da48cdb2ca95c2862313d2.jpeg",
+      "expected_type": "id_card_front",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 6,
+      "field_accuracy": 80.0,
+      "elapsed": 31.602478742599487
+    },
+    {
+      "image": "027aa4151f75424c8529755ada5e6064.jpg",
+      "expected_type": "household_register",
+      "actual_type": "身份证",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 1,
+      "field_accuracy": 25.0,
+      "elapsed": 21.359534740447998
+    },
+    {
+      "image": "7c61d257538e41cab0e1fc7c52993f89.jpeg",
+      "expected_type": "id_card_front",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 50.0,
+      "elapsed": 33.30672001838684
+    },
+    {
+      "image": "2157b6e08c7143e3b03b14f77bfe30b8.jpg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 25.0,
+      "elapsed": 76.03880310058594
+    },
+    {
+      "image": "5cfff66a056c4baa95e10b9901523f2d.jpg",
+      "expected_type": "stock_contract",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 6,
+      "field_accuracy": 66.66666666666666,
+      "elapsed": 19.070831060409546
+    },
+    {
+      "image": "60434e6aacfb41fabafcbfd140687321.jpeg",
+      "expected_type": "id_card_back",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 2,
+      "field_accuracy": 100.0,
+      "elapsed": 7.029704809188843
+    },
+    {
+      "image": "2fb6cd4b67014477a635700b9295cbd8.jpg",
+      "expected_type": "id_card_back",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 1,
+      "field_accuracy": 50.0,
+      "elapsed": 11.148092985153198
+    },
+    {
+      "image": "2ae3836f341a8943eadc83706340720.jpg",
+      "expected_type": "id_card_back",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 2,
+      "field_accuracy": 100.0,
+      "elapsed": 33.23222517967224
+    },
+    {
+      "image": "169c2ae3c7d1132eb6c153ef88c604c.jpg",
+      "expected_type": "id_card_back",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 8,
+      "field_accuracy": 100.0,
+      "elapsed": 6.247472286224365
+    },
+    {
+      "image": "8a04a10a10f44328b57a32e5b50ac98c.jpg",
+      "expected_type": "id_card_back",
+      "actual_type": "身份证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 2,
+      "field_accuracy": 100.0,
+      "elapsed": 17.500339031219482
+    },
+    {
+      "image": "bc254b4fef8c41caaaf7cab0f42ec553.jpeg",
+      "expected_type": "marriage",
+      "actual_type": "结婚证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 40.0,
+      "elapsed": 5.161716938018799
+    },
+    {
+      "image": "fccde46a90d642e79466e101cab848e5.jpeg",
+      "expected_type": "marriage",
+      "actual_type": "结婚证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 3,
+      "field_accuracy": 60.0,
+      "elapsed": 33.49806022644043
+    },
+    {
+      "image": "4032f69b8c0d4c3e9d4bbdee64f2963b.jpg",
+      "expected_type": "marriage",
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "extraction_success": true,
+      "field_count": 0,
+      "field_accuracy": null,
+      "elapsed": 108.71838998794556
+    },
+    {
+      "image": "17938b5ed94a4789a753211c272d3b3a.jpg",
+      "expected_type": "divorce_certificate",
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "extraction_success": true,
+      "field_count": 0,
+      "field_accuracy": null,
+      "elapsed": 100.58633399009705
+    },
+    {
+      "image": "76f20eea31d045f396720cb5b13968e2.jpeg",
+      "expected_type": "marriage",
+      "actual_type": "结婚证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 40.0,
+      "elapsed": 101.58994722366333
+    },
+    {
+      "image": "147d9a19313a4594afb35bffd7e3f2e0.jpg",
+      "expected_type": "divorce_certificate",
+      "actual_type": "离婚证",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 0,
+      "field_accuracy": null,
+      "elapsed": 101.06544494628906
+    },
+    {
+      "image": "115b0f26466a4b76b1cb1b11b031e757.jpg",
+      "expected_type": "marriage",
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "extraction_success": true,
+      "field_count": 0,
+      "field_accuracy": null,
+      "elapsed": 110.53517627716064
+    },
+    {
+      "image": "3f101385b95f452882e655e39d36cb9b.jpg",
+      "expected_type": "marriage",
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "extraction_success": true,
+      "field_count": 0,
+      "field_accuracy": null,
+      "elapsed": 95.70522117614746
+    },
+    {
+      "image": "590357bd74744208856cfe64d8d0726b.jpg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 40.0,
+      "elapsed": 42.069886922836304
+    },
+    {
+      "image": "233407adbfd09977056fc72703fd423.jpg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 6,
+      "field_accuracy": 25.0,
+      "elapsed": 24.584334135055542
+    },
+    {
+      "image": "c34f94843f4d4f29ba21448b075448cc.jpeg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.85,
+      "extraction_success": true,
+      "field_count": 3,
+      "field_accuracy": 0.0,
+      "elapsed": 12.233465909957886
+    },
+    {
+      "image": "1dba4be9c720462f932733f4d4bdfa2d.jpg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 2,
+      "field_accuracy": 16.666666666666664,
+      "elapsed": 57.23744487762451
+    },
+    {
+      "image": "fff184b8d65b45efb3bd0010f3aa9bdd.jpeg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 16.666666666666664,
+      "elapsed": 68.21377182006836
+    },
+    {
+      "image": "f1513c2721954c0389f7ce0184e47baf.jpg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 3,
+      "field_accuracy": 25.0,
+      "elapsed": 103.90190386772156
+    },
+    {
+      "image": "310f98d8c8654cea8b7f3ad4ef2b3d93.jpeg",
+      "expected_type": "invoice",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 5,
+      "field_accuracy": 50.0,
+      "elapsed": 198.31044912338257
+    },
+    {
+      "image": "d0acb8b0db4643828e2e984aec682346.jpg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 14.285714285714285,
+      "elapsed": 106.07841515541077
+    },
+    {
+      "image": "d31de234db7e442c9afb918004759878.jpeg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 0.0,
+      "elapsed": 135.49753499031067
+    },
+    {
+      "image": "49d3a5c10ca748f0a7197b62e478e947.jpg",
+      "expected_type": "hukou",
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "extraction_success": true,
+      "field_count": 6,
+      "field_accuracy": 50.0,
+      "elapsed": 123.81324815750122
+    },
+    {
+      "image": "35608642705846be88406d5b3db558bd.jpeg",
+      "expected_type": "hukou",
+      "actual_type": "户口本",
+      "confidence": 0.95,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 20.0,
+      "elapsed": 21.577644109725952
+    },
+    {
+      "image": "cc1b63ce8572495f880c50b3d3b217a3.jpeg",
+      "expected_type": "hukou",
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "extraction_success": true,
+      "field_count": 9,
+      "field_accuracy": 42.857142857142854,
+      "elapsed": 170.81708431243896
+    },
+    {
+      "image": "2b7aee7102a44d579ea92d011dc9995a.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 66.66666666666666,
+      "elapsed": 42.540520906448364
+    },
+    {
+      "image": "ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 100.0,
+      "elapsed": 159.9147551059723
+    },
+    {
+      "image": "d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 66.66666666666666,
+      "elapsed": 169.33386278152466
+    },
+    {
+      "image": "2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": null,
+      "elapsed": 172.48935413360596
+    },
+    {
+      "image": "3418882883ff478095435aa96e25a272.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 50.0,
+      "elapsed": 159.11720609664917
+    },
+    {
+      "image": "25fc387ef8df4a068b6b70967873302e.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": 66.66666666666666,
+      "elapsed": 162.54177618026733
+    },
+    {
+      "image": "21721add1dee4fc6a9c2ff37dc6c5d45.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "购房合同",
+      "confidence": 0.6,
+      "extraction_success": true,
+      "field_count": 5,
+      "field_accuracy": 50.0,
+      "elapsed": 173.55741786956787
+    },
+    {
+      "image": "942b7e1a18664ee2ab542c98410cfd79.jpeg",
+      "expected_type": "purchase_contract",
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "extraction_success": true,
+      "field_count": 2,
+      "field_accuracy": 50.0,
+      "elapsed": 97.38205695152283
+    },
+    {
+      "image": "e9505e57b2d646b9a06c121fe96a8a4a.jpg",
+      "expected_type": "stock_contract",
+      "actual_type": "存量房合同",
+      "confidence": 0.85,
+      "extraction_success": true,
+      "field_count": 4,
+      "field_accuracy": null,
+      "elapsed": 119.77223300933838
+    },
+    {
+      "image": "061e171a8b6e41bbbf2b1b562ec5aa26.jpg",
+      "expected_type": "property",
+      "actual_type": "资金监管协议",
+      "confidence": 0.85,
+      "extraction_success": true,
+      "field_count": 1,
+      "field_accuracy": 0.0,
+      "elapsed": 28.815793991088867
+    },
+    {
+      "image": "a81d1cfaf102418f848c0626ad1b5eb6.jpg",
+      "expected_type": "property",
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "extraction_success": true,
+      "field_count": 9,
+      "field_accuracy": 0.0,
+      "elapsed": 134.4272541999817
+    },
+    {
+      "image": "bd1015fe78b84ec6bfa743504ca4a63c.jpg",
+      "expected_type": "property",
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "extraction_success": true,
+      "field_count": 0,
+      "field_accuracy": null,
+      "elapsed": 111.64192795753479
+    },
+    {
+      "image": "2f04ef2a8b5244c9b2ff926aa1d0e92b.jpeg",
+      "expected_type": "invoice",
+      "actual_type": "发票",
+      "confidence": 0.7,
+      "extraction_success": true,
+      "field_count": 7,
+      "field_accuracy": 0.0,
+      "elapsed": 13.292162895202637
+    },
+    {
+      "image": "0d7b511c1e7144f4bad4f60335aa1226.jpg",
+      "expected_type": "property",
+      "actual_type": "不动产权证书",
+      "confidence": 0.85,
+      "extraction_success": true,
+      "field_count": 7,
+      "field_accuracy": 50.0,
+      "elapsed": 121.45497703552246
+    },
+    {
+      "image": "34314ee9baa24b398305efa8e1cc7ee7.jpg",
+      "expected_type": "fund_supervision",
+      "actual_type": "资金监管协议",
+      "confidence": 0.85,
+      "extraction_success": true,
+      "field_count": 2,
+      "field_accuracy": 0.0,
+      "elapsed": 30.662675142288208
+    }
+  ]
+}

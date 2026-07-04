@@ -1,0 +1,528 @@
+{
+  "total_images": 102,
+  "classified": {
+    "身份证-正面": [
+      {
+        "image": "0246a4b0d0a1469ba8d70b3a107b9e0c.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "0586bebab5d845c78ca327617f6c0c4f.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "b265479776ca482bacca5db03f422dd5.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "1afcf78b6ccc417195044e178f18b4d9.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "3c0c4658ba0440e8a6c7b411941c1533.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "57e9298aeb9b4abfa1b4b5da8095267b.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "7815657ebef84a80a6ef1f863d9529a9.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "af1ed5c9c8654bbeac30776fedf03b83.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "b8db40d8c9924e12ab44be8b6fb812ca.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "e2be83a13c38429284c1e5eaa7abc342.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "ee23ef6f647744aba145c03810b92ad7.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "资金监管凭证": [
+      {
+        "image": "16ddfab108eb442d8fc7dbecdb24e4d0.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "7f8b2f9daa81415082e2afa79fc01fe3.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "16bb1e492640492c8f3ffbd5a797ff46.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "3a0e007515c6438ebfd35a960cacac47.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "7f6f2c31929d4689b037a81d854644a8.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "d0f275344a7b4702857f5c584ebde659.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "未知": [
+      {
+        "image": "17938b5ed94a4789a753211c272d3b3a.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "533bd5f9bde94bcf83d8201d67c40660.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "591c7b65bbb849ba8383c46a8d36920f.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "7c974da886384863a93acb21758d1a68.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "a51037a6a68945ba8a7041d6850ae6d7.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "a9a65f7395cd47838aa2933b2e1b6eab.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "f12aa1994b114ed39f82e8bb32a1356e.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "174f64fa9f2f42e19928845be8f23622.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "1e8df002bc5a4a5fae52968718aa3009.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "2273188d71bf40fc9a38b5ca08f2d88b.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "265a1693e83348e6902fc24b6743cdc6.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "362aeb3bc7ed409daa6d50cdcbd8f6fc.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "4f9cbfb441414b2f9d5bcd68f5575066.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "556da3c9f776405dbe7c1bbde6635493.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "5592866de5274f38b2440dd8d1defc97.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "6716285b08104bf693a76d756300578f.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "8d1465dd52df44868b9c372d5c66b991.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "9c17656b3ae44264bfe6ed5b9e1a2cac.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "c34cd33f2357478bbb6c2b4aa1a8aeb6.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "c7d40cb323d34b5abcffd7bd85366ba3.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "d02f7e5f07cb436b924ec4ad98c1450e.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "d4d72e8a152f4f3b8bb33bff8514eb55.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "e1d78cc903af4e45ab4721af776eb969.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "f38dc64c304f49fa9006ef57742e5f40.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "fc26104cf92745ba966b4c9c07a59d32.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "资金监管协议-签章页": [
+      {
+        "image": "2c3fab198951434d8411a06761410cad.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "0d8194e18bdb456093bd45d1895a97d9.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "132433b09aae4d7da8ae6b1607e9789b.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "身份证-背面": [
+      {
+        "image": "34880fec42a347e29d196f54b4b29bd3.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "fccf3d94e5154109a4fdec59ffcdb61d.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "37fbbaeccafc4a2690d23bd731fcc492.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "65f73f53d2f24d7d92940f66d49bb580.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "7d8036b237cc49e0afaa76cd10b1dce6.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "7f7e82a866c64ef989b0f5e1da10a9b7.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "8bae4908bb504dd0b2deed9f7968f4d1.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "c11f3b9a01af4737b40877d7d35be95b.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "cba0c7ab7364483a81ac97aeb791759b.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "ede80f2a26a3463a81343dd17c9f936e.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "结婚证-内容页": [
+      {
+        "image": "4d87edefff924149886ebf1ae3162d06.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "4ee73b998ece41b3bc4c6e665f617301.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "b3e9e4b333b746f293c311b75d06129d.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "户口本-个人页": [
+      {
+        "image": "5d343ead09434ceaa8bf74504cf727eb.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "9736950e0eb24a1297e63972fe29d740.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "34ab1e413ba34ad0b49fb99ac2c776c0.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "51840ef8fa914d3985a9b8926809117a.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "641f0cd74a844c9e8066a7aee1e38741.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "7da109c7844e48b4bd1bfb40ba6575b9.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "7e6418eddfd14105948ea1453d57d68c.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "bb4c0fcd91a14aa3bbd47424d7478ef2.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "c652431597004a2c98bd2934fe563cc9.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "f5ceaef8dc5c4efb984c59858910a1f0.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "离婚证": [
+      {
+        "image": "6143ed14669b49bfb8540a2681fa7252.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "625399f3819b4b6eb9723a9cfab4157b.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "7ef6fd88c162456197b90decb60e95b1.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "资金监管协议-首页": [
+      {
+        "image": "656bf2dcf1f64e84bf9636058dc411ff.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "34314ee9baa24b398305efa8e1cc7ee7.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "644b6d2ab1b9456bab23050329a8b7aa.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "6d409ec272924bff82afc8f312a5e0f6.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "beaa5edd78e44283aa15138c5ac1dd4f.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "身份证": [
+      {
+        "image": "9c48b70657854a15ae567b786d3d4a97.jpg",
+        "case": "BBJZ-2026-0113059"
+      }
+    ],
+    "离婚协议": [
+      {
+        "image": "b1dc265e62584612b461e2a8d6e09837.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "51a095df14944882ae108c3625d62240.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "e41f5d2c9f684cf5a6292657d9cde288.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "存量房合同": [
+      {
+        "image": "beaa461cbdc44da3938ba5b94f0d25c6.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "ceccd0253d6c4eda89014f3d8b3518d1.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "04b4fa0d063747bbad487c1647747936.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "19850b0ca9d540a59008272034b373e1.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "4510353c2dbb49aab2579c5ccd09f7be.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "5f2f5319a1414074ab31c0df01e21cc2.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "6861e3cf58e44a088925251c0d2b75be.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "777a9df25ba84373beee17a9a3233d94.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "a86a7034cf3a4465a549156d7d7a18e2.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "ce4afcc1a71341cfa3c92046c82dc5f0.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "户口本-首页": [
+      {
+        "image": "efd3efe1014e47a89a37d5e732df51fe.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "f3d70e5f22a047e3b98e62f1ae2f40af.jpg",
+        "case": "BBJZ-2026-0113059"
+      },
+      {
+        "image": "3877f970678a4c3ea52b47ac3acf9146.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "7cad94f0cd3d4359a191edc18536574a.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "a36969ac160f41f787dae4b583bc3144.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "f6de44ce3c8d408ea4a8b866346e335f.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "f8cd8dcc49fd4b788be1273f8ad182bb.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "fcf8837cd88d4068b47d9dd31257a958.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ],
+    "不动产权证书-附图页": [
+      {
+        "image": "2b6a0f1e18784c76a24edbce28e1ea69.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "3dbfe716b7674ba39a55ed17e19759ea.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "c07a781d0a964352b3b36972d56eb12b.jpg",
+        "case": "BBJZ-2026-0114007"
+      },
+      {
+        "image": "c54e094d367440d2834eab3b3101cf2e.jpg",
+        "case": "BBJZ-2026-0114007"
+      }
+    ]
+  },
+  "fund_supervision_found": [
+    {
+      "image": "16ddfab108eb442d8fc7dbecdb24e4d0.jpg",
+      "case": "BBJZ-2026-0113059",
+      "doc_type": "资金监管凭证",
+      "page_type": "内容页"
+    },
+    {
+      "image": "2c3fab198951434d8411a06761410cad.jpg",
+      "case": "BBJZ-2026-0113059",
+      "doc_type": "资金监管协议-签章页",
+      "page_type": "盖章页"
+    },
+    {
+      "image": "656bf2dcf1f64e84bf9636058dc411ff.jpg",
+      "case": "BBJZ-2026-0113059",
+      "doc_type": "资金监管协议-首页",
+      "page_type": "首页"
+    },
+    {
+      "image": "7f8b2f9daa81415082e2afa79fc01fe3.jpg",
+      "case": "BBJZ-2026-0113059",
+      "doc_type": "资金监管凭证",
+      "page_type": "内容页"
+    },
+    {
+      "image": "0d8194e18bdb456093bd45d1895a97d9.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管协议-签章页",
+      "page_type": "盖章页"
+    },
+    {
+      "image": "132433b09aae4d7da8ae6b1607e9789b.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管协议-签章页",
+      "page_type": "盖章页"
+    },
+    {
+      "image": "16bb1e492640492c8f3ffbd5a797ff46.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管凭证",
+      "page_type": "内容页"
+    },
+    {
+      "image": "34314ee9baa24b398305efa8e1cc7ee7.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管协议-首页",
+      "page_type": "首页"
+    },
+    {
+      "image": "3a0e007515c6438ebfd35a960cacac47.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管凭证",
+      "page_type": "内容页"
+    },
+    {
+      "image": "644b6d2ab1b9456bab23050329a8b7aa.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管协议-首页",
+      "page_type": "首页"
+    },
+    {
+      "image": "6d409ec272924bff82afc8f312a5e0f6.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管协议-首页",
+      "page_type": "首页"
+    },
+    {
+      "image": "7f6f2c31929d4689b037a81d854644a8.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管凭证",
+      "page_type": "内容页"
+    },
+    {
+      "image": "beaa5edd78e44283aa15138c5ac1dd4f.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管协议-首页",
+      "page_type": "首页"
+    },
+    {
+      "image": "d0f275344a7b4702857f5c584ebde659.jpg",
+      "case": "BBJZ-2026-0114007",
+      "doc_type": "资金监管凭证",
+      "page_type": "内容页"
+    }
+  ],
+  "errors": []
+}

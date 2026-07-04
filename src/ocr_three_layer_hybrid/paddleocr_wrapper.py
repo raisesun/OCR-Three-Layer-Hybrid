@@ -305,11 +305,11 @@ class PPStructureV3Engine:
         logger.info(f"PP-StructureV3 开始推理: {input_desc}")
         start = time.time()
 
-        # 图片预处理：缩放到 4000px 以内（避免性能问题）
+        # 图片预处理：缩放到 2000px 以内（经测试为准确率与性能的最佳平衡点）
         processed_input = input_data
         if isinstance(input_data, str) and os.path.exists(input_data):
             from ocr_three_layer_hybrid.image_preprocessor import ensure_max_size
-            processed_input = ensure_max_size(input_data, max_side=4000)
+            processed_input = ensure_max_size(input_data, max_side=2000)
             if processed_input != input_data:
                 logger.info(f"图片已预处理（缩放）")
 
