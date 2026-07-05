@@ -44,6 +44,18 @@ class PlanEPlusPipeline:
             "签发机关",
             "有效期限",
         ],
+        DocumentType.ID_CARD_FRONT: [
+            "姓名",
+            "性别",
+            "民族",
+            "出生",
+            "住址",
+            "公民身份号码",
+        ],
+        DocumentType.ID_CARD_BACK: [
+            "签发机关",
+            "有效期限",
+        ],
         DocumentType.MARRIAGE_CERTIFICATE: [
             "持证人",
             "登记日期",

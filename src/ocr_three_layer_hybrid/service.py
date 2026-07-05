@@ -311,12 +311,17 @@ class OCRService:
 
         Args:
             image_path: 图片路径
-            ocr_text: OCR识别文本（可为空，空时会通过VLM分类兜底）
+            ocr_text: OCR识别文本（可为空，空时自动运行OCR）
 
         Returns:
             包含分类结果、提取结果、Pipeline详情的字典
         """
         img_name = Path(image_path).name
+
+        # 如果未提供OCR文本，自动运行OCR
+        if not ocr_text:
+            ocr_text = self.run_ocr(image_path)
+
         ocr_texts = [ocr_text] if ocr_text else []
         full_text = " ".join(ocr_texts)
 
