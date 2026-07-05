@@ -6,14 +6,21 @@
 
 ## 🔴 高优先级（当前进行中）
 
-### 选项B：解决基础设施问题 ✅ 已完成
-- [x] 分析VLM服务内存崩溃原因（context size过小）
-- [x] 添加服务健康检查机制（vlm_health_checker.py）
-- [x] 添加自动重启策略（装饰器支持）
-- [x] 实现降级策略（空结果/缓存/异常）
-- [ ] 添加服务监控和告警（待实施）
-
-**状态**：✅ 核心功能已完成，3/3样本测试通过
+### 选项A：代码质量改进 🔄 进行中
+- [x] 修复process_single自动运行OCR
+- [x] 添加ID_CARD_FRONT/BACK字段配置
+- [ ] 拆分rule_layer.py（按文档类型拆分为独立模块）
+  - [x] 创建extractors包结构
+  - [x] 创建base_extractor.py
+  - [x] 创建personal_id_extractor.py（568行）
+  - [ ] 创建household_property_extractor.py
+  - [ ] 创建financial_extractor.py
+  - [ ] 创建agreement_extractor.py
+  - [ ] 更新rule_layer.py使用新的提取器
+- [ ] 降低classifier.py复杂度（拆分为多个小方法）
+- [ ] 添加更多单元测试（目标覆盖率>70%）
+- [ ] 消除重复代码（提取公共提取逻辑）
+- [ ] 重构service.py（使用依赖注入）
 
 ---
 
