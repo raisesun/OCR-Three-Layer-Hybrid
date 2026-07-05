@@ -1,0 +1,30 @@
+src/ocr_three_layer_hybrid/classifier.py:13:1: F401 'typing.Tuple' imported but unused
+src/ocr_three_layer_hybrid/classifier.py:245:13: F841 local variable 'has_address' is assigned to but never used
+src/ocr_three_layer_hybrid/classifier.py:338:13: F841 local variable 'has_contract_no' is assigned to but never used
+src/ocr_three_layer_hybrid/classifier.py:662:17: F841 local variable 'has_price' is assigned to but never used
+src/ocr_three_layer_hybrid/classifier.py:663:121: E501 line too long (126 > 120 characters)
+src/ocr_three_layer_hybrid/demo.py:9:1: F401 'time' imported but unused
+src/ocr_three_layer_hybrid/demo.py:14:1: F401 'ocr_three_layer_hybrid.interfaces.ProcessingLayer' imported but unused
+src/ocr_three_layer_hybrid/demo.py:72:15: F541 f-string is missing placeholders
+src/ocr_three_layer_hybrid/demo.py:137:15: F541 f-string is missing placeholders
+src/ocr_three_layer_hybrid/field_validator.py:18:1: F401 'typing.Optional' imported but unused
+src/ocr_three_layer_hybrid/image_preprocessor.py:29:5: F821 undefined name 'logger'
+src/ocr_three_layer_hybrid/image_preprocessor.py:59:13: F841 local variable 'original_size' is assigned to but never used
+src/ocr_three_layer_hybrid/image_preprocessor.py:315:9: E741 ambiguous variable name 'l'
+src/ocr_three_layer_hybrid/interfaces.py:9:1: F401 'typing.Optional' imported but unused
+src/ocr_three_layer_hybrid/paddleocr_wrapper.py:30:1: F401 'typing.Dict' imported but unused
+src/ocr_three_layer_hybrid/paddleocr_wrapper.py:314:29: F541 f-string is missing placeholders
+src/ocr_three_layer_hybrid/paddleocr_wrapper.py:470:25: F541 f-string is missing placeholders
+src/ocr_three_layer_hybrid/paddleocr_wrapper.py:547:13: E301 expected 1 blank line, found 0
+src/ocr_three_layer_hybrid/pipeline.py:16:1: F401 'typing.Any' imported but unused
+src/ocr_three_layer_hybrid/pipeline.py:334:121: E501 line too long (123 > 120 characters)
+src/ocr_three_layer_hybrid/rule_layer.py:12:1: F401 'typing.Optional' imported but unused
+src/ocr_three_layer_hybrid/rule_layer.py:289:25: E129 visually indented line with same indent as next logical line
+src/ocr_three_layer_hybrid/rule_layer.py:780:121: E501 line too long (123 > 120 characters)
+src/ocr_three_layer_hybrid/rule_layer.py:1284:121: E501 line too long (127 > 120 characters)
+src/ocr_three_layer_hybrid/service.py:473:17: F841 local variable 'all_success' is assigned to but never used
+src/ocr_three_layer_hybrid/service_v1_backup.py:25:1: F401 'ocr_three_layer_hybrid.interfaces.DocumentType' imported but unused
+src/ocr_three_layer_hybrid/service_v1_backup.py:25:1: F401 'ocr_three_layer_hybrid.interfaces.ProcessingLayer' imported but unused
+src/ocr_three_layer_hybrid/text_preprocessor.py:13:1: F401 'typing.Dict' imported but unused
+src/ocr_three_layer_hybrid/text_preprocessor.py:13:1: F401 'typing.Tuple' imported but unused
+src/ocr_three_layer_hybrid/vlm_layer.py:94:121: E501 line too long (122 > 120 characters)

@@ -26,9 +26,11 @@ try:
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
-    logger.warning("OpenCV 不可用，图像增强功能将被禁用。请安装: pip install opencv-python")
 
 logger = logging.getLogger(__name__)
+
+if not CV2_AVAILABLE:
+    logger.warning("OpenCV 不可用，图像增强功能将被禁用。请安装: pip install opencv-python")
 
 
 def resize_image(

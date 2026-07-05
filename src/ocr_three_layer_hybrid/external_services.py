@@ -13,12 +13,17 @@ v2.0 简化：
 """
 
 import base64
+import logging
 from pathlib import Path
 from typing import Optional
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .config import VLMServiceConfig
+
+logger = logging.getLogger(__name__)
 
 
 def encode_image_base64(image_path: str) -> str:
@@ -38,6 +43,26 @@ class VLMClient:
 
     def __init__(self, config: Optional[VLMServiceConfig] = None):
         self.config = config or VLMServiceConfig()
+        self._session = self._create_session()
+
+    def _create_session(self) -> requests.Session:
+        """创建带有重试机制的HTTP会话"""
+        session = requests.Session()
+
+        # 配置重试策略
+        retry_strategy = Retry(
+            total=3,  # 最大重试次数
+            backoff_factor=1,  # 重试间隔：1s, 2s, 4s
+            status_forcelist=[429, 500, 502, 503, 504],  # 需要重试的HTTP状态码
+            allowed_methods=["POST"],  # 只重试POST请求
+        )
+
+        # 挂载重试适配器
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
+        return session
 
     def call(self, prompt: str, image_path: str, max_tokens: int = 1024) -> str:
         """
@@ -78,10 +103,11 @@ class VLMClient:
             "max_tokens": max_tokens,
         }
 
-        resp = requests.post(
+        resp = self._session.post(
             f"{self.config.base_url}/chat/completions",
             json=payload,
             timeout=self.config.timeout,
+            verify=True,  # 显式启用SSL验证
         )
         resp.raise_for_status()
 

@@ -386,9 +386,10 @@ class PPStructureV3Engine:
         if self._pipeline is not None:
             try:
                 self._pipeline.close()
-            except Exception:
-                pass
-            self._pipeline = None
+            except Exception as e:
+                logger.warning(f"关闭 PP-StructureV3 pipeline 失败: {e}")
+            finally:
+                self._pipeline = None
 
 
 # ============== OCR 引擎（标准 PP-OCRv6） ==============
@@ -667,9 +668,10 @@ class PaddleOCREngine:
         if self._ocr_pipeline is not None:
             try:
                 self._ocr_pipeline.close()
-            except Exception:
-                pass
-            self._ocr_pipeline = None
+            except Exception as e:
+                logger.warning(f"关闭 PP-OCR pipeline 失败: {e}")
+            finally:
+                self._ocr_pipeline = None
         self._layout_model = None
 
 
@@ -785,9 +787,10 @@ class PaddleOCRVLLEngine:
         if self._pipeline is not None:
             try:
                 self._pipeline.close()
-            except Exception:
-                pass
-            self._pipeline = None
+            except Exception as e:
+                logger.warning(f"关闭 VLM pipeline 失败: {e}")
+            finally:
+                self._pipeline = None
 
 
 # ============== 统一包装器 ==============
