@@ -548,17 +548,63 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         基础分类方法（不含页面类型识别）
 
         这是原始的分类逻辑，返回基础的文档类型。
+        拆分为多个阶段方法以降低复杂度。
         """
         # 去除空格以修复破碎OCR文本的关键词匹配问题（如"结 婚" → "结婚"）
         full_text = "".join(ocr_texts).replace(" ", "")
 
-        # === 阶段0: 多文档冲突检测 ===
-        # 当合同级强信号（买受人+出卖人+房屋类型）同时存在时，优先分类为合同
-        # 防止多文档混合扫描时，合同页面中的身份证号码误触发身份证分类
-        # 注意：仅用"买受人/出卖人"，不用"甲方/乙方"（后者在资金监管协议中也出现）
+        # 阶段0: 多文档冲突检测
+        result = self._check_multi_doc_conflict(image_path, full_text, ocr_texts)
+        if result:
+            return result
+
+        # 阶段1: 标准证件强信号
+        result = self._check_standard_certificates(image_path, full_text, ocr_texts)
+        if result:
+            return result
+
+        # 阶段1.5: 标准证件备选强信号
+        result = self._check_backup_certificates(image_path, full_text, ocr_texts)
+        if result:
+            return result
+
+        # 阶段1.6: 更多备选信号（针对特殊页面）
+        result = self._check_additional_backup(image_path, full_text, ocr_texts)
+        if result:
+            return result
+
+        # 阶段2: 标准单证强信号
+        result = self._check_standard_documents(image_path, full_text, ocr_texts)
+        if result:
+            return result
+
+        # 阶段3: 合同/协议字段组合
+        result = self._check_contracts(image_path, full_text, ocr_texts)
+        if result:
+            return result
+
+        # 阶段4: VLM兜底
+        return DocumentInfo(
+            image_path=image_path,
+            doc_type=DocumentType.UNKNOWN,
+            ocr_texts=ocr_texts,
+            confidence=0.0,
+            metadata={"route": "vlm_fallback_required"},
+        )
+
+    def _check_multi_doc_conflict(
+        self, image_path: str, full_text: str, ocr_texts: List[str]
+    ) -> Optional[DocumentInfo]:
+        """
+        阶段0: 多文档冲突检测
+
+        当合同级强信号（买受人+出卖人+房屋类型）同时存在时，优先分类为合同
+        防止多文档混合扫描时，合同页面中的身份证号码误触发身份证分类
+        """
         has_buyer = "买受人" in full_text
         has_seller = "出卖人" in full_text
         has_property_type = any(kw in full_text for kw in ["商品房", "存量房"])
+
         if has_buyer and has_seller and has_property_type:
             if "商品房" in full_text:
                 contract_type = DocumentType.PURCHASE_CONTRACT
@@ -575,8 +621,14 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     "signal": "buyer+seller+property_type",
                 },
             )
+        return None
 
-        # === 阶段1: 标准证件强信号 ===
+    def _check_standard_certificates(
+        self, image_path: str, full_text: str, ocr_texts: List[str]
+    ) -> Optional[DocumentInfo]:
+        """
+        阶段1: 标准证件强信号
+        """
         for doc_type, signals in self.STANDARD_CERTIFICATE_SIGNALS.items():
             for signal in signals:
                 if signal in full_text:
@@ -635,8 +687,14 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                                 "signal": signal,
                             },
                         )
+        return None
 
-        # === 阶段1.5: 标准证件备选强信号 ===
+    def _check_backup_certificates(
+        self, image_path: str, full_text: str, ocr_texts: List[str]
+    ) -> Optional[DocumentInfo]:
+        """
+        阶段1.5: 标准证件备选强信号
+        """
         for doc_type, signal_config in self.BACKUP_CERTIFICATE_SIGNALS.items():
             primary_signals = signal_config["primary"]
             required_signals = signal_config.get("required", [])
@@ -686,8 +744,14 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     "required": [kw for kw in required_signals if kw in full_text],
                 },
             )
+        return None
 
-        # === 阶段1.6: 更多备选信号（针对特殊页面） ===
+    def _check_additional_backup(
+        self, image_path: str, full_text: str, ocr_texts: List[str]
+    ) -> Optional[DocumentInfo]:
+        """
+        阶段1.6: 更多备选信号（针对特殊页面）
+        """
         for doc_type, signal_config in self.ADDITIONAL_BACKUP_SIGNALS.items():
             primary_signals = signal_config["primary"]
             secondary_signals = signal_config.get("secondary", [])
@@ -721,8 +785,14 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     "primary": [kw for kw in primary_signals if kw in full_text],
                 },
             )
+        return None
 
-        # === 阶段2: 标准单证强信号 ===
+    def _check_standard_documents(
+        self, image_path: str, full_text: str, ocr_texts: List[str]
+    ) -> Optional[DocumentInfo]:
+        """
+        阶段2: 标准单证强信号
+        """
         # 发票：发票代码 + 发票号码同时存在
         invoice_signals = self.STANDARD_DOCUMENT_SIGNALS[DocumentType.INVOICE]
         if all(signal in full_text for signal in invoice_signals):
@@ -753,8 +823,14 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                         "weak_signals": weak_signal_count,
                     },
                 )
+        return None
 
-        # === 阶段3: 合同/协议字段组合 ===
+    def _check_contracts(
+        self, image_path: str, full_text: str, ocr_texts: List[str]
+    ) -> Optional[DocumentInfo]:
+        """
+        阶段3: 合同/协议字段组合
+        """
         for doc_type, signal_config in self.CONTRACT_SIGNALS.items():
             property_type_keywords = signal_config.get("property_type", [])
 
@@ -881,15 +957,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     "has_property_type": bool(property_type_keywords),
                 },
             )
-
-        # === 阶段4: VLM兜底 ===
-        return DocumentInfo(
-            image_path=image_path,
-            doc_type=DocumentType.UNKNOWN,
-            ocr_texts=ocr_texts,
-            confidence=0.0,
-            metadata={"route": "vlm_fallback_required"},
-        )
+        return None
 
     def _group_keywords(self, keywords: List[str]) -> List[List[str]]:
         """
