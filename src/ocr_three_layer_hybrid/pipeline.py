@@ -175,7 +175,7 @@ class PlanEPlusPipeline:
         DocumentType.MARRIAGE_CERTIFICATE_STAMP: ProcessingLayer.RULE,  # 盖章页用规则层
 
         # 离婚证
-        DocumentType.DIVORCE_CERTIFICATE: ProcessingLayer.VLM,
+        DocumentType.DIVORCE_CERTIFICATE: ProcessingLayer.RULE,  # 规则层优先，VLM字段级兜底
         DocumentType.DIVORCE_CERTIFICATE_COVER: ProcessingLayer.RULE,  # 封面页用规则层（返回空）
         DocumentType.DIVORCE_CERTIFICATE_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层
         DocumentType.DIVORCE_CERTIFICATE_STAMP: ProcessingLayer.RULE,  # 盖章页用规则层
@@ -194,14 +194,14 @@ class PlanEPlusPipeline:
         # 发票
         DocumentType.INVOICE: ProcessingLayer.RULE,
 
-        # 合同/协议
-        DocumentType.PURCHASE_CONTRACT: ProcessingLayer.VLM,
-        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: ProcessingLayer.VLM,  # 首页用VLM
-        DocumentType.PURCHASE_CONTRACT_CONTENT: ProcessingLayer.VLM,  # 内容页用VLM
+        # 合同/协议（规则层优先，VLM字段级兜底）
+        DocumentType.PURCHASE_CONTRACT: ProcessingLayer.RULE,  # 规则层优先
+        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: ProcessingLayer.RULE,  # 首页用规则层
+        DocumentType.PURCHASE_CONTRACT_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层
         DocumentType.PURCHASE_CONTRACT_STAMP: ProcessingLayer.RULE,  # 签署页用规则层（返回空）
-        DocumentType.STOCK_CONTRACT: ProcessingLayer.VLM,
-        DocumentType.STOCK_CONTRACT_FIRST_PAGE: ProcessingLayer.VLM,  # 首页用VLM
-        DocumentType.STOCK_CONTRACT_CONTENT: ProcessingLayer.VLM,  # 内容页用VLM
+        DocumentType.STOCK_CONTRACT: ProcessingLayer.RULE,  # 规则层优先
+        DocumentType.STOCK_CONTRACT_FIRST_PAGE: ProcessingLayer.RULE,  # 首页用规则层
+        DocumentType.STOCK_CONTRACT_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层
         DocumentType.STOCK_CONTRACT_STAMP: ProcessingLayer.RULE,  # 签署页用规则层（返回空）
         DocumentType.FUND_SUPERVISION: ProcessingLayer.RULE,
         DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE: ProcessingLayer.RULE,  # 协议首页用规则层
@@ -399,6 +399,10 @@ class PlanEPlusPipeline:
             for field_name in failed_fields:
                 if vlm_fields.get(field_name):
                     result.fields[field_name] = vlm_fields[field_name]
+
+            # 标记已触发VLM字段级兜底
+            result.vlm_fallback_triggered = True
+            result.vlm_fallback_fields = list(failed_fields)
 
             return result
         except Exception as e:

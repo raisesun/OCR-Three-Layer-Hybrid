@@ -96,14 +96,16 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         },
         DocumentType.MARRIAGE_CERTIFICATE: {
             # 结婚证 + 登记机关 → 结婚证盖章页
-            "primary": ["结婚证"],
-            "secondary": ["登记机关", "婚姻登记专用章", "予以登记"],
+            # 支持多种表述：结婚证、结婚申请、结婚登记
+            "primary": ["结婚证", "结婚申请", "结婚登记"],
+            "secondary": ["登记机关", "婚姻登记专用章", "予以登记", "民政部监制"],
             "min_secondary": 1,
         },
         DocumentType.DIVORCE_CERTIFICATE: {
             # 离婚证 + 印章 → 离婚证盖章页
-            "primary": ["离婚证"],
-            "secondary": ["婚姻登记专用章", "予以登记"],
+            # 支持多种表述：离婚证、离婚申请、离婚登记
+            "primary": ["离婚证", "离婚申请", "离婚登记"],
+            "secondary": ["婚姻登记专用章", "予以登记", "民政部监制", "登记机关"],
             "min_secondary": 1,
         },
         DocumentType.PROPERTY_CERTIFICATE: {
@@ -450,7 +452,8 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         doc_info = self._classify_base(image_path, ocr_texts)
 
         # 然后识别页面类型并细化文档类型
-        full_text = " ".join(ocr_texts)
+        # 去除空格以修复破碎OCR文本的关键词匹配问题（如"结 婚" → "结婚"）
+        full_text = "".join(ocr_texts).replace(" ", "")
         page_type = self._detect_page_type(doc_info.doc_type, full_text)
         refined_doc_type = self._get_refined_doc_type(doc_info.doc_type, page_type)
 
@@ -466,7 +469,8 @@ class KeywordDocumentClassifier(IDocumentClassifier):
 
         这是原始的分类逻辑，返回基础的文档类型。
         """
-        full_text = " ".join(ocr_texts)
+        # 去除空格以修复破碎OCR文本的关键词匹配问题（如"结 婚" → "结婚"）
+        full_text = "".join(ocr_texts).replace(" ", "")
 
         # === 阶段0: 多文档冲突检测 ===
         # 当合同级强信号（买受人+出卖人+房屋类型）同时存在时，优先分类为合同

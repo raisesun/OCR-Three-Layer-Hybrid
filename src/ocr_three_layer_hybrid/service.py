@@ -304,6 +304,9 @@ class OCRService:
                 "layer": result.layer.value if result.layer else "none",
                 "fields": result.fields,
                 "error_message": result.error_message,
+                "vlm_fallback_enabled": self._vlm_fallback_handler is not None,
+                "vlm_fallback_triggered": getattr(result, "vlm_fallback_triggered", False),
+                "vlm_fallback_fields": getattr(result, "vlm_fallback_fields", []),
             },
             "pipeline_flow": self._build_pipeline_flow(doc_info, result),
             "timing": {

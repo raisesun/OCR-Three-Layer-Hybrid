@@ -119,6 +119,8 @@ class ExtractionResult:
     time_cost: float = 0.0
     error_message: str = ""
     raw_text: str = ""
+    vlm_fallback_triggered: bool = False  # 是否触发了VLM字段级兜底
+    vlm_fallback_fields: List[str] = field(default_factory=list)  # 触发兜底的字段名
 
     def get(self, key: str, default: str = "") -> str:
         """安全获取字段值"""

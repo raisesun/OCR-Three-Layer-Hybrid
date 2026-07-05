@@ -85,7 +85,7 @@
     "case_id": "BBJZ-2026-0119050",
     "image": "027aa4151f75424c8529755ada5e6064.jpg",
     "image_path": "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2026-0119050/027aa4151f75424c8529755ada5e6064.jpg",
-    "cert_code": "household_register",
+    "cert_code": "hukou",
     "ref_fields": {
       "姓名": "吴可",
       "民族": "汉族",
@@ -359,7 +359,7 @@
     "case_id": "202402190050",
     "image": "310f98d8c8654cea8b7f3ad4ef2b3d93.jpeg",
     "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202402190050/310f98d8c8654cea8b7f3ad4ef2b3d93.jpeg",
-    "cert_code": "invoice",
+    "cert_code": "hukou",
     "ref_fields": {
       "姓名": "张玉德",
       "与户主关系": "孙子",
