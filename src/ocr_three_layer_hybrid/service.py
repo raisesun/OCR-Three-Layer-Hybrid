@@ -118,7 +118,10 @@ class OCRService:
             config: 服务配置，不传则使用默认配置
         """
         self.config = config or OCRConfig()
-        self._vlm_client = VLMClient(self.config.vlm_service)
+
+        # VLM客户端：根据vlm_ocr_engine配置选择模型
+        vlm_ocr_config = self.config.get_vlm_config(self.config.vlm_ocr_engine)
+        self._vlm_client = VLMClient(vlm_ocr_config)
 
         # 分类器：只使用规则分类器
         self._classifier = KeywordDocumentClassifier()
@@ -133,13 +136,16 @@ class OCRService:
             except ImportError as e:
                 logger.warning(f"位置标注提取器未启用（导入失败）: {e}")
 
-        # VLM字段级兜底处理器
+        # VLM字段级兜底处理器：根据vlm_fallback_engine配置选择模型
         self._vlm_fallback_handler = None
         if self.config.enable_vlm_field_fallback:
             try:
                 from ocr_three_layer_hybrid.vlm_fallback import VLMFallbackHandler
-                self._vlm_fallback_handler = VLMFallbackHandler(vlm_client=self._vlm_client)
-                logger.info("VLM字段级兜底已启用")
+                # 创建独立的VLM客户端用于兜底
+                vlm_fallback_config = self.config.get_vlm_config(self.config.vlm_fallback_engine)
+                vlm_fallback_client = VLMClient(vlm_fallback_config)
+                self._vlm_fallback_handler = VLMFallbackHandler(vlm_client=vlm_fallback_client)
+                logger.info(f"VLM字段级兜底已启用 (引擎: {self.config.vlm_fallback_engine})")
             except ImportError as e:
                 logger.warning(f"VLM字段级兜底未启用（导入失败）: {e}")
 
@@ -147,31 +153,26 @@ class OCRService:
         from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
         rule_layer = RuleExtractionLayer(position_extractor=self._position_extractor)
 
-        # VLM 提取层：根据配置选择模型
-        vlm_extraction_engine = self.config.vlm_extraction_engine
-        if vlm_extraction_engine == "qwen2_5_vl_7b":
-            vlm_service_config = self.config.qwen_vl_service
-            logger.info(f"VLM 提取层使用: Qwen2.5-VL-7B ({vlm_service_config.base_url})")
-        else:  # 默认使用 glm_ocr
-            vlm_service_config = self.config.vlm_service
-            logger.info(f"VLM 提取层使用: GLM-OCR ({vlm_service_config.base_url})")
+        # VLM 提取层：根据vlm_extraction_engine配置选择模型
+        vlm_extraction_config = self.config.get_vlm_config(self.config.vlm_extraction_engine)
+        logger.info(f"VLM 提取层使用: {self.config.vlm_extraction_engine} ({vlm_extraction_config.base_url})")
 
         # Pipeline：注入规则层和VLM层（无LLM层）
         self._pipeline = PlanEPlusPipeline(
             classifier=self._classifier,
             rule_layer=rule_layer,
             vlm_layer=VLMExtractionLayer(
-                base_url=vlm_service_config.base_url,
-                model_name=vlm_service_config.model_name,
-                timeout=vlm_service_config.timeout,
+                base_url=vlm_extraction_config.base_url,
+                model_name=vlm_extraction_config.model_name,
+                timeout=vlm_extraction_config.timeout,
             ),
             vlm_fallback_handler=self._vlm_fallback_handler,
         )
         logger.info(
-            "OCRService v2.0 初始化 | VLM提取=%s | 位置标注=%s | VLM兜底=%s",
-            vlm_service_config.base_url,
+            "OCRService v2.0 初始化 | VLM提取=%s | VLM兜底=%s | 位置标注=%s",
+            self.config.vlm_extraction_engine,
+            self.config.vlm_fallback_engine,
             "启用" if self._position_extractor else "禁用",
-            "启用" if self._vlm_fallback_handler else "禁用",
         )
 
     @classmethod

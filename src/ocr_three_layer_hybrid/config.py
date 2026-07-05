@@ -89,12 +89,20 @@ class OCRConfig:
     # - paddleocr_vl: PaddleOCR-VL（备用，151秒/张，精度高）
     # - structure_v3: PP-StructureV3（已弃用，性能不稳定）
 
-    # VLM 提取引擎配置（Phase 3 新增）
-    # 用于字段提取阶段，支持多种 VLM 模型
-    vlm_extraction_engine: str = "qwen2_5_vl_7b"  # "glm_ocr" | "qwen2_5_vl_7b"
-    # 说明：
-    # - qwen2_5_vl_7b: Qwen2.5-VL-7B（默认，端口8082，理解能力强）
-    # - glm_ocr: GLM-OCR（备选，端口8080，速度快）
+    # VLM 引擎配置（支持不同场景使用不同模型）
+    # 可选值: "glm_ocr" | "qwen2_5_vl_7b"
+    # 说明:
+    # - qwen2_5_vl_7b: Qwen2.5-VL-7B（默认，端口8082，理解能力强，速度快）
+    # - glm_ocr: GLM-OCR（备选，端口8080，速度快但理解能力弱）
+
+    # 1. VLM提取层：分类为"未知"时使用
+    vlm_extraction_engine: str = "qwen2_5_vl_7b"
+
+    # 2. VLM兜底处理器：规则层字段校验失败时触发
+    vlm_fallback_engine: str = "qwen2_5_vl_7b"
+
+    # 3. VLM纯OCR：用于纯文本提取（如需要）
+    vlm_ocr_engine: str = "qwen2_5_vl_7b"
 
     # 图像预处理配置（Phase 4 新增）
     # 用于在 OCR 前对图像进行增强处理
@@ -113,6 +121,25 @@ class OCRConfig:
         if url := os.getenv("QWEN_VLM_URL"):
             cfg.qwen_vl_service.base_url = url
         return cfg
+
+    def get_vlm_config(self, engine_name: str):
+        """根据引擎名称获取对应的VLM配置
+
+        Args:
+            engine_name: VLM引擎名称 ("glm_ocr" | "qwen2_5_vl_7b")
+
+        Returns:
+            VLMServiceConfig 或 QwenVLServiceConfig
+
+        Raises:
+            ValueError: 不支持的引擎名称
+        """
+        if engine_name == "qwen2_5_vl_7b":
+            return self.qwen_vl_service
+        elif engine_name == "glm_ocr":
+            return self.vlm_service
+        else:
+            raise ValueError(f"不支持的VLM引擎: {engine_name}，可选值: glm_ocr, qwen2_5_vl_7b")
 
 
 # =============================================================================

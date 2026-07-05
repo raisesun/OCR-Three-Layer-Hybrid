@@ -399,16 +399,12 @@ def main():
     # 评测参数
     max_samples = 50  # 每个模型测试 50 个样本（全量测试）
 
-    # 评测 GLM-OCR
-    glm_results = evaluate_vlm_model('glm_ocr', samples, max_samples)
-    print_evaluation_report(glm_results)
-
-    # 评测 Qwen2.5-VL-7B
+    # 只评测 Qwen2.5-VL-7B（统一配置后只需要一个VLM服务）
+    print("\n" + "="*70)
+    print("评测 VLM 模型: qwen2_5_vl_7b (统一配置)")
+    print("="*70)
     qwen_results = evaluate_vlm_model('qwen2_5_vl_7b', samples, max_samples)
     print_evaluation_report(qwen_results)
-
-    # 对比两个模型
-    compare_models(glm_results, qwen_results)
 
     print("="*70)
     print("✅ 评测完成")
