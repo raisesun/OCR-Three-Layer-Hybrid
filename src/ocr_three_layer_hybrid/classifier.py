@@ -210,183 +210,59 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         Returns:
             PageType枚举值
         """
-        # === 离婚证页面类型识别 ===
+        # 离婚证页面类型识别
         if doc_type in [
             DocumentType.DIVORCE_CERTIFICATE,
             DocumentType.DIVORCE_CERTIFICATE_COVER,
             DocumentType.DIVORCE_CERTIFICATE_CONTENT,
             DocumentType.DIVORCE_CERTIFICATE_STAMP,
         ]:
-            # 内容页特征：有离婚证字号 + 登记日期 + 持证人信息
-            has_cert_no = "离婚证字号" in full_text
-            has_date = "登记日期" in full_text
+            return self._detect_divorce_certificate_page_type(full_text)
 
-            if has_cert_no and has_date:
-                return PageType.CONTENT
-            # 盖章页特征：有印章相关词（优先于封面页检测）
-            elif (
-                "登记机关" in full_text
-                or "婚姻登记专用章" in full_text
-                or "予以登记" in full_text
-            ):
-                return PageType.STAMP
-            # 封面页特征：有"离婚证"但无内容页特征
-            elif "离婚证" in full_text and not has_cert_no:
-                return PageType.COVER
-            else:
-                return PageType.UNKNOWN
-
-        # === 结婚证页面类型识别 ===
+        # 结婚证页面类型识别
         if doc_type in [
             DocumentType.MARRIAGE_CERTIFICATE,
             DocumentType.MARRIAGE_CERTIFICATE_COVER,
             DocumentType.MARRIAGE_CERTIFICATE_CONTENT,
             DocumentType.MARRIAGE_CERTIFICATE_STAMP,
         ]:
-            # 内容页特征：有结婚证字号 + 持证人 + 登记日期
-            has_cert_no = "结婚证字号" in full_text
-            has_holder = "持证人" in full_text
-            has_date = "登记日期" in full_text
+            return self._detect_marriage_certificate_page_type(full_text)
 
-            if has_cert_no or (has_holder and has_date):
-                return PageType.CONTENT
-            # 盖章页特征：有印章相关词（优先于封面页检测）
-            elif (
-                "登记机关" in full_text
-                or "婚姻登记专用章" in full_text
-                or "予以登记" in full_text
-            ):
-                return PageType.STAMP
-            # 封面页特征：有"结婚证"但无内容页特征
-            elif "结婚证" in full_text and not has_cert_no:
-                return PageType.COVER
-            else:
-                return PageType.UNKNOWN
-
-        # === 户口本页面类型识别 ===
+        # 户口本页面类型识别
         if doc_type in [
             DocumentType.HOUSEHOLD_REGISTER,
             DocumentType.HOUSEHOLD_REGISTER_COVER,
             DocumentType.HOUSEHOLD_REGISTER_CONTENT,
         ]:
-            # 首页特征：户别 + 户主姓名 + 住址
-            has_hubie = "户别" in full_text or "户 别" in full_text
-            has_holder_name = "户主姓名" in full_text
+            return self._detect_household_register_page_type(full_text)
 
-            # 个人页特征：常住人口登记卡
-            has_personal_card = "常住人口登记卡" in full_text
-
-            if has_personal_card:
-                return PageType.PERSONAL_PAGE
-            elif has_hubie or has_holder_name:
-                return PageType.FIRST_PAGE
-            else:
-                return PageType.UNKNOWN
-
-        # === 不动产权证书页面类型识别 ===
+        # 不动产权证书页面类型识别
         if doc_type in [
             DocumentType.PROPERTY_CERTIFICATE,
             DocumentType.PROPERTY_CERTIFICATE_CONTENT,
             DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
             DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE,
         ]:
-            # 附图页特征：房产分户图、宗地图、所在图幅编号
-            attachment_signals = [
-                "房产分户图",
-                "宗地图",
-                "所在图幅编号",
-                "制图日期",
-                "制图者",
-                "宗地代码",
-            ]
-            if any(signal in full_text for signal in attachment_signals):
-                return PageType.ATTACHMENT
-            # 内容页特征：有共有情况、不动产单元号、坐落、权利类型等多个字段
-            content_signals = [
-                "共有情况",
-                "不动产单元号",
-                "坐落",
-                "权利类型",
-                "权利性质",
-                "使用期限",
-            ]
-            content_count = sum(1 for signal in content_signals if signal in full_text)
-            if content_count >= 3:
-                return PageType.CONTENT
-            # 首页特征：有登记机构、编号，但没有内容页的字段
-            first_page_signals = ["登记机构", "编号"]
-            if any(signal in full_text for signal in first_page_signals):
-                # 且不包含内容页的明确特征
-                if not any(
-                    signal in full_text
-                    for signal in ["共有情况", "不动产单元号", "权利类型", "权利性质"]
-                ):
-                    return PageType.FIRST_PAGE
-            else:
-                return PageType.UNKNOWN
+            return self._detect_property_certificate_page_type(full_text)
 
-        # === 身份证页面类型识别 ===
+        # 身份证页面类型识别
         if doc_type in [
             DocumentType.ID_CARD,
             DocumentType.ID_CARD_FRONT,
             DocumentType.ID_CARD_BACK,
         ]:
-            # 正面特征：有姓名、性别、民族、出生、住址
-            has_front_fields = any(
-                kw in full_text for kw in ["姓名", "性别", "民族", "出生", "住址"]
-            )
-            # 背面特征：有签发机关、有效期限
-            has_back_fields = any(kw in full_text for kw in ["签发机关", "有效期限"])
+            return self._detect_id_card_page_type(full_text)
 
-            if has_front_fields and "公民身份号码" in full_text:
-                return PageType.CONTENT  # 正面
-            elif has_back_fields:
-                return PageType.BACK  # 背面（用BACK表示）
-            else:
-                return PageType.UNKNOWN
-
-        # === 资金监管协议页面类型识别 ===
+        # 资金监管协议页面类型识别
         if doc_type in [
             DocumentType.FUND_SUPERVISION,
             DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE,
             DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE,
             DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP,
         ]:
-            # 首页特征：有"存量房交易资金监管协议"标题 + 编号/甲方/乙方
-            has_title = "存量房交易资金监管协议" in full_text
-            has_first_page_fields = any(
-                kw in full_text for kw in ["编号", "甲方", "乙方", "丙方", "签署日期"]
-            )
-            # 信息页特征：有甲方/乙方 + 身份证号/银行/账号（但没有协议标题）
-            has_party_info = any(kw in full_text for kw in ["身份证号", "银行", "账号"])
-            # 签章页特征：有"签章"/"签字"/"盖章" + 有甲乙丙方签章标记
-            has_stamp_signals = any(
-                kw in full_text
-                for kw in [
-                    "甲方（签章）",
-                    "乙方（签章）",
-                    "丙方（签章）",
-                    "甲方签章",
-                    "乙方签章",
-                    "丙方签章",
-                ]
-            )
-            has_sign_signals = any(kw in full_text for kw in ["签字", "盖章"])
+            return self._detect_fund_supervision_page_type(full_text)
 
-            # 签章页优先检测（签章标记是强信号）
-            if has_stamp_signals or (has_sign_signals and not has_first_page_fields):
-                return PageType.STAMP
-            elif has_title and has_first_page_fields:
-                return PageType.FIRST_PAGE
-            elif has_party_info:
-                return PageType.PERSONAL_PAGE  # 复用个人页表示信息页
-            elif has_title:
-                # 有标题但没有首页字段，可能是信息页
-                return PageType.PERSONAL_PAGE
-            else:
-                return PageType.UNKNOWN
-
-        # === 合同页面类型识别（购房合同/存量房合同）===
+        # 合同页面类型识别（购房合同/存量房合同）
         if doc_type in [
             DocumentType.PURCHASE_CONTRACT,
             DocumentType.STOCK_CONTRACT,
@@ -397,42 +273,195 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             DocumentType.STOCK_CONTRACT_CONTENT,
             DocumentType.STOCK_CONTRACT_STAMP,
         ]:
-            # 签署页特征：合同签订日期、合同签订地址、签字/盖章
-            has_stamp_signals = any(
-                kw in full_text
-                for kw in ["合同签订日期", "合同签订地址", "签字", "盖章", "签章"]
-            )
-            # 注意：监管协议的签章页也有这些特征，需要排除
-            is_fund_supervision = any(
-                kw in full_text
-                for kw in ["资金监管", "监管协议", "监管凭证", "监管资金"]
-            )
-
-            # 首页特征：买卖合同、合同编号 + 卖方/买方/房屋坐落
-            has_contract_title = any(
-                kw in full_text for kw in ["买卖合同", "存量房买卖合同"]
-            )
-            has_first_page_fields = any(
-                kw in full_text for kw in ["卖方", "买方", "房屋坐落"]
-            )
-
-            # 内容页特征：房屋基本情况、付款方式、装修价款
-            has_content_fields = any(
-                kw in full_text for kw in ["房屋基本情况", "付款方式", "装修价款"]
-            )
-
-            # 签署页优先（但要排除监管协议）
-            if has_stamp_signals and not is_fund_supervision:
-                return PageType.STAMP
-            elif has_contract_title and has_first_page_fields:
-                return PageType.FIRST_PAGE
-            elif has_content_fields:
-                return PageType.CONTENT
-            else:
-                return PageType.UNKNOWN
+            return self._detect_contract_page_type(full_text)
 
         # 默认返回内容页（对于合同、协议等）
         return PageType.CONTENT
+
+    def _detect_divorce_certificate_page_type(self, full_text: str) -> PageType:
+        """离婚证页面类型识别"""
+        # 内容页特征：有离婚证字号 + 登记日期 + 持证人信息
+        has_cert_no = "离婚证字号" in full_text
+        has_date = "登记日期" in full_text
+
+        if has_cert_no and has_date:
+            return PageType.CONTENT
+        # 盖章页特征：有印章相关词（优先于封面页检测）
+        elif (
+            "登记机关" in full_text
+            or "婚姻登记专用章" in full_text
+            or "予以登记" in full_text
+        ):
+            return PageType.STAMP
+        # 封面页特征：有"离婚证"但无内容页特征
+        elif "离婚证" in full_text and not has_cert_no:
+            return PageType.COVER
+        else:
+            return PageType.UNKNOWN
+
+    def _detect_marriage_certificate_page_type(self, full_text: str) -> PageType:
+        """结婚证页面类型识别"""
+        # 内容页特征：有结婚证字号 + 持证人 + 登记日期
+        has_cert_no = "结婚证字号" in full_text
+        has_holder = "持证人" in full_text
+        has_date = "登记日期" in full_text
+
+        if has_cert_no or (has_holder and has_date):
+            return PageType.CONTENT
+        # 盖章页特征：有印章相关词（优先于封面页检测）
+        elif (
+            "登记机关" in full_text
+            or "婚姻登记专用章" in full_text
+            or "予以登记" in full_text
+        ):
+            return PageType.STAMP
+        # 封面页特征：有"结婚证"但无内容页特征
+        elif "结婚证" in full_text and not has_cert_no:
+            return PageType.COVER
+        else:
+            return PageType.UNKNOWN
+
+    def _detect_household_register_page_type(self, full_text: str) -> PageType:
+        """户口本页面类型识别"""
+        # 首页特征：户别 + 户主姓名 + 住址
+        has_hubie = "户别" in full_text or "户 别" in full_text
+        has_holder_name = "户主姓名" in full_text
+
+        # 个人页特征：常住人口登记卡
+        has_personal_card = "常住人口登记卡" in full_text
+
+        if has_personal_card:
+            return PageType.PERSONAL_PAGE
+        elif has_hubie or has_holder_name:
+            return PageType.FIRST_PAGE
+        else:
+            return PageType.UNKNOWN
+
+    def _detect_property_certificate_page_type(self, full_text: str) -> PageType:
+        """不动产权证书页面类型识别"""
+        # 附图页特征：房产分户图、宗地图、所在图幅编号
+        attachment_signals = [
+            "房产分户图",
+            "宗地图",
+            "所在图幅编号",
+            "制图日期",
+            "制图者",
+            "宗地代码",
+        ]
+        if any(signal in full_text for signal in attachment_signals):
+            return PageType.ATTACHMENT
+        # 内容页特征：有共有情况、不动产单元号、坐落、权利类型等多个字段
+        content_signals = [
+            "共有情况",
+            "不动产单元号",
+            "坐落",
+            "权利类型",
+            "权利性质",
+            "使用期限",
+        ]
+        content_count = sum(1 for signal in content_signals if signal in full_text)
+        if content_count >= 3:
+            return PageType.CONTENT
+        # 首页特征：有登记机构、编号，但没有内容页的字段
+        first_page_signals = ["登记机构", "编号"]
+        if any(signal in full_text for signal in first_page_signals):
+            # 且不包含内容页的明确特征
+            if not any(
+                signal in full_text
+                for signal in ["共有情况", "不动产单元号", "权利类型", "权利性质"]
+            ):
+                return PageType.FIRST_PAGE
+        else:
+            return PageType.UNKNOWN
+        return PageType.UNKNOWN
+
+    def _detect_id_card_page_type(self, full_text: str) -> PageType:
+        """身份证页面类型识别"""
+        # 正面特征：有姓名、性别、民族、出生、住址
+        has_front_fields = any(
+            kw in full_text for kw in ["姓名", "性别", "民族", "出生", "住址"]
+        )
+        # 背面特征：有签发机关、有效期限
+        has_back_fields = any(kw in full_text for kw in ["签发机关", "有效期限"])
+
+        if has_front_fields and "公民身份号码" in full_text:
+            return PageType.CONTENT  # 正面
+        elif has_back_fields:
+            return PageType.BACK  # 背面（用BACK表示）
+        else:
+            return PageType.UNKNOWN
+
+    def _detect_fund_supervision_page_type(self, full_text: str) -> PageType:
+        """资金监管协议页面类型识别"""
+        # 首页特征：有"存量房交易资金监管协议"标题 + 编号/甲方/乙方
+        has_title = "存量房交易资金监管协议" in full_text
+        has_first_page_fields = any(
+            kw in full_text for kw in ["编号", "甲方", "乙方", "丙方", "签署日期"]
+        )
+        # 信息页特征：有甲方/乙方 + 身份证号/银行/账号（但没有协议标题）
+        has_party_info = any(kw in full_text for kw in ["身份证号", "银行", "账号"])
+        # 签章页特征：有"签章"/"签字"/"盖章" + 有甲乙丙方签章标记
+        has_stamp_signals = any(
+            kw in full_text
+            for kw in [
+                "甲方（签章）",
+                "乙方（签章）",
+                "丙方（签章）",
+                "甲方签章",
+                "乙方签章",
+                "丙方签章",
+            ]
+        )
+        has_sign_signals = any(kw in full_text for kw in ["签字", "盖章"])
+
+        # 签章页优先检测（签章标记是强信号）
+        if has_stamp_signals or (has_sign_signals and not has_first_page_fields):
+            return PageType.STAMP
+        elif has_title and has_first_page_fields:
+            return PageType.FIRST_PAGE
+        elif has_party_info:
+            return PageType.PERSONAL_PAGE  # 复用个人页表示信息页
+        elif has_title:
+            # 有标题但没有首页字段，可能是信息页
+            return PageType.PERSONAL_PAGE
+        else:
+            return PageType.UNKNOWN
+
+    def _detect_contract_page_type(self, full_text: str) -> PageType:
+        """合同页面类型识别（购房合同/存量房合同）"""
+        # 签署页特征：合同签订日期、合同签订地址、签字/盖章
+        has_stamp_signals = any(
+            kw in full_text
+            for kw in ["合同签订日期", "合同签订地址", "签字", "盖章", "签章"]
+        )
+        # 注意：监管协议的签章页也有这些特征，需要排除
+        is_fund_supervision = any(
+            kw in full_text
+            for kw in ["资金监管", "监管协议", "监管凭证", "监管资金"]
+        )
+
+        # 首页特征：买卖合同、合同编号 + 卖方/买方/房屋坐落
+        has_contract_title = any(
+            kw in full_text for kw in ["买卖合同", "存量房买卖合同"]
+        )
+        has_first_page_fields = any(
+            kw in full_text for kw in ["卖方", "买方", "房屋坐落"]
+        )
+
+        # 内容页特征：房屋基本情况、付款方式、装修价款
+        has_content_fields = any(
+            kw in full_text for kw in ["房屋基本情况", "付款方式", "装修价款"]
+        )
+
+        # 签署页优先（但要排除监管协议）
+        if has_stamp_signals and not is_fund_supervision:
+            return PageType.STAMP
+        elif has_contract_title and has_first_page_fields:
+            return PageType.FIRST_PAGE
+        elif has_content_fields:
+            return PageType.CONTENT
+        else:
+            return PageType.UNKNOWN
 
     def _get_refined_doc_type(
         self, doc_type: DocumentType, page_type: PageType
