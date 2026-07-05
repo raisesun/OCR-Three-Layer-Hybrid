@@ -22,6 +22,12 @@ from ocr_three_layer_hybrid.interfaces import (
 class KeywordDocumentClassifier(IDocumentClassifier):
     """基于关键词的文档分类器（三阶段路由）"""
 
+    # === 置信度阈值 ===
+    CONFIDENCE_PARTIAL_MATCH = 0.6  # 部分匹配（有买卖双方但无房屋类型）
+    CONFIDENCE_STRONG_SIGNAL = 0.9  # 强信号匹配
+    CONFIDENCE_COMBINATION = 0.85  # 组合信号匹配
+    CONFIDENCE_BACKUP = 0.85  # 备选信号匹配
+
     # === 阶段1: 标准证件强信号 ===
     # 这些关键词几乎只出现在对应证件上，误判率极低
     # 注意：字典顺序决定优先级，户口本在身份证之前（避免"公民身份号码"误判户口本）
@@ -776,7 +782,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 if doc_type == DocumentType.PURCHASE_CONTRACT:
                     if property_type_keywords and not has_property_type:
                         # 有买受人+出卖人，但没有"商品房" → 部分匹配，分类为购房合同
-                        confidence = 0.6
+                        confidence = self.CONFIDENCE_PARTIAL_MATCH
                         return DocumentInfo(
                             image_path=image_path,
                             doc_type=DocumentType.PURCHASE_CONTRACT,
@@ -790,7 +796,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                         )
                     else:
                         # 完整匹配：有买受人+出卖人+商品房
-                        confidence = 0.9
+                        confidence = self.CONFIDENCE_STRONG_SIGNAL
                         return DocumentInfo(
                             image_path=image_path,
                             doc_type=doc_type,
@@ -805,7 +811,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     # 存量房合同：必须有"存量房"关键词（完整匹配）
                     if property_type_keywords and not has_property_type:
                         continue  # 没有"存量房"关键词，跳过
-                    confidence = 0.85
+                    confidence = self.CONFIDENCE_COMBINATION
                     return DocumentInfo(
                         image_path=image_path,
                         doc_type=doc_type,
@@ -863,7 +869,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     continue
 
             # 计算置信度（仅资金监管和离婚协议走这里，合同类已在上面提前返回）
-            confidence = 0.85
+            confidence = self.CONFIDENCE_COMBINATION
 
             return DocumentInfo(
                 image_path=image_path,

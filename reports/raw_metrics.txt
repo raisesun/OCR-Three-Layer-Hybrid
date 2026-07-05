@@ -1,0 +1,216 @@
+src/ocr_three_layer_hybrid/paddleocr_wrapper.py
+    LOC: 990
+    LLOC: 453
+    SLOC: 621
+    Comments: 64
+    Single comments: 68
+    Multi: 142
+    Blank: 159
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 10%
+        (C + M % L): 21%
+src/ocr_three_layer_hybrid/interfaces.py
+    LOC: 179
+    LLOC: 124
+    SLOC: 98
+    Comments: 18
+    Single comments: 20
+    Multi: 19
+    Blank: 42
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 18%
+        (C + M % L): 21%
+src/ocr_three_layer_hybrid/rule_layer.py
+    LOC: 2189
+    LLOC: 1100
+    SLOC: 1659
+    Comments: 296
+    Single comments: 296
+    Multi: 62
+    Blank: 172
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 18%
+        (C + M % L): 16%
+src/ocr_three_layer_hybrid/service.py
+    LOC: 787
+    LLOC: 275
+    SLOC: 538
+    Comments: 54
+    Single comments: 54
+    Multi: 83
+    Blank: 112
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 10%
+        (C + M % L): 17%
+src/ocr_three_layer_hybrid/classifier.py
+    LOC: 910
+    LLOC: 326
+    SLOC: 658
+    Comments: 160
+    Single comments: 112
+    Multi: 54
+    Blank: 86
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 24%
+        (C + M % L): 24%
+src/ocr_three_layer_hybrid/config.py
+    LOC: 198
+    LLOC: 75
+    SLOC: 50
+    Comments: 75
+    Single comments: 68
+    Multi: 47
+    Blank: 33
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 150%
+        (C + M % L): 62%
+src/ocr_three_layer_hybrid/vlm_layer.py
+    LOC: 893
+    LLOC: 157
+    SLOC: 758
+    Comments: 33
+    Single comments: 32
+    Multi: 49
+    Blank: 54
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 4%
+        (C + M % L): 9%
+src/ocr_three_layer_hybrid/field_validator.py
+    LOC: 311
+    LLOC: 77
+    SLOC: 223
+    Comments: 24
+    Single comments: 14
+    Multi: 41
+    Blank: 33
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 11%
+        (C + M % L): 21%
+src/ocr_three_layer_hybrid/service_v1_backup.py
+    LOC: 760
+    LLOC: 281
+    SLOC: 515
+    Comments: 55
+    Single comments: 50
+    Multi: 90
+    Blank: 105
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 11%
+        (C + M % L): 19%
+src/ocr_three_layer_hybrid/__init__.py
+    LOC: 43
+    LLOC: 8
+    SLOC: 27
+    Comments: 2
+    Single comments: 0
+    Multi: 11
+    Blank: 5
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 7%
+        (C + M % L): 30%
+src/ocr_three_layer_hybrid/external_services.py
+    LOC: 119
+    LLOC: 41
+    SLOC: 61
+    Comments: 9
+    Single comments: 6
+    Multi: 26
+    Blank: 26
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 15%
+        (C + M % L): 29%
+src/ocr_three_layer_hybrid/image_preprocessor.py
+    LOC: 411
+    LLOC: 164
+    SLOC: 189
+    Comments: 28
+    Single comments: 26
+    Multi: 106
+    Blank: 90
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 15%
+        (C + M % L): 33%
+src/ocr_three_layer_hybrid/vlm_fallback.py
+    LOC: 242
+    LLOC: 97
+    SLOC: 158
+    Comments: 13
+    Single comments: 17
+    Multi: 33
+    Blank: 34
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 8%
+        (C + M % L): 19%
+src/ocr_three_layer_hybrid/pipeline.py
+    LOC: 568
+    LLOC: 97
+    SLOC: 475
+    Comments: 79
+    Single comments: 20
+    Multi: 33
+    Blank: 40
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 17%
+        (C + M % L): 20%
+src/ocr_three_layer_hybrid/text_preprocessor.py
+    LOC: 237
+    LLOC: 76
+    SLOC: 64
+    Comments: 24
+    Single comments: 27
+    Multi: 78
+    Blank: 68
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 38%
+        (C + M % L): 43%
+src/ocr_three_layer_hybrid/demo.py
+    LOC: 158
+    LLOC: 68
+    SLOC: 121
+    Comments: 6
+    Single comments: 7
+    Multi: 4
+    Blank: 26
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 6%
+src/ocr_three_layer_hybrid/position_extractor.py
+    LOC: 429
+    LLOC: 251
+    SLOC: 281
+    Comments: 34
+    Single comments: 32
+    Multi: 49
+    Blank: 67
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 12%
+        (C + M % L): 19%
+** Total **
+    LOC: 9424
+    LLOC: 3670
+    SLOC: 6496
+    Comments: 974
+    Single comments: 849
+    Multi: 927
+    Blank: 1152
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 15%
+        (C + M % L): 20%

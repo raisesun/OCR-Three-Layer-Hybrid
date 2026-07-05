@@ -1,0 +1,41 @@
+src/ocr_three_layer_hybrid/paddleocr_wrapper.py
+    M 515:4 PaddleOCREngine._group_texts_by_regions - C (18)
+    M 586:4 PaddleOCREngine.predict - C (13)
+    M 291:4 PPStructureV3Engine.predict - C (12)
+src/ocr_three_layer_hybrid/rule_layer.py
+    M 786:4 RuleExtractionLayer._extract_household_register - F (84)
+    M 1606:4 RuleExtractionLayer._extract_fund_supervision - F (81)
+    M 1450:4 RuleExtractionLayer._extract_contract - F (57)
+    M 1313:4 RuleExtractionLayer._extract_invoice - F (51)
+    M 1895:4 RuleExtractionLayer._extract_fund_supervision_certificate - F (45)
+    M 391:4 RuleExtractionLayer._extract_id_card_without_labels - F (44)
+    M 1168:4 RuleExtractionLayer._extract_property_certificate_content - F (42)
+    M 235:4 RuleExtractionLayer._extract_id_card_with_labels - F (41)
+    M 1047:4 RuleExtractionLayer._extract_property_certificate - E (40)
+    C 26:0 RuleExtractionLayer - E (32)
+    M 2095:4 RuleExtractionLayer._extract_divorce_agreement - D (26)
+    M 82:4 RuleExtractionLayer.extract - D (23)
+    M 557:4 RuleExtractionLayer._extract_marriage_certificate - C (20)
+    M 643:4 RuleExtractionLayer._extract_divorce_certificate - C (16)
+    M 699:4 RuleExtractionLayer._extract_two_persons_info - C (11)
+src/ocr_three_layer_hybrid/service.py
+    M 509:4 OCRService._extract_multi_page_merge - C (12)
+src/ocr_three_layer_hybrid/classifier.py
+    M 540:4 KeywordDocumentClassifier._classify_base - F (90)
+    M 196:4 KeywordDocumentClassifier._detect_page_type - F (62)
+    M 431:4 KeywordDocumentClassifier._get_refined_doc_type - E (31)
+    C 22:0 KeywordDocumentClassifier - D (28)
+src/ocr_three_layer_hybrid/vlm_layer.py
+    M 822:4 VLMExtractionLayer._parse_json_response - D (24)
+    M 646:4 VLMExtractionLayer.extract_multi_page - C (15)
+src/ocr_three_layer_hybrid/field_validator.py
+    M 189:4 FieldValidator.validate - C (17)
+src/ocr_three_layer_hybrid/service_v1_backup.py
+    M 152:4 OCRService.__init__ - C (13)
+src/ocr_three_layer_hybrid/pipeline.py
+    M 382:4 PlanEPlusPipeline.process - D (24)
+src/ocr_three_layer_hybrid/position_extractor.py
+    M 290:4 HouseholdPositionExtractor._extract_field - C (20)
+
+29 blocks (classes, functions, methods) analyzed.
+Average complexity: E (34.206896551724135)
