@@ -23,6 +23,7 @@ import numpy as np
 
 try:
     import cv2
+
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
@@ -30,7 +31,9 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 if not CV2_AVAILABLE:
-    logger.warning("OpenCV 不可用，图像增强功能将被禁用。请安装: pip install opencv-python")
+    logger.warning(
+        "OpenCV 不可用，图像增强功能将被禁用。请安装: pip install opencv-python"
+    )
 
 
 def resize_image(
@@ -54,8 +57,8 @@ def resize_image(
     try:
         with Image.open(image_path) as img:
             # 转换为 RGB（如果是 RGBA 或其他模式）
-            if img.mode not in ('RGB', 'L'):
-                img = img.convert('RGB')
+            if img.mode not in ("RGB", "L"):
+                img = img.convert("RGB")  # type: ignore[assignment]
 
             width, height = img.size
 
@@ -69,7 +72,9 @@ def resize_image(
             new_width = int(width * scale)
             new_height = int(height * scale)
 
-            logger.info(f"缩放图片: {width}x{height} → {new_width}x{new_height} (scale={scale:.2f})")
+            logger.info(
+                f"缩放图片: {width}x{height} → {new_width}x{new_height} (scale={scale:.2f})"
+            )
 
             # 高质量缩放
             img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
@@ -121,6 +126,7 @@ def ensure_max_size(
     # 需要缩放，创建临时文件
     if temp_dir is None:
         import tempfile
+
         temp_dir = tempfile.gettempdir()
 
     Path(temp_dir).mkdir(parents=True, exist_ok=True)
@@ -166,6 +172,7 @@ def get_image_info(image_path: str) -> dict:
 # =============================================================================
 # 高级图像增强功能
 # =============================================================================
+
 
 class ImageEnhancer:
     """
@@ -289,13 +296,11 @@ class ImageEnhancer:
         logger.debug(f"纠偏角度: {angle:.2f}°")
 
         # 旋转图像
-        (h, w) = image.shape[:2]
+        h, w = image.shape[:2]
         center = (w // 2, h // 2)
         M = cv2.getRotationMatrix2D(center, angle, 1.0)
         return cv2.warpAffine(
-            image, M, (w, h),
-            flags=cv2.INTER_CUBIC,
-            borderMode=cv2.BORDER_REPLICATE
+            image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE
         )
 
     def enhance_contrast(self, image: np.ndarray) -> np.ndarray:
@@ -333,16 +338,10 @@ class ImageEnhancer:
 
         if method == "adaptive":
             return cv2.adaptiveThreshold(
-                gray, 255,
-                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                cv2.THRESH_BINARY,
-                11, 2
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
             )
         elif method == "otsu":
-            _, binary = cv2.threshold(
-                gray, 0, 255,
-                cv2.THRESH_BINARY + cv2.THRESH_OTSU
-            )
+            _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             return binary
         else:
             raise ValueError(f"未知的二值化方法: {method}，支持 adaptive / otsu")
@@ -395,6 +394,7 @@ def enhance_image(
         # 确定输出路径
         if output_path is None:
             import tempfile
+
             temp_dir = tempfile.gettempdir()
             Path(temp_dir).mkdir(parents=True, exist_ok=True)
             filename = Path(image_path).name

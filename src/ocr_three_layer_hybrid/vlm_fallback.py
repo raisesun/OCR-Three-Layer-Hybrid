@@ -197,7 +197,9 @@ class VLMFallbackHandler:
             json_template=json_template,
         )
 
-    def _parse_response(self, response: str, expected_fields: List[str]) -> Dict[str, str]:
+    def _parse_response(
+        self, response: str, expected_fields: List[str]
+    ) -> Dict[str, str]:
         """解析VLM响应JSON"""
         # 清理markdown代码块标记
         response = re.sub(r"```json\s*", "", response)

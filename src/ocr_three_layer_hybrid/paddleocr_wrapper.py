@@ -49,23 +49,21 @@ _DEFAULT_REC_MODEL = os.path.join(_DEFAULT_MODELS_DIR, "PP-OCRv6_medium_rec")
 _DEFAULT_LAYOUT_MODEL = os.path.join(_DEFAULT_MODELS_DIR, "PP-DocLayoutV3")
 
 # PaddleOCR-VL 模型路径
-_DEFAULT_VLM_MODEL = os.path.expanduser(
-    "~/Github/models-OCR/PaddleOCR-VL-0.9B"
-)
+_DEFAULT_VLM_MODEL = os.path.expanduser("~/Github/models-OCR/PaddleOCR-VL-0.9B")
 
 # ============== 版面分析标签 ==============
 
 LAYOUT_LABELS = {
-    "text",           # 普通文本
-    "title",          # 标题
-    "table",          # 表格
-    "figure",         # 图片
-    "image",          # 图片
-    "seal",           # 印章
-    "header",         # 页眉
-    "footer",         # 页脚
-    "header_image",   # 页眉图片
-    "footer_image",   # 页脚图片
+    "text",  # 普通文本
+    "title",  # 标题
+    "table",  # 表格
+    "figure",  # 图片
+    "image",  # 图片
+    "seal",  # 印章
+    "header",  # 页眉
+    "footer",  # 页脚
+    "header_image",  # 页眉图片
+    "footer_image",  # 页脚图片
 }
 
 # 需要 OCR 的区域
@@ -77,14 +75,16 @@ SKIP_REGION_LABELS = {"seal", "figure", "image", "header_image", "footer_image"}
 
 # ============== 数据结构 ==============
 
+
 @dataclass
 class LayoutRegion:
     """版面分析检测到的区域"""
-    label: str              # 区域类型
-    score: float            # 检测置信度
-    coordinate: list        # 边界框 [x1, y1, x2, y2]
-    order: Optional[int]    # 阅读顺序
-    polygon_points: list    # 多边形顶点
+
+    label: str  # 区域类型
+    score: float  # 检测置信度
+    coordinate: list  # 边界框 [x1, y1, x2, y2]
+    order: Optional[int]  # 阅读顺序
+    polygon_points: list  # 多边形顶点
 
     def to_dict(self) -> dict:
         return {
@@ -98,6 +98,7 @@ class LayoutRegion:
 @dataclass
 class OCRResult:
     """OCR 识别结果"""
+
     input_path: str
     # 识别文本列表
     rec_texts: List[str] = field(default_factory=list)
@@ -150,13 +151,15 @@ class OCRResult:
                         [float(x1), float(y1), float(x2), float(y2)]
                     )
 
-            result.append({
-                "text": text,
-                "score": float(score),
-                "poly": poly.tolist() if poly is not None else [],
-                "bbox": bbox or [],
-                "region_label": region_label,
-            })
+            result.append(
+                {
+                    "text": text,
+                    "score": float(score),
+                    "poly": poly.tolist() if poly is not None else [],
+                    "bbox": bbox or [],
+                    "region_label": region_label,
+                }
+            )
         return result
 
     def _find_region_for_bbox(self, text_bbox: List[float]) -> Optional[str]:
@@ -192,10 +195,7 @@ class OCRResult:
 
     def get_text_by_region(self, label: str) -> List[str]:
         """获取指定区域类型的所有文本"""
-        return [
-            b["text"] for b in self.blocks
-            if b.get("region_label") == label
-        ]
+        return [b["text"] for b in self.blocks if b.get("region_label") == label]
 
     def to_dict(self) -> dict:
         """转换为字典"""
@@ -217,9 +217,7 @@ class OCRResult:
                 {
                     "region": b["region"].to_dict(),
                     "texts": b["texts"],
-                    "avg_score": round(
-                        sum(b["scores"]) / max(len(b["scores"]), 1), 4
-                    ),
+                    "avg_score": round(sum(b["scores"]) / max(len(b["scores"]), 1), 4),
                 }
                 for b in self.grouped_blocks
             ]
@@ -231,6 +229,7 @@ class OCRResult:
 
 
 # ============== PP-StructureV3 引擎 ==============
+
 
 class PPStructureV3Engine:
     """
@@ -275,6 +274,7 @@ class PPStructureV3Engine:
         """延迟加载 PP-StructureV3 pipeline"""
         if self._pipeline is None:
             from paddlex import create_pipeline
+
             logger.info(f"初始化 PP-StructureV3 pipeline (device={self.device})...")
             start = time.time()
             self._pipeline = create_pipeline(
@@ -284,7 +284,9 @@ class PPStructureV3Engine:
                 use_table_recognition=self.use_table,
                 use_formula_recognition=self.use_formula,
             )
-            logger.info(f"PP-StructureV3 pipeline 初始化完成，耗时: {time.time()-start:.1f}s")
+            logger.info(
+                f"PP-StructureV3 pipeline 初始化完成，耗时: {time.time()-start:.1f}s"
+            )
 
     def predict(
         self,
@@ -309,6 +311,7 @@ class PPStructureV3Engine:
         processed_input = input_data
         if isinstance(input_data, str) and os.path.exists(input_data):
             from ocr_three_layer_hybrid.image_preprocessor import ensure_max_size
+
             processed_input = ensure_max_size(input_data, max_side=2000)
             if processed_input != input_data:
                 logger.info(f"图片已预处理（缩放）")
@@ -341,7 +344,7 @@ class PPStructureV3Engine:
 
             input_path = inner.get(
                 "input_path",
-                str(input_data) if isinstance(input_data, str) else "ndarray"
+                str(input_data) if isinstance(input_data, str) else "ndarray",
             )
 
             ocr_result = OCRResult(
@@ -354,7 +357,9 @@ class PPStructureV3Engine:
             results.append(ocr_result)
 
         elapsed = time.time() - start
-        logger.info(f"PP-StructureV3 推理完成，耗时: {elapsed:.1f}s，共{len(results)}页")
+        logger.info(
+            f"PP-StructureV3 推理完成，耗时: {elapsed:.1f}s，共{len(results)}页"
+        )
 
         return results
 
@@ -393,6 +398,7 @@ class PPStructureV3Engine:
 
 
 # ============== OCR 引擎（标准 PP-OCRv6） ==============
+
 
 class PaddleOCREngine:
     """
@@ -453,6 +459,7 @@ class PaddleOCREngine:
         """延迟加载 OCR pipeline"""
         if self._ocr_pipeline is None:
             from paddleocr import PaddleOCR
+
             logger.info(f"初始化 PaddleOCR pipeline (device={self.device})...")
             logger.info(f"  检测模型: {self.det_model_dir}")
             logger.info(f"  识别模型: {self.rec_model_dir}")
@@ -462,12 +469,15 @@ class PaddleOCREngine:
                 text_recognition_model_dir=self.rec_model_dir,
                 **self._init_kwargs,
             )
-            logger.info(f"PaddleOCR pipeline 初始化完成，耗时: {time.time()-start:.1f}s")
+            logger.info(
+                f"PaddleOCR pipeline 初始化完成，耗时: {time.time()-start:.1f}s"
+            )
 
     def _ensure_layout_model(self):
         """延迟加载版面分析模型"""
         if self.use_layout and self._layout_model is None:
             from paddlex import create_pipeline
+
             logger.info(f"初始化 PP-DocLayoutV3 版面分析模型...")
             logger.info(f"  模型路径: {self.layout_model_dir}")
             start = time.time()
@@ -488,14 +498,18 @@ class PaddleOCREngine:
             inner = j.get("res", j) if isinstance(j, dict) else {}
             boxes = inner.get("boxes", [])
             for b in boxes:
-                regions.append(LayoutRegion(
-                    label=b.get("label", "unknown"),
-                    score=b.get("score", 0.0),
-                    coordinate=b.get("coordinate", []),
-                    order=b.get("order"),
-                    polygon_points=b.get("polygon_points", []),
-                ))
-        logger.info(f"版面分析完成，耗时: {time.time()-start:.1f}s，检测到 {len(regions)} 个区域")
+                regions.append(
+                    LayoutRegion(
+                        label=b.get("label", "unknown"),
+                        score=b.get("score", 0.0),
+                        coordinate=b.get("coordinate", []),
+                        order=b.get("order"),
+                        polygon_points=b.get("polygon_points", []),
+                    )
+                )
+        logger.info(
+            f"版面分析完成，耗时: {time.time()-start:.1f}s，检测到 {len(regions)} 个区域"
+        )
         return regions
 
     def _group_texts_by_regions(
@@ -544,11 +558,13 @@ class PaddleOCREngine:
         for region_idx in set(block_to_region.values()):
             region = regions[region_idx]
             indices = [i for i, ri in block_to_region.items() if ri == region_idx]
+
             # 按 y 坐标排序
             def y_position(i):
                 if i < len(rec_polys):
                     return np.array(rec_polys[i]).min(axis=0)[1]
                 return 0
+
             indices.sort(key=y_position)
             grouped[region_idx] = {
                 "region": region,
@@ -559,7 +575,11 @@ class PaddleOCREngine:
         # 按区域 order 排序输出
         result = sorted(
             grouped.values(),
-            key=lambda g: (0, g["region"].coordinate[1]) if g["region"].order is None else (1, g["region"].order),
+            key=lambda g: (
+                (0, g["region"].coordinate[1])
+                if g["region"].order is None
+                else (1, g["region"].order)
+            ),
         )
         return result
 
@@ -582,15 +602,21 @@ class PaddleOCREngine:
         """
         self._ensure_pipeline()
 
-        input_desc = input_data if isinstance(input_data, str) else (
-            f"{len(input_data)}张" if isinstance(input_data, list) else "ndarray"
+        input_desc = (
+            input_data
+            if isinstance(input_data, str)
+            else (f"{len(input_data)}张" if isinstance(input_data, list) else "ndarray")
         )
         logger.info(f"开始推理: {input_desc}")
         start = time.time()
 
         # 版面分析（如果启用）
         layout_regions = None
-        if self.use_layout and isinstance(input_data, str) and os.path.exists(input_data):
+        if (
+            self.use_layout
+            and isinstance(input_data, str)
+            and os.path.exists(input_data)
+        ):
             try:
                 layout_regions = self._run_layout_analysis(input_data)
             except Exception as e:
@@ -604,7 +630,7 @@ class PaddleOCREngine:
         for res in output:
             input_path = res.get(
                 "input_path",
-                str(input_data) if isinstance(input_data, str) else "ndarray"
+                str(input_data) if isinstance(input_data, str) else "ndarray",
             )
             rec_texts = res.get("rec_texts", []) or []
             rec_scores = res.get("rec_scores", []) or []
@@ -677,6 +703,7 @@ class PaddleOCREngine:
 
 # ============== VLM 引擎 ==============
 
+
 class PaddleOCRVLLEngine:
     """
     PaddleOCR-VL 视觉语言模型引擎
@@ -720,7 +747,10 @@ class PaddleOCRVLLEngine:
         """延迟加载 VLM pipeline"""
         if self._pipeline is None:
             from paddleocr import PaddleOCRVL
-            logger.info(f"初始化 PaddleOCR-VL pipeline (version={self.pipeline_version})...")
+
+            logger.info(
+                f"初始化 PaddleOCR-VL pipeline (version={self.pipeline_version})..."
+            )
             logger.info(f"  VLM 模型: {self.vl_rec_model_dir}")
             start = time.time()
             self._pipeline = PaddleOCRVL(
@@ -745,7 +775,9 @@ class PaddleOCRVLLEngine:
         """
         self._ensure_pipeline()
 
-        logger.info(f"VLM 推理开始: {input_data if isinstance(input_data, str) else 'ndarray'}")
+        logger.info(
+            f"VLM 推理开始: {input_data if isinstance(input_data, str) else 'ndarray'}"
+        )
         start = time.time()
 
         output = self._pipeline.predict(input_data)
@@ -765,7 +797,7 @@ class PaddleOCRVLLEngine:
 
             input_path = inner.get(
                 "input_path",
-                str(input_data) if isinstance(input_data, str) else "ndarray"
+                str(input_data) if isinstance(input_data, str) else "ndarray",
             )
 
             ocr_result = OCRResult(
@@ -795,6 +827,7 @@ class PaddleOCRVLLEngine:
 
 # ============== 统一包装器 ==============
 
+
 class PaddleOCRWrapper:
     """
     PaddleOCR 统一包装器
@@ -818,8 +851,15 @@ class PaddleOCRWrapper:
 
     # 文档类型分类
     FAST_DOC_TYPES = {
-        "身份证", "结婚证", "离婚证", "户口本", "发票",
-        "不动产权证书", "营业执照", "驾驶证", "行驶证"
+        "身份证",
+        "结婚证",
+        "离婚证",
+        "户口本",
+        "发票",
+        "不动产权证书",
+        "营业执照",
+        "驾驶证",
+        "行驶证",
     }
 
     def __init__(

@@ -10,13 +10,15 @@ OCR文本预处理模块
 """
 
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 class OCRTextPreprocessor:
     """OCR文本预处理器"""
 
-    def __init__(self, enable_cleaning: bool = True, enable_standardization: bool = True):
+    def __init__(
+        self, enable_cleaning: bool = True, enable_standardization: bool = True
+    ):
         """
         初始化预处理器
 
@@ -63,24 +65,24 @@ class OCRTextPreprocessor:
         result = text
 
         # 1. 移除零宽字符和控制字符
-        result = re.sub(r'[​‌‍﻿]', '', result)
+        result = re.sub(r"[​‌‍﻿]", "", result)
 
         # 2. 将全角空格转换为半角空格
-        result = result.replace('　', ' ')
+        result = result.replace("　", " ")
 
         # 3. 规范化空白字符（制表符、换页符等转为空格）
-        result = re.sub(r'[\t\f\v]', ' ', result)
+        result = re.sub(r"[\t\f\v]", " ", result)
 
         # 4. 移除行首行尾多余空格（保留换行符）
-        lines = result.split('\n')
+        lines = result.split("\n")
         lines = [line.strip() for line in lines]
-        result = '\n'.join(lines)
+        result = "\n".join(lines)
 
         # 5. 压缩连续多个空格为单个空格
-        result = re.sub(r' {2,}', ' ', result)
+        result = re.sub(r" {2,}", " ", result)
 
         # 6. 压缩连续多个换行为单个换行
-        result = re.sub(r'\n{3,}', '\n\n', result)
+        result = re.sub(r"\n{3,}", "\n\n", result)
 
         return result
 
@@ -115,24 +117,14 @@ class OCRTextPreprocessor:
 
         # 1. "2026年 1月 14日" → "2026年1月14日"（移除日期中的空格）
         result = re.sub(
-            r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日',
-            r'\1年\2月\3日',
-            result
+            r"(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日", r"\1年\2月\3日", result
         )
 
         # 2. "2026- 01- 14" → "2026-01-14"
-        result = re.sub(
-            r'(\d{4})\s*-\s*(\d{1,2})\s*-\s*(\d{1,2})',
-            r'\1-\2-\3',
-            result
-        )
+        result = re.sub(r"(\d{4})\s*-\s*(\d{1,2})\s*-\s*(\d{1,2})", r"\1-\2-\3", result)
 
         # 3. "2026/ 01/ 14" → "2026/01/14"
-        result = re.sub(
-            r'(\d{4})\s*/\s*(\d{1,2})\s*/\s*(\d{1,2})',
-            r'\1/\2/\3',
-            result
-        )
+        result = re.sub(r"(\d{4})\s*/\s*(\d{1,2})\s*/\s*(\d{1,2})", r"\1/\2/\3", result)
 
         return result
 
@@ -145,7 +137,7 @@ class OCRTextPreprocessor:
         result = text
 
         # 1. "¥ 40000.00" → "¥40000.00"（移除货币符号后的空格）
-        result = re.sub(r'[¥￥]\s*(\d)', r'¥\1', result)
+        result = re.sub(r"[¥￥]\s*(\d)", r"¥\1", result)
 
         # 2. "40,000.00" → "40000.00"（移除千位分隔符，可选）
         # 注意：这个可能会影响其他数字，暂时不启用
@@ -168,7 +160,7 @@ class OCRTextPreprocessor:
         # 不替换，因为中文文档应该用中文括号
 
         # 3. 移除标点符号后的多余空格
-        result = re.sub(r'([，。；：！？])\s+', r'\1', result)
+        result = re.sub(r"([，。；：！？])\s+", r"\1", result)
 
         return result
 
@@ -188,7 +180,7 @@ class OCRTextPreprocessor:
 class FieldExtractorEnhancer:
     """字段提取增强器（使用预处理后的文本）"""
 
-    def __init__(self, preprocessor: OCRTextPreprocessor = None):
+    def __init__(self, preprocessor: Optional[OCRTextPreprocessor] = None):
         """
         初始化增强器
 

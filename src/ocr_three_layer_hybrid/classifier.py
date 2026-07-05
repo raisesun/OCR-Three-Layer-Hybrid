@@ -10,8 +10,13 @@
 4. 无法判定 → VLM兜底（返回UNKNOWN）
 """
 
-from typing import Dict, List, Optional, Tuple
-from ocr_three_layer_hybrid.interfaces import DocumentType, DocumentInfo, PageType, IDocumentClassifier
+from typing import Any, Dict, List, Optional, Tuple
+from ocr_three_layer_hybrid.interfaces import (
+    DocumentType,
+    DocumentInfo,
+    PageType,
+    IDocumentClassifier,
+)
 
 
 class KeywordDocumentClassifier(IDocumentClassifier):
@@ -22,50 +27,50 @@ class KeywordDocumentClassifier(IDocumentClassifier):
     # 注意：字典顺序决定优先级，户口本在身份证之前（避免"公民身份号码"误判户口本）
     STANDARD_CERTIFICATE_SIGNALS: Dict[DocumentType, List[str]] = {
         DocumentType.HOUSEHOLD_REGISTER: [
-            "常住人口登记卡",    # 户口本个人页独有（优先级最高）
+            "常住人口登记卡",  # 户口本个人页独有（优先级最高）
         ],
         DocumentType.DIVORCE_CERTIFICATE: [
-            "离婚证字号",        # 离婚证独有
-            "离婚证",            # 离婚证标题
+            "离婚证字号",  # 离婚证独有
+            "离婚证",  # 离婚证标题
         ],
         DocumentType.NOTARY_CERTIFICATE: [
-            "公证书",            # 公证书标题
-            "公证字第",          # 公证书编号特征
+            "公证书",  # 公证书标题
+            "公证字第",  # 公证书编号特征
         ],
         DocumentType.POWER_OF_ATTORNEY: [
-            "委托书",            # 委托书标题
-            "委托人",            # 委托书特征
-            "受托人",            # 委托书特征
+            "委托书",  # 委托书标题
+            "委托人",  # 委托书特征
+            "受托人",  # 委托书特征
         ],
         DocumentType.DIVORCE_AGREEMENT: [
-            "离婚协议书",        # 离婚协议书标题
+            "离婚协议书",  # 离婚协议书标题
         ],
         DocumentType.ID_CARD: [
-            "公民身份号码",      # 身份证独有
-            "签发机关",          # 身份证反面独有
+            "公民身份号码",  # 身份证独有
+            "签发机关",  # 身份证反面独有
         ],
         DocumentType.MARRIAGE_CERTIFICATE: [
-            "结婚证字号",        # 结婚证独有
+            "结婚证字号",  # 结婚证独有
         ],
         DocumentType.PROPERTY_CERTIFICATE: [
-            "不动产权证书",      # 房产证独有
-            "BDCQZ",            # 房产证编号前缀
-            "房产分户图",        # 房产证附图页
-            "宗地图",            # 房产证附图页
-            "所在图幅编号",      # 房产证附图页
-            "制图日期",          # 房产证附图页
-            "制图者",            # 房产证附图页
-            "宗地代码",          # 房产证附图页
+            "不动产权证书",  # 房产证独有
+            "BDCQZ",  # 房产证编号前缀
+            "房产分户图",  # 房产证附图页
+            "宗地图",  # 房产证附图页
+            "所在图幅编号",  # 房产证附图页
+            "制图日期",  # 房产证附图页
+            "制图者",  # 房产证附图页
+            "宗地代码",  # 房产证附图页
         ],
         DocumentType.FUND_SUPERVISION_CERTIFICATE: [
             "存量房交易资金监管凭证",  # 资金监管凭证独有标题
-            "资金监管凭证",       # 简写
+            "资金监管凭证",  # 简写
         ],
     }
 
     # === 阶段1.5: 标准证件备选强信号（需要组合匹配） ===
     # 当主强信号未命中时，使用备选强信号
-    BACKUP_CERTIFICATE_SIGNALS: Dict[DocumentType, Dict[str, List[str]]] = {
+    BACKUP_CERTIFICATE_SIGNALS: Dict[DocumentType, Dict[str, Any]] = {
         DocumentType.MARRIAGE_CERTIFICATE: {
             # 持证人 + 登记日期 → 结婚证
             "primary": ["持证人"],
@@ -86,7 +91,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
 
     # === 阶段1.6: 更多备选信号 ===
     # 针对特殊页面的备选信号
-    ADDITIONAL_BACKUP_SIGNALS: Dict[DocumentType, Dict[str, List[str]]] = {
+    ADDITIONAL_BACKUP_SIGNALS: Dict[DocumentType, Dict[str, Any]] = {
         DocumentType.HOUSEHOLD_REGISTER: {
             # 户别 + 户主姓名 + (住址 或 户口专用章) → 户口本首页
             "primary": ["户别", "户 别"],  # 处理OCR空格问题
@@ -200,8 +205,12 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             PageType枚举值
         """
         # === 离婚证页面类型识别 ===
-        if doc_type in [DocumentType.DIVORCE_CERTIFICATE, DocumentType.DIVORCE_CERTIFICATE_COVER,
-                        DocumentType.DIVORCE_CERTIFICATE_CONTENT, DocumentType.DIVORCE_CERTIFICATE_STAMP]:
+        if doc_type in [
+            DocumentType.DIVORCE_CERTIFICATE,
+            DocumentType.DIVORCE_CERTIFICATE_COVER,
+            DocumentType.DIVORCE_CERTIFICATE_CONTENT,
+            DocumentType.DIVORCE_CERTIFICATE_STAMP,
+        ]:
             # 内容页特征：有离婚证字号 + 登记日期 + 持证人信息
             has_cert_no = "离婚证字号" in full_text
             has_date = "登记日期" in full_text
@@ -209,7 +218,11 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             if has_cert_no and has_date:
                 return PageType.CONTENT
             # 盖章页特征：有印章相关词（优先于封面页检测）
-            elif "登记机关" in full_text or "婚姻登记专用章" in full_text or "予以登记" in full_text:
+            elif (
+                "登记机关" in full_text
+                or "婚姻登记专用章" in full_text
+                or "予以登记" in full_text
+            ):
                 return PageType.STAMP
             # 封面页特征：有"离婚证"但无内容页特征
             elif "离婚证" in full_text and not has_cert_no:
@@ -218,8 +231,12 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 return PageType.UNKNOWN
 
         # === 结婚证页面类型识别 ===
-        if doc_type in [DocumentType.MARRIAGE_CERTIFICATE, DocumentType.MARRIAGE_CERTIFICATE_COVER,
-                        DocumentType.MARRIAGE_CERTIFICATE_CONTENT, DocumentType.MARRIAGE_CERTIFICATE_STAMP]:
+        if doc_type in [
+            DocumentType.MARRIAGE_CERTIFICATE,
+            DocumentType.MARRIAGE_CERTIFICATE_COVER,
+            DocumentType.MARRIAGE_CERTIFICATE_CONTENT,
+            DocumentType.MARRIAGE_CERTIFICATE_STAMP,
+        ]:
             # 内容页特征：有结婚证字号 + 持证人 + 登记日期
             has_cert_no = "结婚证字号" in full_text
             has_holder = "持证人" in full_text
@@ -228,7 +245,11 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             if has_cert_no or (has_holder and has_date):
                 return PageType.CONTENT
             # 盖章页特征：有印章相关词（优先于封面页检测）
-            elif "登记机关" in full_text or "婚姻登记专用章" in full_text or "予以登记" in full_text:
+            elif (
+                "登记机关" in full_text
+                or "婚姻登记专用章" in full_text
+                or "予以登记" in full_text
+            ):
                 return PageType.STAMP
             # 封面页特征：有"结婚证"但无内容页特征
             elif "结婚证" in full_text and not has_cert_no:
@@ -237,8 +258,11 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 return PageType.UNKNOWN
 
         # === 户口本页面类型识别 ===
-        if doc_type in [DocumentType.HOUSEHOLD_REGISTER, DocumentType.HOUSEHOLD_REGISTER_COVER,
-                        DocumentType.HOUSEHOLD_REGISTER_CONTENT]:
+        if doc_type in [
+            DocumentType.HOUSEHOLD_REGISTER,
+            DocumentType.HOUSEHOLD_REGISTER_COVER,
+            DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+        ]:
             # 首页特征：户别 + 户主姓名 + 住址
             has_hubie = "户别" in full_text or "户 别" in full_text
             has_holder_name = "户主姓名" in full_text
@@ -254,14 +278,32 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 return PageType.UNKNOWN
 
         # === 不动产权证书页面类型识别 ===
-        if doc_type in [DocumentType.PROPERTY_CERTIFICATE, DocumentType.PROPERTY_CERTIFICATE_CONTENT,
-                        DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT, DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE]:
+        if doc_type in [
+            DocumentType.PROPERTY_CERTIFICATE,
+            DocumentType.PROPERTY_CERTIFICATE_CONTENT,
+            DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+            DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE,
+        ]:
             # 附图页特征：房产分户图、宗地图、所在图幅编号
-            attachment_signals = ["房产分户图", "宗地图", "所在图幅编号", "制图日期", "制图者", "宗地代码"]
+            attachment_signals = [
+                "房产分户图",
+                "宗地图",
+                "所在图幅编号",
+                "制图日期",
+                "制图者",
+                "宗地代码",
+            ]
             if any(signal in full_text for signal in attachment_signals):
                 return PageType.ATTACHMENT
             # 内容页特征：有共有情况、不动产单元号、坐落、权利类型等多个字段
-            content_signals = ["共有情况", "不动产单元号", "坐落", "权利类型", "权利性质", "使用期限"]
+            content_signals = [
+                "共有情况",
+                "不动产单元号",
+                "坐落",
+                "权利类型",
+                "权利性质",
+                "使用期限",
+            ]
             content_count = sum(1 for signal in content_signals if signal in full_text)
             if content_count >= 3:
                 return PageType.CONTENT
@@ -269,15 +311,24 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             first_page_signals = ["登记机构", "编号"]
             if any(signal in full_text for signal in first_page_signals):
                 # 且不包含内容页的明确特征
-                if not any(signal in full_text for signal in ["共有情况", "不动产单元号", "权利类型", "权利性质"]):
+                if not any(
+                    signal in full_text
+                    for signal in ["共有情况", "不动产单元号", "权利类型", "权利性质"]
+                ):
                     return PageType.FIRST_PAGE
             else:
                 return PageType.UNKNOWN
 
         # === 身份证页面类型识别 ===
-        if doc_type in [DocumentType.ID_CARD, DocumentType.ID_CARD_FRONT, DocumentType.ID_CARD_BACK]:
+        if doc_type in [
+            DocumentType.ID_CARD,
+            DocumentType.ID_CARD_FRONT,
+            DocumentType.ID_CARD_BACK,
+        ]:
             # 正面特征：有姓名、性别、民族、出生、住址
-            has_front_fields = any(kw in full_text for kw in ["姓名", "性别", "民族", "出生", "住址"])
+            has_front_fields = any(
+                kw in full_text for kw in ["姓名", "性别", "民族", "出生", "住址"]
+            )
             # 背面特征：有签发机关、有效期限
             has_back_fields = any(kw in full_text for kw in ["签发机关", "有效期限"])
 
@@ -289,20 +340,31 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 return PageType.UNKNOWN
 
         # === 资金监管协议页面类型识别 ===
-        if doc_type in [DocumentType.FUND_SUPERVISION,
-                        DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE,
-                        DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE,
-                        DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP]:
+        if doc_type in [
+            DocumentType.FUND_SUPERVISION,
+            DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE,
+            DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE,
+            DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP,
+        ]:
             # 首页特征：有"存量房交易资金监管协议"标题 + 编号/甲方/乙方
             has_title = "存量房交易资金监管协议" in full_text
-            has_first_page_fields = any(kw in full_text for kw in ["编号", "甲方", "乙方", "丙方", "签署日期"])
+            has_first_page_fields = any(
+                kw in full_text for kw in ["编号", "甲方", "乙方", "丙方", "签署日期"]
+            )
             # 信息页特征：有甲方/乙方 + 身份证号/银行/账号（但没有协议标题）
             has_party_info = any(kw in full_text for kw in ["身份证号", "银行", "账号"])
             # 签章页特征：有"签章"/"签字"/"盖章" + 有甲乙丙方签章标记
-            has_stamp_signals = any(kw in full_text for kw in [
-                "甲方（签章）", "乙方（签章）", "丙方（签章）",
-                "甲方签章", "乙方签章", "丙方签章"
-            ])
+            has_stamp_signals = any(
+                kw in full_text
+                for kw in [
+                    "甲方（签章）",
+                    "乙方（签章）",
+                    "丙方（签章）",
+                    "甲方签章",
+                    "乙方签章",
+                    "丙方签章",
+                ]
+            )
             has_sign_signals = any(kw in full_text for kw in ["签字", "盖章"])
 
             # 签章页优先检测（签章标记是强信号）
@@ -319,27 +381,39 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 return PageType.UNKNOWN
 
         # === 合同页面类型识别（购房合同/存量房合同）===
-        if doc_type in [DocumentType.PURCHASE_CONTRACT, DocumentType.STOCK_CONTRACT,
-                        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE, DocumentType.PURCHASE_CONTRACT_CONTENT,
-                        DocumentType.PURCHASE_CONTRACT_STAMP, DocumentType.STOCK_CONTRACT_FIRST_PAGE,
-                        DocumentType.STOCK_CONTRACT_CONTENT, DocumentType.STOCK_CONTRACT_STAMP]:
+        if doc_type in [
+            DocumentType.PURCHASE_CONTRACT,
+            DocumentType.STOCK_CONTRACT,
+            DocumentType.PURCHASE_CONTRACT_FIRST_PAGE,
+            DocumentType.PURCHASE_CONTRACT_CONTENT,
+            DocumentType.PURCHASE_CONTRACT_STAMP,
+            DocumentType.STOCK_CONTRACT_FIRST_PAGE,
+            DocumentType.STOCK_CONTRACT_CONTENT,
+            DocumentType.STOCK_CONTRACT_STAMP,
+        ]:
             # 签署页特征：合同签订日期、合同签订地址、签字/盖章
-            has_stamp_signals = any(kw in full_text for kw in [
-                "合同签订日期", "合同签订地址", "签字", "盖章", "签章"
-            ])
+            has_stamp_signals = any(
+                kw in full_text
+                for kw in ["合同签订日期", "合同签订地址", "签字", "盖章", "签章"]
+            )
             # 注意：监管协议的签章页也有这些特征，需要排除
-            is_fund_supervision = any(kw in full_text for kw in [
-                "资金监管", "监管协议", "监管凭证", "监管资金"
-            ])
+            is_fund_supervision = any(
+                kw in full_text
+                for kw in ["资金监管", "监管协议", "监管凭证", "监管资金"]
+            )
 
             # 首页特征：买卖合同、合同编号 + 卖方/买方/房屋坐落
-            has_contract_title = any(kw in full_text for kw in ["买卖合同", "存量房买卖合同"])
-            has_first_page_fields = any(kw in full_text for kw in ["卖方", "买方", "房屋坐落"])
+            has_contract_title = any(
+                kw in full_text for kw in ["买卖合同", "存量房买卖合同"]
+            )
+            has_first_page_fields = any(
+                kw in full_text for kw in ["卖方", "买方", "房屋坐落"]
+            )
 
             # 内容页特征：房屋基本情况、付款方式、装修价款
-            has_content_fields = any(kw in full_text for kw in [
-                "房屋基本情况", "付款方式", "装修价款"
-            ])
+            has_content_fields = any(
+                kw in full_text for kw in ["房屋基本情况", "付款方式", "装修价款"]
+            )
 
             # 签署页优先（但要排除监管协议）
             if has_stamp_signals and not is_fund_supervision:
@@ -354,7 +428,9 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         # 默认返回内容页（对于合同、协议等）
         return PageType.CONTENT
 
-    def _get_refined_doc_type(self, doc_type: DocumentType, page_type: PageType) -> DocumentType:
+    def _get_refined_doc_type(
+        self, doc_type: DocumentType, page_type: PageType
+    ) -> DocumentType:
         """
         根据页面类型细化文档类型
 
@@ -488,7 +564,10 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 page_type=PageType.CONTENT,  # 合同页默认为内容页
                 ocr_texts=ocr_texts,
                 confidence=0.90,
-                metadata={"route": "multi_doc_conflict_resolution", "signal": "buyer+seller+property_type"},
+                metadata={
+                    "route": "multi_doc_conflict_resolution",
+                    "signal": "buyer+seller+property_type",
+                },
             )
 
         # === 阶段1: 标准证件强信号 ===
@@ -498,15 +577,21 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     # 特殊处理：资金监管凭证需要额外检查
                     if doc_type == DocumentType.FUND_SUPERVISION_CERTIFICATE:
                         # 检查是否真的是凭证（有实际字段）
-                        has_cert_fields = any(kw in full_text for kw in [
-                            "协议编号", "买房人", "卖房人", "监管总额",
-                            "建筑面积", "房屋坐落"
-                        ])
-                        # 检查是否是协议信息页（有甲乙丙方+银行账号）
-                        has_agreement_info = (
-                            any(kw in full_text for kw in ["甲方", "乙方", "丙方"]) and
-                            any(kw in full_text for kw in ["银行", "账号"])
+                        has_cert_fields = any(
+                            kw in full_text
+                            for kw in [
+                                "协议编号",
+                                "买房人",
+                                "卖房人",
+                                "监管总额",
+                                "建筑面积",
+                                "房屋坐落",
+                            ]
                         )
+                        # 检查是否是协议信息页（有甲乙丙方+银行账号）
+                        has_agreement_info = any(
+                            kw in full_text for kw in ["甲方", "乙方", "丙方"]
+                        ) and any(kw in full_text for kw in ["银行", "账号"])
 
                         # 如果有凭证字段且不是协议信息页，才是真正的凭证
                         if has_cert_fields and not has_agreement_info:
@@ -515,7 +600,10 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                                 doc_type=doc_type,
                                 ocr_texts=ocr_texts,
                                 confidence=0.95,
-                                metadata={"route": "standard_certificate", "signal": signal},
+                                metadata={
+                                    "route": "standard_certificate",
+                                    "signal": signal,
+                                },
                             )
                         else:
                             # 否则分类为资金监管协议（信息页）
@@ -526,7 +614,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                                 confidence=0.90,
                                 metadata={
                                     "route": "fund_supervision_info_page",
-                                    "reason": "mentioned_cert_but_has_agreement_info"
+                                    "reason": "mentioned_cert_but_has_agreement_info",
                                 },
                             )
                     else:
@@ -536,7 +624,10 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                             doc_type=doc_type,
                             ocr_texts=ocr_texts,
                             confidence=0.95,
-                            metadata={"route": "standard_certificate", "signal": signal},
+                            metadata={
+                                "route": "standard_certificate",
+                                "signal": signal,
+                            },
                         )
 
         # === 阶段1.5: 标准证件备选强信号 ===
@@ -562,7 +653,8 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             # 检查是否需要18位身份证号模式（身份证专用）
             if id_pattern_required:
                 import re
-                if not re.search(r'\d{17}[\dXx]', full_text):
+
+                if not re.search(r"\d{17}[\dXx]", full_text):
                     continue
 
             # 检查次要信号（如果有定义）
@@ -633,19 +725,27 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 doc_type=DocumentType.INVOICE,
                 ocr_texts=ocr_texts,
                 confidence=0.95,
-                metadata={"route": "standard_document", "signal": "invoice_code+number"},
+                metadata={
+                    "route": "standard_document",
+                    "signal": "invoice_code+number",
+                },
             )
 
         # 发票弱信号：税额 + 不含税金额
         if any(signal in full_text for signal in self.INVOICE_WEAK_SIGNALS):
-            weak_signal_count = sum(1 for s in self.INVOICE_WEAK_SIGNALS if s in full_text)
+            weak_signal_count = sum(
+                1 for s in self.INVOICE_WEAK_SIGNALS if s in full_text
+            )
             if weak_signal_count >= 2:
                 return DocumentInfo(
                     image_path=image_path,
                     doc_type=DocumentType.INVOICE,
                     ocr_texts=ocr_texts,
                     confidence=0.7,
-                    metadata={"route": "standard_document_weak", "weak_signals": weak_signal_count},
+                    metadata={
+                        "route": "standard_document_weak",
+                        "weak_signals": weak_signal_count,
+                    },
                 )
 
         # === 阶段3: 合同/协议字段组合 ===
@@ -653,11 +753,18 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             property_type_keywords = signal_config.get("property_type", [])
 
             # 根据文档类型检查不同的字段组合
-            if doc_type in (DocumentType.PURCHASE_CONTRACT, DocumentType.STOCK_CONTRACT):
+            if doc_type in (
+                DocumentType.PURCHASE_CONTRACT,
+                DocumentType.STOCK_CONTRACT,
+            ):
                 # 买卖合同：买受人 + 出卖人 + (价款 或 房屋类型关键词)
                 has_buyer = any(kw in full_text for kw in signal_config["buyer"])
                 has_seller = any(kw in full_text for kw in signal_config["seller"])
-                has_property_type = any(kw in full_text for kw in property_type_keywords) if property_type_keywords else False
+                has_property_type = (
+                    any(kw in full_text for kw in property_type_keywords)
+                    if property_type_keywords
+                    else False
+                )
 
                 # 基本条件：必须有买受人+出卖人
                 if not has_buyer or not has_seller:
@@ -715,8 +822,12 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 has_资金监管 = "资金监管" in full_text
                 has_监管协议 = "监管协议" in full_text
                 has_amount = any(kw in full_text for kw in signal_config["amount"])
-                has_alternative = any(kw in full_text for kw in self.SUPERVISION_ALTERNATIVE)
-                has_clause_signal = any(kw in full_text for kw in self.SUPERVISION_CLAUSE_SIGNALS)
+                has_alternative = any(
+                    kw in full_text for kw in self.SUPERVISION_ALTERNATIVE
+                )
+                has_clause_signal = any(
+                    kw in full_text for kw in self.SUPERVISION_CLAUSE_SIGNALS
+                )
                 # 签章页特殊处理：丙方 + 签章 + (签约日期 或 第X页)
                 has_丙方 = "丙方" in full_text
                 has_签章 = "签章" in full_text
@@ -735,7 +846,9 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     pass  # 满足条件2
                 elif has_资金监管 and has_amount:
                     pass  # 满足条件3
-                elif has_clause_signal and (has_资金监管 or has_监管协议 or "协议" in full_text):
+                elif has_clause_signal and (
+                    has_资金监管 or has_监管协议 or "协议" in full_text
+                ):
                     pass  # 满足条件4：条款页
                 elif is_stamp_page:
                     pass  # 满足条件5：签章页特殊处理

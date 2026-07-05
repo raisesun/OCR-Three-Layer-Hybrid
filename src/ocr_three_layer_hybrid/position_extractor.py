@@ -18,6 +18,7 @@
 import logging
 import re
 from dataclasses import dataclass
+from typing import Optional
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OcrItem:
     """OCR识别项（文本+坐标）"""
+
     text: str
     score: float
     # 图片相对坐标 (0-1)
@@ -74,9 +76,17 @@ class HouseholdPositionExtractor:
 
     # 标签前缀片段（用于从合并文本中剥离标签）
     LABEL_FRAGMENTS = [
-        "户主姓名", "户主姓", "户姓名", "户主",
-        "户号", "户 号", "住址", "住 址",
-        "户别", "户 别", "别",
+        "户主姓名",
+        "户主姓",
+        "户姓名",
+        "户主",
+        "户号",
+        "户 号",
+        "住址",
+        "住 址",
+        "户别",
+        "户 别",
+        "别",
     ]
 
     # 首页表格行Y范围（文档相对坐标，基于PaddleOCR实测校准）
@@ -84,18 +94,18 @@ class HouseholdPositionExtractor:
     ROW2_Y = (0.62, 0.70)  # 户号 + 住址
 
     # 列X范围
-    LEFT_COL_X = (0.10, 0.40)   # 左列（户别、户号）
+    LEFT_COL_X = (0.10, 0.40)  # 左列（户别、户号）
     RIGHT_COL_X = (0.45, 0.95)  # 右列（户主姓名、住址）
 
     # 合并参数
-    ROW_TOLERANCE = 0.030       # 同行Y容差（两行间距约0.04，0.03可区分）
-    MERGE_GAP = 0.08            # 小间隙阈值（相邻文本合并）
-    BIG_GAP_THRESHOLD = 0.25    # 大间隙阈值（跨页边界，停止合并）
+    ROW_TOLERANCE = 0.030  # 同行Y容差（两行间距约0.04，0.03可区分）
+    MERGE_GAP = 0.08  # 小间隙阈值（相邻文本合并）
+    BIG_GAP_THRESHOLD = 0.25  # 大间隙阈值（跨页边界，停止合并）
 
     # 地址后缀模式（短片段在开头时需移到末尾）
     ADDR_SUFFIX_PATTERNS = [
-        r"^\d+排\d+号",         # 6排8号
-        r"^\d+号$",             # 74号
+        r"^\d+排\d+号",  # 6排8号
+        r"^\d+号$",  # 74号
         r"^[一-鿿]{1,4}\d+号",  # 曹台子74号
     ]
 
@@ -107,6 +117,7 @@ class HouseholdPositionExtractor:
         if self._ocr is None:
             try:
                 from paddleocr import PaddleOCR
+
                 logger.info("初始化 PaddleOCR（首次加载需约10秒）...")
                 self._ocr = PaddleOCR(lang="ch")
                 logger.info("PaddleOCR 初始化完成")
@@ -115,7 +126,9 @@ class HouseholdPositionExtractor:
                 raise
         return self._ocr
 
-    def _parse_ocr(self, image_path: str) -> Tuple[List[OcrItem], Tuple[float, float, float, float]]:
+    def _parse_ocr(
+        self, image_path: str
+    ) -> Tuple[List[OcrItem], Tuple[float, float, float, float]]:
         """
         运行 PaddleOCR 并解析输出为 OcrItem 列表
 
@@ -129,6 +142,7 @@ class HouseholdPositionExtractor:
         r = results[0]
 
         from PIL import Image
+
         pil_img = Image.open(image_path)
         img_w, img_h = pil_img.size
 
@@ -147,12 +161,20 @@ class HouseholdPositionExtractor:
         items = []
         for text, box, score in zip(r["rec_texts"], r["rec_boxes"], r["rec_scores"]):
             x1, y1, x2, y2 = float(box[0]), float(box[1]), float(box[2]), float(box[3])
-            items.append(OcrItem(
-                text=text, score=float(score),
-                x1=x1 / img_w, y1=y1 / img_h, x2=x2 / img_w, y2=y2 / img_h,
-                rx1=(x1 - min_x) / doc_w, ry1=(y1 - min_y) / doc_h,
-                rx2=(x2 - min_x) / doc_w, ry2=(y2 - min_y) / doc_h,
-            ))
+            items.append(
+                OcrItem(
+                    text=text,
+                    score=float(score),
+                    x1=x1 / img_w,
+                    y1=y1 / img_h,
+                    x2=x2 / img_w,
+                    y2=y2 / img_h,
+                    rx1=(x1 - min_x) / doc_w,
+                    ry1=(y1 - min_y) / doc_h,
+                    rx2=(x2 - min_x) / doc_w,
+                    ry2=(y2 - min_y) / doc_h,
+                )
+            )
 
         # 合并同行相邻文本（修复OCR拆分标签的情况，如"户"+"别"→"户别"）
         items = self._merge_adjacent_items(items)
@@ -210,7 +232,7 @@ class HouseholdPositionExtractor:
         """剥离标签前缀（处理OCR合并标签+数据的情况）"""
         for frag in self.LABEL_FRAGMENTS:
             if text.startswith(frag):
-                text = text[len(frag):]
+                text = text[len(frag) :]
                 break
         # "非农业家庭户口" → "非农业家庭户"
         if text.endswith("口") and len(text) > 3 and "户" in text[-3:-1]:
@@ -227,12 +249,14 @@ class HouseholdPositionExtractor:
             m = re.match(pat, text)
             if m:
                 prefix = m.group(0)
-                rest = text[len(prefix):]
+                rest = text[len(prefix) :]
                 if len(rest) >= 6:
                     return rest + prefix
         return text
 
-    def _find_label(self, items: List[OcrItem], field_name: str, y_range: Tuple[float, float]) -> Optional[OcrItem]:
+    def _find_label(
+        self, items: List[OcrItem], field_name: str, y_range: Tuple[float, float]
+    ) -> Optional[OcrItem]:
         """在指定Y范围内查找字段标签"""
         pattern = self.LABEL_PATTERNS.get(field_name)
         if not pattern:
@@ -250,7 +274,7 @@ class HouseholdPositionExtractor:
         candidates.sort(key=lambda i: (len(i.text), -i.score))
         return candidates[0]
 
-    def _is_label(self, text: str, exclude_field: str = None) -> bool:
+    def _is_label(self, text: str, exclude_field: Optional[str] = None) -> bool:
         """判断文本是否为标签（而非数据）"""
         for fname, pat in self.LABEL_PATTERNS.items():
             if fname == exclude_field:
@@ -258,8 +282,8 @@ class HouseholdPositionExtractor:
             if re.search(pat, text):
                 return True
         if exclude_field:
-            pat = self.LABEL_PATTERNS.get(exclude_field)
-            if pat and re.fullmatch(pat, text):
+            pat2 = self.LABEL_PATTERNS.get(exclude_field)
+            if pat2 and re.fullmatch(pat2, text):
                 return True
         return False
 
@@ -283,7 +307,11 @@ class HouseholdPositionExtractor:
         if label:
             # 策略1a：标签本身包含数据
             label_stripped = self._strip_label(label.text)
-            if label_stripped and len(label_stripped) >= 1 and not self._is_label(label_stripped):
+            if (
+                label_stripped
+                and len(label_stripped) >= 1
+                and not self._is_label(label_stripped)
+            ):
                 logger.debug(f"[{field_name}] 策略1a: 标签包含数据 '{label_stripped}'")
                 return label_stripped
 

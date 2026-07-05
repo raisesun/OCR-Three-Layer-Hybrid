@@ -72,14 +72,16 @@ def run_demo_with_mock_data():
         print(f"提取字段：")
         print(json.dumps(result.fields, ensure_ascii=False, indent=2))
 
-        results.append({
-            "name": case["name"],
-            "doc_type": result.doc_type.value,
-            "layer": result.layer.value,
-            "success": result.success,
-            "time_cost": result.time_cost,
-            "fields": result.fields,
-        })
+        results.append(
+            {
+                "name": case["name"],
+                "doc_type": result.doc_type.value,
+                "layer": result.layer.value,
+                "success": result.success,
+                "time_cost": result.time_cost,
+                "fields": result.fields,
+            }
+        )
 
     print("\n" + "=" * 60)
     print("演示完成")
@@ -137,10 +139,12 @@ def run_demo_with_real_images():
         print(f"提取字段：")
         print(json.dumps(result.fields, ensure_ascii=False, indent=2))
 
-        results.append({
-            "name": case["name"],
-            "result": result,
-        })
+        results.append(
+            {
+                "name": case["name"],
+                "result": result,
+            }
+        )
 
     return results
 

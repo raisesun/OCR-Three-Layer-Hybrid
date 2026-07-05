@@ -35,129 +35,268 @@ class PlanEPlusPipeline:
     # 文档类型到默认字段的映射
     DEFAULT_KEY_LISTS: Dict[DocumentType, List[str]] = {
         DocumentType.ID_CARD: [
-            "姓名", "性别", "民族", "出生", "住址", "公民身份号码",
-            "签发机关", "有效期限",
+            "姓名",
+            "性别",
+            "民族",
+            "出生",
+            "住址",
+            "公民身份号码",
+            "签发机关",
+            "有效期限",
         ],
         DocumentType.MARRIAGE_CERTIFICATE: [
-            "持证人", "登记日期", "结婚证字号", "男方姓名", "女方姓名",
-            "男方身份证号", "女方身份证号",
+            "持证人",
+            "登记日期",
+            "结婚证字号",
+            "男方姓名",
+            "女方姓名",
+            "男方身份证号",
+            "女方身份证号",
         ],
         DocumentType.HOUSEHOLD_REGISTER: [
-            "户主姓名", "户号", "住址", "姓名",
-            "与户主关系", "性别", "公民身份号码",
+            "户主姓名",
+            "户号",
+            "住址",
+            "姓名",
+            "与户主关系",
+            "性别",
+            "公民身份号码",
         ],
         DocumentType.PROPERTY_CERTIFICATE: [
-            "不动产编号", "权利人", "共有情况", "坐落",
-            "不动产单元号", "权利类型", "权利性质", "用途", "面积", "使用期限",
+            "不动产编号",
+            "权利人",
+            "共有情况",
+            "坐落",
+            "不动产单元号",
+            "权利类型",
+            "权利性质",
+            "用途",
+            "面积",
+            "使用期限",
         ],
         DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE: [
             # 首页字段（通常不需要提取，但可以记录）
-            "登记机构", "编号", "登记日期",
+            "登记机构",
+            "编号",
+            "登记日期",
         ],
         DocumentType.INVOICE: [
-            "发票代码", "发票号码", "开票日期", "价税合计",
-            "购买方名称", "购买方纳税人识别号",
-            "销售方名称", "销售方纳税人识别号",
+            "发票代码",
+            "发票号码",
+            "开票日期",
+            "价税合计",
+            "购买方名称",
+            "购买方纳税人识别号",
+            "销售方名称",
+            "销售方纳税人识别号",
         ],
         DocumentType.PURCHASE_CONTRACT: [
-            "合同编号", "买受人", "出卖人", "总价款",
-            "签订日期", "房屋地址", "建筑面积",
+            "合同编号",
+            "买受人",
+            "出卖人",
+            "总价款",
+            "签订日期",
+            "房屋地址",
+            "建筑面积",
         ],
         DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: [
-            "合同编号", "买受人", "出卖人", "房屋坐落",
+            "合同编号",
+            "买受人",
+            "出卖人",
+            "房屋坐落",
         ],
         DocumentType.PURCHASE_CONTRACT_CONTENT: [
-            "合同编号", "买受人", "出卖人", "总价款",
-            "签订日期", "房屋地址", "建筑面积",
+            "合同编号",
+            "买受人",
+            "出卖人",
+            "总价款",
+            "签订日期",
+            "房屋地址",
+            "建筑面积",
         ],
         DocumentType.PURCHASE_CONTRACT_STAMP: [
             # 签署页通常不需要提取字段
         ],
         DocumentType.STOCK_CONTRACT: [
-            "合同编号", "买受人", "出卖人", "总价款",
-            "签订日期", "房屋地址", "建筑面积",
+            "合同编号",
+            "买受人",
+            "出卖人",
+            "总价款",
+            "签订日期",
+            "房屋地址",
+            "建筑面积",
         ],
         DocumentType.STOCK_CONTRACT_FIRST_PAGE: [
-            "合同编号", "买受人", "出卖人", "房屋坐落",
+            "合同编号",
+            "买受人",
+            "出卖人",
+            "房屋坐落",
         ],
         DocumentType.STOCK_CONTRACT_CONTENT: [
-            "合同编号", "买受人", "出卖人", "总价款",
-            "签订日期", "房屋地址", "建筑面积",
+            "合同编号",
+            "买受人",
+            "出卖人",
+            "总价款",
+            "签订日期",
+            "房屋地址",
+            "建筑面积",
         ],
         DocumentType.STOCK_CONTRACT_STAMP: [
             # 签署页通常不需要提取字段
         ],
         DocumentType.FUND_SUPERVISION: [
             # 协议首页字段
-            "编号", "甲方", "乙方", "丙方",
-            "签署日期", "网上签约备案合同号",
-            "房屋地址", "建筑面积", "不动产权证号",
-            "购房款", "购房款(大写)", "购房款(小写)",
-            "贷款(大写)", "贷款(小写)",  # 可选字段，空值表示无贷款
+            "编号",
+            "甲方",
+            "乙方",
+            "丙方",
+            "签署日期",
+            "网上签约备案合同号",
+            "房屋地址",
+            "建筑面积",
+            "不动产权证号",
+            "购房款",
+            "购房款(大写)",
+            "购房款(小写)",
+            "贷款(大写)",
+            "贷款(小写)",  # 可选字段，空值表示无贷款
             # 协议信息页字段
-            "甲方姓名", "甲方身份证号", "甲方银行", "甲方账号",
-            "乙方姓名", "乙方身份证号", "乙方银行", "乙方账号",
+            "甲方姓名",
+            "甲方身份证号",
+            "甲方银行",
+            "甲方账号",
+            "乙方姓名",
+            "乙方身份证号",
+            "乙方银行",
+            "乙方账号",
             # 兼容旧字段
-            "监管金额", "监管账户", "买方", "买方身份证号",
-            "卖方", "卖方身份证号", "监管机构", "监管期限",
-            "合同编号", "签订日期",
+            "监管金额",
+            "监管账户",
+            "买方",
+            "买方身份证号",
+            "卖方",
+            "卖方身份证号",
+            "监管机构",
+            "监管期限",
+            "合同编号",
+            "签订日期",
         ],
         DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE: [
-            "编号", "甲方", "乙方", "丙方",
-            "签署日期", "网上签约备案合同号",
-            "房屋地址", "建筑面积", "不动产权证号",
-            "购房款", "购房款(大写)", "购房款(小写)",
-            "贷款(大写)", "贷款(小写)",  # 可选字段，空值表示无贷款
+            "编号",
+            "甲方",
+            "乙方",
+            "丙方",
+            "签署日期",
+            "网上签约备案合同号",
+            "房屋地址",
+            "建筑面积",
+            "不动产权证号",
+            "购房款",
+            "购房款(大写)",
+            "购房款(小写)",
+            "贷款(大写)",
+            "贷款(小写)",  # 可选字段，空值表示无贷款
         ],
         DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE: [
-            "甲方姓名", "甲方身份证号", "甲方银行", "甲方账号",
-            "乙方姓名", "乙方身份证号", "乙方银行", "乙方账号",
+            "甲方姓名",
+            "甲方身份证号",
+            "甲方银行",
+            "甲方账号",
+            "乙方姓名",
+            "乙方身份证号",
+            "乙方银行",
+            "乙方账号",
         ],
         DocumentType.FUND_SUPERVISION_CERTIFICATE: [
-            "协议编号", "日期",
-            "买房人", "买房人姓名", "身份证号",
-            "房屋坐落", "建筑面积",
+            "协议编号",
+            "日期",
+            "买房人",
+            "买房人姓名",
+            "身份证号",
+            "房屋坐落",
+            "建筑面积",
             "监管总额",
         ],
         DocumentType.DIVORCE_CERTIFICATE: [
             # 离婚证基本信息
-            "离婚证字号", "登记日期",
+            "离婚证字号",
+            "登记日期",
             # 持证人信息
-            "持证人", "持证人性别", "持证人民族", "持证人出生日期", "持证人身份证件号",
+            "持证人",
+            "持证人性别",
+            "持证人民族",
+            "持证人出生日期",
+            "持证人身份证件号",
             # 原配偶信息
-            "原配偶姓名", "原配偶性别", "原配偶民族", "原配偶出生日期", "原配偶身份证件号",
+            "原配偶姓名",
+            "原配偶性别",
+            "原配偶民族",
+            "原配偶出生日期",
+            "原配偶身份证件号",
             # 其他
             "备注",
         ],
         DocumentType.DIVORCE_AGREEMENT: [
-            "男方姓名", "男方身份证号", "女方姓名", "女方身份证号",
-            "离婚日期", "财产分割约定", "子女抚养", "债务处理", "其他约定",
+            "男方姓名",
+            "男方身份证号",
+            "女方姓名",
+            "女方身份证号",
+            "离婚日期",
+            "财产分割约定",
+            "子女抚养",
+            "债务处理",
+            "其他约定",
         ],
         # 公证书（不需要提取字段，只需分类）
         DocumentType.NOTARY_CERTIFICATE: [
-            "公证书编号", "公证日期", "公证事项",
+            "公证书编号",
+            "公证日期",
+            "公证事项",
         ],
         # 委托书（不需要提取字段，只需分类）
         DocumentType.POWER_OF_ATTORNEY: [
-            "委托人", "受托人", "委托事项", "委托日期",
+            "委托人",
+            "受托人",
+            "委托事项",
+            "委托日期",
         ],
         # UNKNOWN文档的通用字段列表（覆盖所有可能的字段）
         DocumentType.UNKNOWN: [
             # 通用字段
-            "文档类型", "编号", "日期", "金额",
+            "文档类型",
+            "编号",
+            "日期",
+            "金额",
             # 人员信息
-            "姓名", "身份证号", "买方", "卖方", "权利人",
+            "姓名",
+            "身份证号",
+            "买方",
+            "卖方",
+            "权利人",
             # 房屋信息
-            "房屋地址", "建筑面积", "用途",
+            "房屋地址",
+            "建筑面积",
+            "用途",
             # 合同信息
-            "合同编号", "买受人", "出卖人", "总价款", "签订日期",
+            "合同编号",
+            "买受人",
+            "出卖人",
+            "总价款",
+            "签订日期",
             # 证件信息
-            "证书号", "不动产单元号", "共有情况",
+            "证书号",
+            "不动产单元号",
+            "共有情况",
             # 发票信息
-            "发票代码", "发票号码", "开票日期", "价税合计",
-            "购买方名称", "销售方名称",
+            "发票代码",
+            "发票号码",
+            "开票日期",
+            "价税合计",
+            "购买方名称",
+            "销售方名称",
             # 其他
-            "监管金额", "监管机构",
+            "监管金额",
+            "监管机构",
         ],
     }
 
@@ -167,33 +306,27 @@ class PlanEPlusPipeline:
         DocumentType.ID_CARD: ProcessingLayer.RULE,
         DocumentType.ID_CARD_FRONT: ProcessingLayer.RULE,
         DocumentType.ID_CARD_BACK: ProcessingLayer.RULE,
-
         # 结婚证
         DocumentType.MARRIAGE_CERTIFICATE: ProcessingLayer.RULE,
         DocumentType.MARRIAGE_CERTIFICATE_COVER: ProcessingLayer.RULE,  # 封面页用规则层（返回空）
         DocumentType.MARRIAGE_CERTIFICATE_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层
         DocumentType.MARRIAGE_CERTIFICATE_STAMP: ProcessingLayer.RULE,  # 盖章页用规则层
-
         # 离婚证
         DocumentType.DIVORCE_CERTIFICATE: ProcessingLayer.RULE,  # 规则层优先，VLM字段级兜底
         DocumentType.DIVORCE_CERTIFICATE_COVER: ProcessingLayer.RULE,  # 封面页用规则层（返回空）
         DocumentType.DIVORCE_CERTIFICATE_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层
         DocumentType.DIVORCE_CERTIFICATE_STAMP: ProcessingLayer.RULE,  # 盖章页用规则层
-
         # 户口本
         DocumentType.HOUSEHOLD_REGISTER: ProcessingLayer.RULE,
         DocumentType.HOUSEHOLD_REGISTER_COVER: ProcessingLayer.RULE,  # 首页用规则层
         DocumentType.HOUSEHOLD_REGISTER_CONTENT: ProcessingLayer.RULE,  # 个人页用规则层
-
         # 不动产权证书
         DocumentType.PROPERTY_CERTIFICATE: ProcessingLayer.RULE,  # 改为规则层（已实现100%完成率）
         DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE: ProcessingLayer.RULE,  # 首页用规则层（返回空）
         DocumentType.PROPERTY_CERTIFICATE_CONTENT: ProcessingLayer.RULE,  # 内容页用规则层（100%完成率）
         DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT: ProcessingLayer.RULE,  # 附图页用规则层（返回空）
-
         # 发票
         DocumentType.INVOICE: ProcessingLayer.RULE,
-
         # 合同/协议（规则层优先，VLM字段级兜底）
         DocumentType.PURCHASE_CONTRACT: ProcessingLayer.RULE,  # 规则层优先
         DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: ProcessingLayer.RULE,  # 首页用规则层
@@ -209,11 +342,9 @@ class PlanEPlusPipeline:
         DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP: ProcessingLayer.RULE,  # 签章页用规则层（返回空）
         DocumentType.FUND_SUPERVISION_CERTIFICATE: ProcessingLayer.RULE,  # 凭证用规则层
         DocumentType.DIVORCE_AGREEMENT: ProcessingLayer.RULE,
-
         # 公证书、委托书（只需要分类，不需要提取）
         DocumentType.NOTARY_CERTIFICATE: ProcessingLayer.RULE,  # 返回空字段
         DocumentType.POWER_OF_ATTORNEY: ProcessingLayer.RULE,  # 返回空字段
-
         # 未知
         DocumentType.UNKNOWN: ProcessingLayer.VLM,
     }
@@ -282,11 +413,14 @@ class PlanEPlusPipeline:
                 Path(image_path).name,
                 doc_info.metadata.get("route", "unknown"),
                 doc_info.doc_type.value,
-                classify_time
+                classify_time,
             )
 
         # 附属页面检查：如果识别为附属页面，跳过提取
-        if doc_info.metadata.get("is_attachment") and doc_info.doc_type == DocumentType.UNKNOWN:
+        if (
+            doc_info.metadata.get("is_attachment")
+            and doc_info.doc_type == DocumentType.UNKNOWN
+        ):
             return ExtractionResult(
                 doc_type=doc_info.doc_type,
                 layer=ProcessingLayer.VLM,
@@ -331,16 +465,23 @@ class PlanEPlusPipeline:
 
         if target_layer == ProcessingLayer.RULE:
             model_name = "正则表达式"
-            if self.rule_layer and hasattr(self.rule_layer, '_position_extractor') and self.rule_layer._position_extractor:
+            if (
+                self.rule_layer
+                and hasattr(self.rule_layer, "_position_extractor")
+                and self.rule_layer._position_extractor
+            ):
                 if doc_info.doc_type == DocumentType.HOUSEHOLD_REGISTER:
                     model_name = "位置标注提取器(PaddleOCR)"
         elif target_layer == ProcessingLayer.VLM:
             if self.vlm_layer:
-                model_name = getattr(self.vlm_layer, 'model_name', 'Qwen2.5-VL-7B')
+                model_name = getattr(self.vlm_layer, "model_name", "Qwen2.5-VL-7B")
 
         logger.info(
             "[提取] %s | 层=%s | 模型=%s | 文档类型=%s",
-            Path(image_path).name, layer_name, model_name, doc_info.doc_type.value
+            Path(image_path).name,
+            layer_name,
+            model_name,
+            doc_info.doc_type.value,
         )
 
         result = layer.extract(doc_info, key_list)
@@ -348,7 +489,10 @@ class PlanEPlusPipeline:
 
         logger.info(
             "[提取] %s | 完成 | 成功=%s | 字段数=%d | 耗时=%.2fs",
-            Path(image_path).name, result.success, len([v for v in result.fields.values() if v]), extract_time
+            Path(image_path).name,
+            result.success,
+            len([v for v in result.fields.values() if v]),
+            extract_time,
         )
 
         # 第2.5层：VLM字段级兜底（校验失败时触发）
@@ -360,7 +504,8 @@ class PlanEPlusPipeline:
             if fallback_time > 0.1:  # 只有实际触发兜底时才记录
                 logger.info(
                     "[VLM兜底] %s | 完成 | 耗时=%.2fs",
-                    Path(image_path).name, fallback_time
+                    Path(image_path).name,
+                    fallback_time,
                 )
 
         result.time_cost = time.time() - start_time  # 包含分类时间

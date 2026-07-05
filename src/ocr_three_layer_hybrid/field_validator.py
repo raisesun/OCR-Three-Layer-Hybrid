@@ -22,15 +22,17 @@ logger = logging.getLogger(__name__)
 
 class ValidationStatus(str, Enum):
     """校验结果状态"""
-    VALID = "valid"           # 通过校验
-    EMPTY = "empty"           # 字段为空（不一定是错误）
-    INVALID = "invalid"       # 校验失败
-    UNCERTAIN = "uncertain"   # 无法判断（无规则）
+
+    VALID = "valid"  # 通过校验
+    EMPTY = "empty"  # 字段为空（不一定是错误）
+    INVALID = "invalid"  # 校验失败
+    UNCERTAIN = "uncertain"  # 无法判断（无规则）
 
 
 @dataclass
 class ValidationResult:
     """单字段校验结果"""
+
     field_name: str
     value: str
     status: ValidationStatus
@@ -38,7 +40,11 @@ class ValidationResult:
 
     @property
     def is_valid(self) -> bool:
-        return self.status in (ValidationStatus.VALID, ValidationStatus.UNCERTAIN, ValidationStatus.EMPTY)
+        return self.status in (
+            ValidationStatus.VALID,
+            ValidationStatus.UNCERTAIN,
+            ValidationStatus.EMPTY,
+        )
 
     @property
     def needs_fallback(self) -> bool:
@@ -97,10 +103,8 @@ class FieldValidator:
         "性别": {
             "pattern": r"^(男|女)$",
         },
-
         # === 身份证 ===
         # （公民身份号码已定义）
-
         # === 结婚证 ===
         "结婚证字号": {
             "pattern": r"^[一-鿿]\d{5,6}-\d{4}-\d{5,6}$",
@@ -131,7 +135,6 @@ class FieldValidator:
         "女方身份证号": {
             "pattern": r"^\d{17}[\dXx]$",
         },
-
         # === 发票 ===
         "发票代码": {
             "pattern": r"^\d{10,12}$",
@@ -145,7 +148,6 @@ class FieldValidator:
             "pattern": r"^[\d,.]+$",
             "description": "金额数字",
         },
-
         # === 合同/协议 ===
         "监管金额": {
             "pattern": r"^[\d,.]+.*元?$",
@@ -159,7 +161,6 @@ class FieldValidator:
             "pattern": r"^[\d,.]+.*平方米?$",
             "description": "面积",
         },
-
         # === 不动产权证书 ===
         "不动产单元号": {
             "pattern": r"^\d{20,}$",
@@ -168,7 +169,22 @@ class FieldValidator:
     }
 
     # 中文地址关键词（至少包含一个）
-    ADDRESS_KEYWORDS = ["省", "市", "区", "县", "镇", "乡", "路", "号", "街", "村", "弄", "栋", "幢", "室"]
+    ADDRESS_KEYWORDS = [
+        "省",
+        "市",
+        "区",
+        "县",
+        "镇",
+        "乡",
+        "路",
+        "号",
+        "街",
+        "村",
+        "弄",
+        "栋",
+        "幢",
+        "室",
+    ]
 
     def validate(self, field_name: str, value: str) -> ValidationResult:
         """

@@ -27,7 +27,6 @@ from ocr_three_layer_hybrid.classifier import KeywordDocumentClassifier
 from ocr_three_layer_hybrid.vlm_layer import VLMExtractionLayer
 from ocr_three_layer_hybrid.pipeline import PlanEPlusPipeline
 
-
 # ========== Pipeline 元数据常量（供前端流程图使用） ==========
 
 # Pipeline阶段名称映射
@@ -44,23 +43,53 @@ ROUTE_NAMES = {
 
 # Pipeline阶段列表（用于流程图显示）
 PIPELINE_STAGES = [
-    {"id": "stage0", "name": "阶段0", "title": "多文档冲突检测", "keywords": "买受人+出卖人+房屋类型"},
-    {"id": "stage1", "name": "阶段1", "title": "标准证件强信号", "keywords": "公民身份号码、常住人口登记卡等"},
-    {"id": "stage1_5", "name": "阶段1.5", "title": "备选强信号", "keywords": "户口簿+户主、持证人+登记日期"},
-    {"id": "stage1_6", "name": "阶段1.6", "title": "更多备选信号", "keywords": "户别+户主姓名、结婚证+登记机关"},
-    {"id": "stage2", "name": "阶段2", "title": "标准单证强信号", "keywords": "发票代码+发票号码"},
-    {"id": "stage3", "name": "阶段3", "title": "合同字段组合", "keywords": "买受人+出卖人+价款"},
+    {
+        "id": "stage0",
+        "name": "阶段0",
+        "title": "多文档冲突检测",
+        "keywords": "买受人+出卖人+房屋类型",
+    },
+    {
+        "id": "stage1",
+        "name": "阶段1",
+        "title": "标准证件强信号",
+        "keywords": "公民身份号码、常住人口登记卡等",
+    },
+    {
+        "id": "stage1_5",
+        "name": "阶段1.5",
+        "title": "备选强信号",
+        "keywords": "户口簿+户主、持证人+登记日期",
+    },
+    {
+        "id": "stage1_6",
+        "name": "阶段1.6",
+        "title": "更多备选信号",
+        "keywords": "户别+户主姓名、结婚证+登记机关",
+    },
+    {
+        "id": "stage2",
+        "name": "阶段2",
+        "title": "标准单证强信号",
+        "keywords": "发票代码+发票号码",
+    },
+    {
+        "id": "stage3",
+        "name": "阶段3",
+        "title": "合同字段组合",
+        "keywords": "买受人+出卖人+价款",
+    },
 ]
 
 # 提取层颜色映射
 LAYER_COLORS = {
-    "rule": "#10b981",    # 绿色
-    "vlm": "#3b82f6",     # 蓝色
-    "none": "#6b7280",    # 灰色
+    "rule": "#10b981",  # 绿色
+    "vlm": "#3b82f6",  # 蓝色
+    "none": "#6b7280",  # 灰色
 }
 
 # 支持的图片扩展名
-IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff"}
 
 
 # ========== 日志配置 ==========
@@ -78,7 +107,7 @@ def setup_logging(level: str = "INFO", log_file: Optional[str] = None):
     log_format = "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
     date_format = "%Y-%m-%d %H:%M:%S"
 
-    handlers = []
+    handlers: list[logging.Handler] = []
     # 控制台 handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
@@ -130,7 +159,10 @@ class OCRService:
         self._position_extractor = None
         if self.config.enable_position_extraction:
             try:
-                from ocr_three_layer_hybrid.position_extractor import HouseholdPositionExtractor
+                from ocr_three_layer_hybrid.position_extractor import (
+                    HouseholdPositionExtractor,
+                )
+
                 self._position_extractor = HouseholdPositionExtractor()
                 logger.info("位置标注提取器已启用")
             except ImportError as e:
@@ -141,21 +173,33 @@ class OCRService:
         if self.config.enable_vlm_field_fallback:
             try:
                 from ocr_three_layer_hybrid.vlm_fallback import VLMFallbackHandler
+
                 # 创建独立的VLM客户端用于兜底
-                vlm_fallback_config = self.config.get_vlm_config(self.config.vlm_fallback_engine)
+                vlm_fallback_config = self.config.get_vlm_config(
+                    self.config.vlm_fallback_engine
+                )
                 vlm_fallback_client = VLMClient(vlm_fallback_config)
-                self._vlm_fallback_handler = VLMFallbackHandler(vlm_client=vlm_fallback_client)
-                logger.info(f"VLM字段级兜底已启用 (引擎: {self.config.vlm_fallback_engine})")
+                self._vlm_fallback_handler = VLMFallbackHandler(
+                    vlm_client=vlm_fallback_client
+                )
+                logger.info(
+                    f"VLM字段级兜底已启用 (引擎: {self.config.vlm_fallback_engine})"
+                )
             except ImportError as e:
                 logger.warning(f"VLM字段级兜底未启用（导入失败）: {e}")
 
         # 规则层：注入位置标注提取器
         from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
+
         rule_layer = RuleExtractionLayer(position_extractor=self._position_extractor)
 
         # VLM 提取层：根据vlm_extraction_engine配置选择模型
-        vlm_extraction_config = self.config.get_vlm_config(self.config.vlm_extraction_engine)
-        logger.info(f"VLM 提取层使用: {self.config.vlm_extraction_engine} ({vlm_extraction_config.base_url})")
+        vlm_extraction_config = self.config.get_vlm_config(
+            self.config.vlm_extraction_engine
+        )
+        logger.info(
+            f"VLM 提取层使用: {self.config.vlm_extraction_engine} ({vlm_extraction_config.base_url})"
+        )
 
         # Pipeline：注入规则层和VLM层（无LLM层）
         self._pipeline = PlanEPlusPipeline(
@@ -213,6 +257,7 @@ class OCRService:
             if self.config.enable_image_preprocessing:
                 try:
                     from ocr_three_layer_hybrid.image_preprocessor import enhance_image
+
                     preprocess_start = time.time()
                     preprocess_path = enhance_image(
                         image_path,
@@ -224,7 +269,8 @@ class OCRService:
                     preprocess_time = time.time() - preprocess_start
                     logger.info(
                         "[预处理] %s | 耗时=%.2fs",
-                        Path(image_path).name, preprocess_time,
+                        Path(image_path).name,
+                        preprocess_time,
                     )
                     # 使用预处理后的图片进行 OCR
                     ocr_image_path = preprocess_path
@@ -241,7 +287,9 @@ class OCRService:
             ocr_time = time.time() - ocr_start
             logger.info(
                 "[OCR] %s | 引擎=ppocr | 耗时=%.2fs | 文本长度=%d字 | 预处理=%s",
-                Path(image_path).name, ocr_time, len(text),
+                Path(image_path).name,
+                ocr_time,
+                len(text),
                 "是" if self.config.enable_image_preprocessing else "否",
             )
             return text
@@ -249,7 +297,9 @@ class OCRService:
             ocr_time = time.time() - ocr_start
             logger.error(
                 "[OCR] 失败 | %s | 引擎=ppocr | 耗时=%.2fs | 错误=%s",
-                Path(image_path).name, ocr_time, e,
+                Path(image_path).name,
+                ocr_time,
+                e,
             )
             return ""
 
@@ -294,7 +344,9 @@ class OCRService:
         if not result.success:
             logger.warning(
                 "[提取失败] %s | 类型=%s | 错误=%s",
-                img_name, doc_info.doc_type.value, result.error_message,
+                img_name,
+                doc_info.doc_type.value,
+                result.error_message,
             )
 
         # 3. 构建返回结果
@@ -306,7 +358,9 @@ class OCRService:
                 "fields": result.fields,
                 "error_message": result.error_message,
                 "vlm_fallback_enabled": self._vlm_fallback_handler is not None,
-                "vlm_fallback_triggered": getattr(result, "vlm_fallback_triggered", False),
+                "vlm_fallback_triggered": getattr(
+                    result, "vlm_fallback_triggered", False
+                ),
                 "vlm_fallback_fields": getattr(result, "vlm_fallback_fields", []),
             },
             "pipeline_flow": self._build_pipeline_flow(doc_info, result),
@@ -345,7 +399,12 @@ class OCRService:
         if not image_paths:
             return {
                 "classification": {"doc_type": "未知", "confidence": 0},
-                "extraction": {"success": False, "layer": "none", "fields": {}, "error_message": "没有图片"},
+                "extraction": {
+                    "success": False,
+                    "layer": "none",
+                    "fields": {},
+                    "error_message": "没有图片",
+                },
                 "timing": {"total_ms": 0},
             }
 
@@ -363,7 +422,9 @@ class OCRService:
         doc_type = doc_info.doc_type
         logger.info(
             "[多页] 文档类型=%s | 总页数=%d | 处理页数=%d",
-            doc_type.value, len(image_paths), len(pages_to_process),
+            doc_type.value,
+            len(image_paths),
+            len(pages_to_process),
         )
 
         # 2. 根据文档类型选择提取策略
@@ -425,6 +486,7 @@ class OCRService:
         vlm_layer = self._pipeline._get_layer(ProcessingLayer.VLM)
         if vlm_layer is None:
             from ocr_three_layer_hybrid.interfaces import ExtractionResult
+
             return ExtractionResult(
                 doc_type=doc_type,
                 layer=ProcessingLayer.VLM,
@@ -437,7 +499,7 @@ class OCRService:
         key_list = self._pipeline.key_lists.get(doc_type, [])
 
         # 调用多页提取
-        return vlm_layer.extract_multi_page(
+        return vlm_layer.extract_multi_page(  # type: ignore[attr-defined]
             image_paths=image_paths,
             key_list=key_list,
             doc_type=doc_type,
@@ -452,7 +514,7 @@ class OCRService:
         """逐页处理并合并结果（适用于非多页专用文档类型）"""
         from ocr_three_layer_hybrid.interfaces import ExtractionResult
 
-        merged_fields = {}
+        merged_fields: Dict[str, str] = {}
         all_success = True
         total_time = 0.0
         last_layer = ProcessingLayer.VLM
@@ -520,33 +582,44 @@ class OCRService:
                     if result["classification"].get("vlm_result") == "附属页面":
                         is_correct = True
 
-                results.append({
-                    **result,
-                    "file_path": file_path,
-                    "expected_type": expected,
-                    "page_status": page_status,
-                    "is_correct": is_correct,
-                    "file_name": Path(file_path).name,
-                })
+                results.append(
+                    {
+                        **result,
+                        "file_path": file_path,
+                        "expected_type": expected,
+                        "page_status": page_status,
+                        "is_correct": is_correct,
+                        "file_name": Path(file_path).name,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "file_path": file_path,
-                    "file_name": Path(file_path).name,
-                    "expected_type": expected,
-                    "page_status": page_status,
-                    "is_correct": False,
-                    "error": str(e),
-                    "classification": {"doc_type": "错误", "confidence": 0, "route": "error"},
-                    "extraction": {"success": False, "layer": "none", "fields": {}},
-                    "timing": {"total_ms": 0},
-                })
+                results.append(
+                    {
+                        "file_path": file_path,
+                        "file_name": Path(file_path).name,
+                        "expected_type": expected,
+                        "page_status": page_status,
+                        "is_correct": False,
+                        "error": str(e),
+                        "classification": {
+                            "doc_type": "错误",
+                            "confidence": 0,
+                            "route": "error",
+                        },
+                        "extraction": {"success": False, "layer": "none", "fields": {}},
+                        "timing": {"total_ms": 0},
+                    }
+                )
 
         # 批量统计
         correct = sum(1 for r in results if r.get("is_correct"))
         batch_time = time.time() - batch_start
         logger.info(
             "[批量] 完成 | 总数=%d | 正确=%d | 准确率=%.1f%% | 耗时=%.2fs",
-            total, correct, (correct / total * 100) if total > 0 else 0, batch_time,
+            total,
+            correct,
+            (correct / total * 100) if total > 0 else 0,
+            batch_time,
         )
         return results
 
@@ -580,10 +653,13 @@ class OCRService:
             return {"error": f"目录不存在: {dir_path}"}
 
         # 收集图片文件
-        image_files = sorted([
-            f for f in dir_p.iterdir()
-            if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
-        ])
+        image_files = sorted(
+            [
+                f
+                for f in dir_p.iterdir()
+                if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
+            ]
+        )
 
         if not image_files:
             return {"error": f"目录中没有找到图片文件: {dir_path}"}
@@ -593,13 +669,15 @@ class OCRService:
         images = []
         for f in image_files:
             ocr_text = self.run_ocr(str(f))
-            images.append({
-                "file_path": str(f),
-                "file_name": f.name,
-                "text": ocr_text,
-                "expected_type": "",
-                "page_status": "",
-            })
+            images.append(
+                {
+                    "file_path": str(f),
+                    "file_name": f.name,
+                    "text": ocr_text,
+                    "expected_type": "",
+                    "page_status": "",
+                }
+            )
         ocr_time = time.time() - start_time
 
         # Phase 2: 分类+提取
@@ -620,7 +698,11 @@ class OCRService:
 
         logger.info(
             "[目录] %s | 图片=%d | OCR=%.2fs | Pipeline=%.2fs | 总计=%.2fs | 类型分布=%s | 层分布=%s",
-            dir_p.name, total, ocr_time, pipeline_time, total_time,
+            dir_p.name,
+            total,
+            ocr_time,
+            pipeline_time,
+            total_time,
             dict(sorted(type_stats.items(), key=lambda x: -x[1])),
             layer_stats,
         )
@@ -674,7 +756,9 @@ class OCRService:
             stage_match_info = doc_info.metadata.get("signal", "")
         elif route == "backup_certificate":
             active_stage = "stage1_5"
-            signals = doc_info.metadata.get("primary", []) + doc_info.metadata.get("required", [])
+            signals = doc_info.metadata.get("primary", []) + doc_info.metadata.get(
+                "required", []
+            )
             stage_match_info = " + ".join(signals)
         elif route == "additional_backup":
             active_stage = "stage1_6"

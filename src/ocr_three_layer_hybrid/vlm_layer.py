@@ -91,7 +91,7 @@ class VLMExtractionLayer(IExtractionLayer):
             "## 字段提取说明\n"
             "1. **姓名**：从「姓 名」或「姓名」栏中提取\n"
             "2. **户主**：从「户主姓名」栏中提取（通常在页面顶部的户信息区域），或者从「户主或与户主关系」栏中值为「户主」时对应的姓名\n"
-            "3. **与户主关系**：从「户主或与户主关系」栏中提取，常见值有：户主、妻、夫、子、女、长子、长女、次子、二女、孙子、孙女等。**注意：JSON键名必须是\"与户主关系\"，不要使用\"户主或与户主关系\"**\n"
+            '3. **与户主关系**：从「户主或与户主关系」栏中提取，常见值有：户主、妻、夫、子、女、长子、长女、次子、二女、孙子、孙女等。**注意：JSON键名必须是"与户主关系"，不要使用"户主或与户主关系"**\n'
             "4. **性别**：从「性 别」或「性别」栏中提取，值为「男」或「女」\n"
             "5. **出生日期**：从「出生日期」栏中提取，保持原始格式（如：2004年08月03日 或 2004.08.03）\n"
             "6. **民族**：从「民 族」或「民族」栏中提取，如：汉、汉族、回族等\n"
@@ -141,7 +141,7 @@ class VLMExtractionLayer(IExtractionLayer):
             "}\n\n"
             "## 字段提取说明\n"
             "1. **姓名**：从「姓 名」或「姓名」栏中提取\n"
-            "2. **与户主关系**：从「户主或与户主关系」栏中提取，常见值有：户主、妻、夫、子、女、长子、长女等。**注意：JSON键名必须是\"与户主关系\"**\n"
+            '2. **与户主关系**：从「户主或与户主关系」栏中提取，常见值有：户主、妻、夫、子、女、长子、长女等。**注意：JSON键名必须是"与户主关系"**\n'
             "3. **性别**：从「性 别」或「性别」栏中提取，值为「男」或「女」\n"
             "4. **出生日期**：从「出生日期」栏中提取，保持原始格式\n"
             "5. **民族**：从「民 族」或「民族」栏中提取\n"
@@ -546,7 +546,7 @@ class VLMExtractionLayer(IExtractionLayer):
             '  "fields": {\n'
             '    "字段1": "值1",\n'
             '    "字段2": "值2"\n'
-            '  }\n'
+            "  }\n"
             "}\n\n"
             "## 重要注意事项\n"
             "- 只输出纯JSON，不要包含markdown代码块标记\n"
@@ -581,13 +581,17 @@ class VLMExtractionLayer(IExtractionLayer):
         self.base_url = base_url
         self.api_key = api_key
         self.timeout = timeout
-        self.supported_types = supported_doc_types or self.DEFAULT_SUPPORTED_TYPES.copy()
+        self.supported_types = (
+            supported_doc_types or self.DEFAULT_SUPPORTED_TYPES.copy()
+        )
         # 使用注入的客户端，或根据参数创建默认客户端
-        self._client = vlm_client or VLMClient(VLMServiceConfig(
-            base_url=base_url,
-            model_name=model_name,
-            timeout=timeout,
-        ))
+        self._client = vlm_client or VLMClient(
+            VLMServiceConfig(
+                base_url=base_url,
+                model_name=model_name,
+                timeout=timeout,
+            )
+        )
 
     @property
     def supported_doc_types(self) -> List[DocumentType]:
@@ -662,6 +666,7 @@ class VLMExtractionLayer(IExtractionLayer):
             合并后的提取结果
         """
         import logging
+
         logger = logging.getLogger(__name__)
 
         start_time = time.time()
@@ -700,7 +705,9 @@ class VLMExtractionLayer(IExtractionLayer):
                         merged_fields[key] = value
 
                 # 统计本页提取到的非空字段数
-                non_empty_count = len([v for v in page_fields.values() if v and v.strip()])
+                non_empty_count = len(
+                    [v for v in page_fields.values() if v and v.strip()]
+                )
                 logger.info(
                     f"[VLM层] 多页提取 | 页 {pages_processed}/{min(len(image_paths), max_pages)} | "
                     f"耗时 {page_time:.1f}s | 提取字段 {non_empty_count}"
@@ -734,6 +741,7 @@ class VLMExtractionLayer(IExtractionLayer):
     def _encode_image_base64(self, image_path: str) -> str:
         """将图片编码为base64字符串（已迁移到 external_services.encode_image_base64）"""
         from ocr_three_layer_hybrid.external_services import encode_image_base64
+
         return encode_image_base64(image_path)
 
     def _build_prompt(self, doc_info: DocumentInfo, key_list: List[str]) -> str:
@@ -746,7 +754,9 @@ class VLMExtractionLayer(IExtractionLayer):
 
         # 回退到基础文档类型的Prompt
         if template is None:
-            template = self.PROMPT_TEMPLATES.get(self._get_base_doc_type(doc_info.doc_type))
+            template = self.PROMPT_TEMPLATES.get(
+                self._get_base_doc_type(doc_info.doc_type)
+            )
 
         # 最终回退：通用模板
         if template is None:
@@ -809,7 +819,9 @@ class VLMExtractionLayer(IExtractionLayer):
         "公民身份号码": ["公民身份号码", "身份证号", "身份证号码", "公民身份证件编号"],
     }
 
-    def _parse_json_response(self, response: Any, key_list: List[str]) -> Dict[str, str]:
+    def _parse_json_response(
+        self, response: Any, key_list: List[str]
+    ) -> Dict[str, str]:
         """
         解析VLM返回的JSON响应
 

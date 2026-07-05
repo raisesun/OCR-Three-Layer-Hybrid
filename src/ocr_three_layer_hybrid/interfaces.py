@@ -12,6 +12,7 @@ from enum import Enum
 
 class DocumentType(str, Enum):
     """支持的文档类型"""
+
     # 第一类：标准证件
     ID_CARD = "身份证"
     ID_CARD_FRONT = "身份证-正面"
@@ -69,18 +70,20 @@ class DocumentType(str, Enum):
 
 class PageType(str, Enum):
     """页面类型"""
-    COVER = "封面页"           # 证件封面（如：离婚证红色封面）
-    CONTENT = "内容页"         # 核心内容页（如：离婚证内页，包含双方信息）
-    STAMP = "盖章页"           # 盖章页（如：结婚证登记机关章）
-    ATTACHMENT = "附件页"      # 附件页（如：房产证附图）
-    BACK = "封底页"            # 封底页
-    FIRST_PAGE = "首页"        # 户口本首页
-    PERSONAL_PAGE = "个人页"   # 户口本个人页
-    UNKNOWN = "未知页"         # 无法识别
+
+    COVER = "封面页"  # 证件封面（如：离婚证红色封面）
+    CONTENT = "内容页"  # 核心内容页（如：离婚证内页，包含双方信息）
+    STAMP = "盖章页"  # 盖章页（如：结婚证登记机关章）
+    ATTACHMENT = "附件页"  # 附件页（如：房产证附图）
+    BACK = "封底页"  # 封底页
+    FIRST_PAGE = "首页"  # 户口本首页
+    PERSONAL_PAGE = "个人页"  # 户口本个人页
+    UNKNOWN = "未知页"  # 无法识别
 
 
 class ProcessingLayer(str, Enum):
     """处理层类型"""
+
     RULE = "rule"
     VLM = "vlm"
     LLM = "llm"
@@ -89,6 +92,7 @@ class ProcessingLayer(str, Enum):
 @dataclass
 class DocumentInfo:
     """文档信息"""
+
     image_path: str
     doc_type: DocumentType = DocumentType.UNKNOWN
     page_type: PageType = PageType.UNKNOWN
@@ -112,6 +116,7 @@ class DocumentInfo:
 @dataclass
 class ExtractionResult:
     """字段提取结果"""
+
     doc_type: DocumentType
     layer: ProcessingLayer
     fields: Dict[str, str] = field(default_factory=dict)

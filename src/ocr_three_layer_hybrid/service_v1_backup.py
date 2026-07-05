@@ -31,7 +31,6 @@ from ocr_three_layer_hybrid.vlm_classifier import (
 from ocr_three_layer_hybrid.vlm_layer import VLMExtractionLayer
 from ocr_three_layer_hybrid.pipeline import PlanEPlusPipeline
 
-
 # ========== Pipeline 元数据常量（供前端流程图使用） ==========
 
 # Pipeline阶段名称映射
@@ -49,25 +48,60 @@ ROUTE_NAMES = {
 
 # Pipeline阶段列表（用于流程图显示）
 PIPELINE_STAGES = [
-    {"id": "stage0", "name": "阶段0", "title": "多文档冲突检测", "keywords": "买受人+出卖人+房屋类型"},
-    {"id": "stage1", "name": "阶段1", "title": "标准证件强信号", "keywords": "公民身份号码、常住人口登记卡等"},
-    {"id": "stage1_5", "name": "阶段1.5", "title": "备选强信号", "keywords": "户口簿+户主、持证人+登记日期"},
-    {"id": "stage1_6", "name": "阶段1.6", "title": "更多备选信号", "keywords": "户别+户主姓名、结婚证+登记机关"},
-    {"id": "stage2", "name": "阶段2", "title": "标准单证强信号", "keywords": "发票代码+发票号码"},
-    {"id": "stage3", "name": "阶段3", "title": "合同字段组合", "keywords": "买受人+出卖人+价款"},
-    {"id": "stage4", "name": "阶段4", "title": "VLM分类兜底", "keywords": "Qwen2.5-VL-7B视觉识别"},
+    {
+        "id": "stage0",
+        "name": "阶段0",
+        "title": "多文档冲突检测",
+        "keywords": "买受人+出卖人+房屋类型",
+    },
+    {
+        "id": "stage1",
+        "name": "阶段1",
+        "title": "标准证件强信号",
+        "keywords": "公民身份号码、常住人口登记卡等",
+    },
+    {
+        "id": "stage1_5",
+        "name": "阶段1.5",
+        "title": "备选强信号",
+        "keywords": "户口簿+户主、持证人+登记日期",
+    },
+    {
+        "id": "stage1_6",
+        "name": "阶段1.6",
+        "title": "更多备选信号",
+        "keywords": "户别+户主姓名、结婚证+登记机关",
+    },
+    {
+        "id": "stage2",
+        "name": "阶段2",
+        "title": "标准单证强信号",
+        "keywords": "发票代码+发票号码",
+    },
+    {
+        "id": "stage3",
+        "name": "阶段3",
+        "title": "合同字段组合",
+        "keywords": "买受人+出卖人+价款",
+    },
+    {
+        "id": "stage4",
+        "name": "阶段4",
+        "title": "VLM分类兜底",
+        "keywords": "Qwen2.5-VL-7B视觉识别",
+    },
 ]
 
 # 提取层颜色映射
 LAYER_COLORS = {
-    "rule": "#10b981",    # 绿色
-    "vlm": "#3b82f6",     # 蓝色
-    "llm": "#8b5cf6",     # 紫色
-    "none": "#6b7280",    # 灰色
+    "rule": "#10b981",  # 绿色
+    "vlm": "#3b82f6",  # 蓝色
+    "llm": "#8b5cf6",  # 紫色
+    "none": "#6b7280",  # 灰色
 }
 
 # 支持的图片扩展名
-IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff"}
 
 
 # ========== 日志配置 ==========
@@ -115,7 +149,9 @@ class OCRService:
     - VLM字段级兜底（校验失败时触发VLM重新提取）
     """
 
-    def __init__(self, config: Optional[OCRConfig] = None, enable_vlm_fallback: bool = True):
+    def __init__(
+        self, config: Optional[OCRConfig] = None, enable_vlm_fallback: bool = True
+    ):
         """
         初始化服务
 
@@ -146,7 +182,10 @@ class OCRService:
         self._position_extractor = None
         if self.config.enable_position_extraction:
             try:
-                from ocr_three_layer_hybrid.position_extractor import HouseholdPositionExtractor
+                from ocr_three_layer_hybrid.position_extractor import (
+                    HouseholdPositionExtractor,
+                )
+
                 self._position_extractor = HouseholdPositionExtractor()
                 logger.info("位置标注提取器已启用")
             except ImportError as e:
@@ -157,20 +196,26 @@ class OCRService:
         if self.config.enable_vlm_field_fallback:
             try:
                 from ocr_three_layer_hybrid.vlm_fallback import VLMFallbackHandler
-                self._vlm_fallback_handler = VLMFallbackHandler(vlm_client=self._vlm_client)
+
+                self._vlm_fallback_handler = VLMFallbackHandler(
+                    vlm_client=self._vlm_client
+                )
                 logger.info("VLM字段级兜底已启用")
             except ImportError as e:
                 logger.warning(f"VLM字段级兜底未启用（导入失败）: {e}")
 
         # 规则层：注入位置标注提取器
         from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
+
         rule_layer = RuleExtractionLayer(position_extractor=self._position_extractor)
 
         # VLM 提取层：根据配置选择模型
         vlm_extraction_engine = self.config.vlm_extraction_engine
         if vlm_extraction_engine == "qwen2_5_vl_7b":
             vlm_service_config = self.config.qwen_vl_service
-            logger.info(f"VLM 提取层使用: Qwen2.5-VL-7B ({vlm_service_config.base_url})")
+            logger.info(
+                f"VLM 提取层使用: Qwen2.5-VL-7B ({vlm_service_config.base_url})"
+            )
         else:  # 默认使用 glm_ocr
             vlm_service_config = self.config.vlm_service
             logger.info(f"VLM 提取层使用: GLM-OCR ({vlm_service_config.base_url})")
@@ -179,6 +224,7 @@ class OCRService:
         llm_layer = None
         try:
             from ocr_three_layer_hybrid.llm_layer import PPChatOCRv4Layer
+
             llm_layer = PPChatOCRv4Layer(
                 chat_bot_config={
                     "api_type": "openai",
@@ -194,7 +240,9 @@ class OCRService:
                 },
                 timeout=self.config.llm_service.timeout,
             )
-            logger.info(f"LLM 提取层已启用: {self.config.llm_service.model_name} ({self.config.llm_service.base_url})")
+            logger.info(
+                f"LLM 提取层已启用: {self.config.llm_service.model_name} ({self.config.llm_service.base_url})"
+            )
         except ImportError as e:
             logger.warning(f"LLM 提取层未启用（导入失败）: {e}")
         except Exception as e:
@@ -268,15 +316,17 @@ class OCRService:
                 if not hasattr(self, "_paddleocr_wrapper"):
                     # 引擎名称映射：service 配置 → paddleocr_wrapper
                     engine_map = {
-                        "ppocr": "ppocr",           # PP-OCRv6
-                        "paddleocr_vl": "vlm",      # PaddleOCR-VL
+                        "ppocr": "ppocr",  # PP-OCRv6
+                        "paddleocr_vl": "vlm",  # PaddleOCR-VL
                         "structure_v3": "structure_v3",  # PP-StructureV3（弃用）
                     }
                     self._paddleocr_wrapper = PaddleOCRWrapper(
                         device="cpu",
                         default_engine=engine_map.get(engine_name, "auto"),
                     )
-                    logger.info(f"PaddleOCR 引擎已初始化: {engine_name} → {engine_map.get(engine_name)}")
+                    logger.info(
+                        f"PaddleOCR 引擎已初始化: {engine_name} → {engine_map.get(engine_name)}"
+                    )
 
                 # 运行 OCR
                 result = self._paddleocr_wrapper.run_ocr(image_path)
@@ -284,6 +334,7 @@ class OCRService:
             else:
                 logger.error(f"未知的 OCR 引擎: {engine_name}，使用默认 ppocr")
                 from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
+
                 if not hasattr(self, "_paddleocr_wrapper"):
                     self._paddleocr_wrapper = PaddleOCRWrapper(device="cpu")
                 result = self._paddleocr_wrapper.run_ocr(image_path)
@@ -292,14 +343,20 @@ class OCRService:
             ocr_time = time.time() - ocr_start
             logger.info(
                 "[OCR] %s | 引擎=%s | 耗时=%.2fs | 文本长度=%d字",
-                Path(image_path).name, engine_name, ocr_time, len(text),
+                Path(image_path).name,
+                engine_name,
+                ocr_time,
+                len(text),
             )
             return text
         except Exception as e:
             ocr_time = time.time() - ocr_start
             logger.error(
                 "[OCR] 失败 | %s | 引擎=%s | 耗时=%.2fs | 错误=%s",
-                Path(image_path).name, engine_name, ocr_time, e,
+                Path(image_path).name,
+                engine_name,
+                ocr_time,
+                e,
             )
             return ""
 
@@ -438,7 +495,9 @@ class OCRService:
         if not result.success:
             logger.warning(
                 "[提取失败] %s | 类型=%s | 错误=%s",
-                img_name, doc_info.doc_type.value, result.error_message,
+                img_name,
+                doc_info.doc_type.value,
+                result.error_message,
             )
 
         # 3. 构建返回结果
@@ -496,33 +555,44 @@ class OCRService:
                     if result["classification"].get("vlm_result") == "附属页面":
                         is_correct = True
 
-                results.append({
-                    **result,
-                    "file_path": file_path,
-                    "expected_type": expected,
-                    "page_status": page_status,
-                    "is_correct": is_correct,
-                    "file_name": Path(file_path).name,
-                })
+                results.append(
+                    {
+                        **result,
+                        "file_path": file_path,
+                        "expected_type": expected,
+                        "page_status": page_status,
+                        "is_correct": is_correct,
+                        "file_name": Path(file_path).name,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "file_path": file_path,
-                    "file_name": Path(file_path).name,
-                    "expected_type": expected,
-                    "page_status": page_status,
-                    "is_correct": False,
-                    "error": str(e),
-                    "classification": {"doc_type": "错误", "confidence": 0, "route": "error"},
-                    "extraction": {"success": False, "layer": "none", "fields": {}},
-                    "timing": {"total_ms": 0},
-                })
+                results.append(
+                    {
+                        "file_path": file_path,
+                        "file_name": Path(file_path).name,
+                        "expected_type": expected,
+                        "page_status": page_status,
+                        "is_correct": False,
+                        "error": str(e),
+                        "classification": {
+                            "doc_type": "错误",
+                            "confidence": 0,
+                            "route": "error",
+                        },
+                        "extraction": {"success": False, "layer": "none", "fields": {}},
+                        "timing": {"total_ms": 0},
+                    }
+                )
 
         # 批量统计
         correct = sum(1 for r in results if r.get("is_correct"))
         batch_time = time.time() - batch_start
         logger.info(
             "[批量] 完成 | 总数=%d | 正确=%d | 准确率=%.1f%% | 耗时=%.2fs",
-            total, correct, (correct / total * 100) if total > 0 else 0, batch_time,
+            total,
+            correct,
+            (correct / total * 100) if total > 0 else 0,
+            batch_time,
         )
         return results
 
@@ -556,10 +626,13 @@ class OCRService:
             return {"error": f"目录不存在: {dir_path}"}
 
         # 收集图片文件
-        image_files = sorted([
-            f for f in dir_p.iterdir()
-            if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
-        ])
+        image_files = sorted(
+            [
+                f
+                for f in dir_p.iterdir()
+                if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS
+            ]
+        )
 
         if not image_files:
             return {"error": f"目录中没有找到图片文件: {dir_path}"}
@@ -569,13 +642,15 @@ class OCRService:
         images = []
         for f in image_files:
             ocr_text = self.run_ocr(str(f))
-            images.append({
-                "file_path": str(f),
-                "file_name": f.name,
-                "text": ocr_text,
-                "expected_type": "",
-                "page_status": "",
-            })
+            images.append(
+                {
+                    "file_path": str(f),
+                    "file_name": f.name,
+                    "text": ocr_text,
+                    "expected_type": "",
+                    "page_status": "",
+                }
+            )
         ocr_time = time.time() - start_time
 
         # Phase 2: 分类+提取
@@ -596,7 +671,11 @@ class OCRService:
 
         logger.info(
             "[目录] %s | 图片=%d | OCR=%.2fs | Pipeline=%.2fs | 总计=%.2fs | 类型分布=%s | 层分布=%s",
-            dir_p.name, total, ocr_time, pipeline_time, total_time,
+            dir_p.name,
+            total,
+            ocr_time,
+            pipeline_time,
+            total_time,
             dict(sorted(type_stats.items(), key=lambda x: -x[1])),
             layer_stats,
         )
@@ -650,7 +729,9 @@ class OCRService:
             stage_match_info = doc_info.metadata.get("signal", "")
         elif route == "backup_certificate":
             active_stage = "stage1_5"
-            signals = doc_info.metadata.get("primary", []) + doc_info.metadata.get("required", [])
+            signals = doc_info.metadata.get("primary", []) + doc_info.metadata.get(
+                "required", []
+            )
             stage_match_info = " + ".join(signals)
         elif route == "additional_backup":
             active_stage = "stage1_6"

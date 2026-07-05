@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 def encode_image_base64(image_path: str) -> str:
     """读取图片文件并返回 base64 编码字符串"""
-    with open(image_path, 'rb') as f:
-        return base64.b64encode(f.read()).decode('utf-8')
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
 
 
 class VLMClient:

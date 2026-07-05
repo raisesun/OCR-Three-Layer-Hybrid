@@ -28,6 +28,7 @@ class VLMServiceConfig:
       --model GLM-OCR-Q8_0.gguf --mmproj mmproj-GLM-OCR-Q8_0.gguf \\
       --host 0.0.0.0 --port 8080 --ctx-size 8192
     """
+
     base_url: str = "http://localhost:8080/v1"
     model_name: str = "GLM-OCR-Q8_0.gguf"
     model_path: str = "/Users/dongsun/Github/models-OCR/GLM-OCR-GGUF"
@@ -52,6 +53,7 @@ class QwenVLServiceConfig:
       --mmproj Qwen2.5-VL-7B-Instruct-abliterated.mmproj-Q8_0.gguf \\
       --host 0.0.0.0 --port 8082 --ctx-size 8192
     """
+
     base_url: str = "http://localhost:8082/v1"
     model_name: str = "qwen2.5-vl-7b"
     model_path: str = "/Users/dongsun/Github/models-OCR/Qwen2.5-VL-7B"
@@ -74,14 +76,17 @@ class OCRConfig:
         config = OCRConfig()
         config.vlm_service.base_url = "http://custom-host:8080/v1"
     """
+
     vlm_service: VLMServiceConfig = field(default_factory=VLMServiceConfig)
     qwen_vl_service: QwenVLServiceConfig = field(default_factory=QwenVLServiceConfig)
     enable_position_extraction: bool = True  # 启用位置标注提取（户口本首页）
-    enable_vlm_field_fallback: bool = True   # 启用字段级VLM兜底（校验失败时触发）
+    enable_vlm_field_fallback: bool = True  # 启用字段级VLM兜底（校验失败时触发）
 
     # OCR 引擎配置（Phase 2 优化）
     # 注意：分层策略（tiered）测试失败，准确率下降且速度变慢，不推荐使用
-    ocr_engine: str = "ppocr"  # "tiered" | "glm_ocr" | "ppocr" | "paddleocr_vl" | "structure_v3"
+    ocr_engine: str = (
+        "ppocr"  # "tiered" | "glm_ocr" | "ppocr" | "paddleocr_vl" | "structure_v3"
+    )
     # 说明：
     # - tiered: 分层策略（不推荐，准确率68%，速度66.9秒）
     # - glm_ocr: GLM-OCR（当前生产环境，27秒/张，准确率66%）
@@ -107,10 +112,10 @@ class OCRConfig:
     # 图像预处理配置（Phase 4 新增）
     # 用于在 OCR 前对图像进行增强处理
     enable_image_preprocessing: bool = False  # 是否启用图像预处理
-    preprocessing_denoise: bool = True        # 去噪
-    preprocessing_deskew: bool = False        # 纠偏（默认禁用，对竖向文档误判）
-    preprocessing_contrast: bool = True       # 对比度增强
-    preprocessing_binarize: bool = False      # 二值化（默认关闭，会丢失灰度信息）
+    preprocessing_denoise: bool = True  # 去噪
+    preprocessing_deskew: bool = False  # 纠偏（默认禁用，对竖向文档误判）
+    preprocessing_contrast: bool = True  # 对比度增强
+    preprocessing_binarize: bool = False  # 二值化（默认关闭，会丢失灰度信息）
 
     @classmethod
     def from_env(cls) -> "OCRConfig":
@@ -139,7 +144,9 @@ class OCRConfig:
         elif engine_name == "glm_ocr":
             return self.vlm_service
         else:
-            raise ValueError(f"不支持的VLM引擎: {engine_name}，可选值: glm_ocr, qwen2_5_vl_7b")
+            raise ValueError(
+                f"不支持的VLM引擎: {engine_name}，可选值: glm_ocr, qwen2_5_vl_7b"
+            )
 
 
 # =============================================================================
