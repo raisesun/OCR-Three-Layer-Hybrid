@@ -242,7 +242,6 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             # 首页特征：户别 + 户主姓名 + 住址
             has_hubie = "户别" in full_text or "户 别" in full_text
             has_holder_name = "户主姓名" in full_text
-            has_address = "住址" in full_text
 
             # 个人页特征：常住人口登记卡
             has_personal_card = "常住人口登记卡" in full_text
@@ -335,7 +334,6 @@ class KeywordDocumentClassifier(IDocumentClassifier):
 
             # 首页特征：买卖合同、合同编号 + 卖方/买方/房屋坐落
             has_contract_title = any(kw in full_text for kw in ["买卖合同", "存量房买卖合同"])
-            has_contract_no = "合同编号" in full_text
             has_first_page_fields = any(kw in full_text for kw in ["卖方", "买方", "房屋坐落"])
 
             # 内容页特征：房屋基本情况、付款方式、装修价款
@@ -659,7 +657,6 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 # 买卖合同：买受人 + 出卖人 + (价款 或 房屋类型关键词)
                 has_buyer = any(kw in full_text for kw in signal_config["buyer"])
                 has_seller = any(kw in full_text for kw in signal_config["seller"])
-                has_price = any(kw in full_text for kw in signal_config["price"])
                 has_property_type = any(kw in full_text for kw in property_type_keywords) if property_type_keywords else False
 
                 # 基本条件：必须有买受人+出卖人

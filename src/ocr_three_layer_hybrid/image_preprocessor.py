@@ -58,7 +58,6 @@ def resize_image(
                 img = img.convert('RGB')
 
             width, height = img.size
-            original_size = (width, height)
 
             # 检查是否需要缩放
             if max(width, height) <= max_side:

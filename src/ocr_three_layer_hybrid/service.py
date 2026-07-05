@@ -471,7 +471,6 @@ class OCRService:
                     if value and value.strip() and not merged_fields.get(key):
                         merged_fields[key] = value
             else:
-                all_success = False
                 last_error = result.error_message
 
             last_layer = result.layer
