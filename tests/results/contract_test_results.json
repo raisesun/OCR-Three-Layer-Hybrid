@@ -1,0 +1,366 @@
+[
+  {
+    "index": 1,
+    "image": "2b7aee7102a44d579ea92d011dc9995a.jpeg",
+    "case_id": "202406240010",
+    "expected_type": "purchase_contract",
+    "classified_type": "购房合同",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {
+      "合同编号": "202406240010",
+      "买受人": "秦国庆",
+      "出卖人": "蚌埠宏翔置业有限公司",
+      "总价款": "",
+      "签订日期": "",
+      "房屋地址": "",
+      "建筑面积": ""
+    },
+    "non_empty_count": 3,
+    "non_empty_fields": {
+      "合同编号": "202406240010",
+      "买受人": "秦国庆",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "ref_fields": {
+      "合同编号": "202406240010",
+      "买受人": "秦国庆",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "accuracy": 1.0,
+    "accuracy_detail": {
+      "accuracy": 1.0,
+      "matched": 3,
+      "total_extracted": 3,
+      "matched_fields": [
+        "合同编号",
+        "买受人",
+        "出卖人"
+      ],
+      "mismatched_fields": [],
+      "missing_in_ref": []
+    },
+    "ocr_time": 44.48,
+    "process_time": 0.0,
+    "error_message": null
+  },
+  {
+    "index": 2,
+    "image": "ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+    "case_id": "202404010024",
+    "expected_type": "purchase_contract",
+    "classified_type": "购房合同",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {
+      "合同编号": "202404010024",
+      "买受人": "贾杏旺",
+      "出卖人": "蚌埠宏翔置业有限公司",
+      "总价款": "",
+      "签订日期": "",
+      "房屋地址": "",
+      "建筑面积": ""
+    },
+    "non_empty_count": 3,
+    "non_empty_fields": {
+      "合同编号": "202404010024",
+      "买受人": "贾杏旺",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "ref_fields": {
+      "合同编号": "202404010024",
+      "买受人": "贾杏旺,王娜",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "accuracy": 1.0,
+    "accuracy_detail": {
+      "accuracy": 1.0,
+      "matched": 3,
+      "total_extracted": 3,
+      "matched_fields": [
+        "合同编号",
+        "买受人",
+        "出卖人"
+      ],
+      "mismatched_fields": [],
+      "missing_in_ref": []
+    },
+    "ocr_time": 29.63,
+    "process_time": 0.0,
+    "error_message": null
+  },
+  {
+    "index": 3,
+    "image": "d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+    "case_id": "202404250008",
+    "expected_type": "purchase_contract",
+    "classified_type": "购房合同",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {
+      "合同编号": "",
+      "买受人": "李金宝",
+      "出卖人": "蚌埠宏翔置业有限公司",
+      "总价款": "",
+      "签订日期": "",
+      "房屋地址": "安徽省蚌埠市蚌山区解放路东侧、M-H-13（E）路南侧",
+      "建筑面积": ""
+    },
+    "non_empty_count": 3,
+    "non_empty_fields": {
+      "买受人": "李金宝",
+      "出卖人": "蚌埠宏翔置业有限公司",
+      "房屋地址": "安徽省蚌埠市蚌山区解放路东侧、M-H-13（E）路南侧"
+    },
+    "ref_fields": {
+      "合同编号": "20104250009",
+      "买受人": "李金宝",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "accuracy": 0.6666666666666666,
+    "accuracy_detail": {
+      "accuracy": 0.6666666666666666,
+      "matched": 2,
+      "total_extracted": 3,
+      "matched_fields": [
+        "买受人",
+        "出卖人"
+      ],
+      "mismatched_fields": [],
+      "missing_in_ref": [
+        "房屋地址"
+      ]
+    },
+    "ocr_time": 177.25,
+    "process_time": 0.0,
+    "error_message": null
+  },
+  {
+    "index": 4,
+    "image": "2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+    "case_id": "202407200006",
+    "expected_type": "purchase_contract",
+    "classified_type": "购房合同-内容页",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {
+      "合同编号": "",
+      "买受人": "",
+      "出卖人": "",
+      "总价款": "",
+      "签订日期": "2024-07-20",
+      "房屋地址": "",
+      "建筑面积": ""
+    },
+    "non_empty_count": 1,
+    "non_empty_fields": {
+      "签订日期": "2024-07-20"
+    },
+    "ref_fields": {
+      "签订日期": "2024年7月20日"
+    },
+    "accuracy": 0.0,
+    "accuracy_detail": {
+      "accuracy": 0.0,
+      "matched": 0,
+      "total_extracted": 1,
+      "matched_fields": [],
+      "mismatched_fields": [
+        {
+          "field": "签订日期",
+          "extracted": "2024-07-20",
+          "reference": "2024年7月20日"
+        }
+      ],
+      "missing_in_ref": []
+    },
+    "ocr_time": 876.76,
+    "process_time": 0.0,
+    "error_message": null
+  },
+  {
+    "index": 5,
+    "image": "3418882883ff478095435aa96e25a272.jpeg",
+    "case_id": "202402270015",
+    "expected_type": "purchase_contract",
+    "classified_type": "购房合同-内容页",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {
+      "合同编号": "",
+      "买受人": "",
+      "出卖人": "",
+      "总价款": "",
+      "签订日期": "2024-02-27",
+      "房屋地址": "",
+      "建筑面积": ""
+    },
+    "non_empty_count": 1,
+    "non_empty_fields": {
+      "签订日期": "2024-02-27"
+    },
+    "ref_fields": {
+      "合同编号": "202402270015",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "accuracy": 0.0,
+    "accuracy_detail": {
+      "accuracy": 0.0,
+      "matched": 0,
+      "total_extracted": 1,
+      "matched_fields": [],
+      "mismatched_fields": [],
+      "missing_in_ref": [
+        "签订日期"
+      ]
+    },
+    "ocr_time": 393.74,
+    "process_time": 0.0,
+    "error_message": null
+  },
+  {
+    "index": 6,
+    "image": "25fc387ef8df4a068b6b70967873302e.jpeg",
+    "case_id": "202410220008",
+    "expected_type": "purchase_contract",
+    "classified_type": "购房合同",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {
+      "合同编号": "",
+      "买受人": "王宁",
+      "出卖人": "蚌埠宏翔置业有限公司",
+      "总价款": "",
+      "签订日期": "",
+      "房屋地址": "安徽省蚌埠市蚌山区解放路东侧、M-H-13（E）路南侧",
+      "建筑面积": ""
+    },
+    "non_empty_count": 3,
+    "non_empty_fields": {
+      "买受人": "王宁",
+      "出卖人": "蚌埠宏翔置业有限公司",
+      "房屋地址": "安徽省蚌埠市蚌山区解放路东侧、M-H-13（E）路南侧"
+    },
+    "ref_fields": {
+      "合同编号": "202410220008",
+      "买受人": "王宁",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "accuracy": 0.6666666666666666,
+    "accuracy_detail": {
+      "accuracy": 0.6666666666666666,
+      "matched": 2,
+      "total_extracted": 3,
+      "matched_fields": [
+        "买受人",
+        "出卖人"
+      ],
+      "mismatched_fields": [],
+      "missing_in_ref": [
+        "房屋地址"
+      ]
+    },
+    "ocr_time": 137.72,
+    "process_time": 0.0,
+    "error_message": null
+  },
+  {
+    "index": 7,
+    "image": "21721add1dee4fc6a9c2ff37dc6c5d45.jpeg",
+    "case_id": "202502050035",
+    "expected_type": "purchase_contract",
+    "classified_type": "购房合同-签署页",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {},
+    "non_empty_count": 0,
+    "non_empty_fields": {},
+    "ref_fields": {},
+    "accuracy": null,
+    "accuracy_detail": {
+      "accuracy": null,
+      "matched": 0,
+      "total_extracted": 0,
+      "matched_fields": [],
+      "mismatched_fields": [],
+      "missing_in_ref": []
+    },
+    "ocr_time": 182.07,
+    "process_time": 0.0,
+    "error_message": null
+  },
+  {
+    "index": 8,
+    "image": "942b7e1a18664ee2ab542c98410cfd79.jpeg",
+    "case_id": "202410090006",
+    "expected_type": "purchase_contract",
+    "classified_type": "购房合同-内容页",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {
+      "合同编号": "",
+      "买受人": "",
+      "出卖人": "",
+      "总价款": "880000",
+      "签订日期": "",
+      "房屋地址": "",
+      "建筑面积": ""
+    },
+    "non_empty_count": 1,
+    "non_empty_fields": {
+      "总价款": "880000"
+    },
+    "ref_fields": {
+      "合同编号": "202410090006",
+      "总价款": "880000元"
+    },
+    "accuracy": 1.0,
+    "accuracy_detail": {
+      "accuracy": 1.0,
+      "matched": 1,
+      "total_extracted": 1,
+      "matched_fields": [
+        "总价款"
+      ],
+      "mismatched_fields": [],
+      "missing_in_ref": []
+    },
+    "ocr_time": 82.41,
+    "process_time": 0.0,
+    "error_message": null
+  },
+  {
+    "index": 9,
+    "image": "e9505e57b2d646b9a06c121fe96a8a4a.jpg",
+    "case_id": "BBJZ-2026-0126003",
+    "expected_type": "stock_contract",
+    "classified_type": "存量房合同-签署页",
+    "classified_correct": true,
+    "processing_layer": "rule",
+    "success": true,
+    "extracted_fields": {},
+    "non_empty_count": 0,
+    "non_empty_fields": {},
+    "ref_fields": {},
+    "accuracy": null,
+    "accuracy_detail": {
+      "accuracy": null,
+      "matched": 0,
+      "total_extracted": 0,
+      "matched_fields": [],
+      "mismatched_fields": [],
+      "missing_in_ref": []
+    },
+    "ocr_time": 143.23,
+    "process_time": 0.0,
+    "error_message": null
+  }
+]

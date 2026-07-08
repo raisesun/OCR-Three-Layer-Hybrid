@@ -200,7 +200,7 @@ class RuleExtractionLayer(IExtractionLayer):
                 DocumentType.NOTARY_CERTIFICATE,
                 DocumentType.POWER_OF_ATTORNEY,
             ]:
-                # 签署页、公证书、委托书不需要提取字段
+                # 签署页、公证书、委托书不提取字段
                 fields = {k: "" for k in key_list}
             else:
                 fields = {}

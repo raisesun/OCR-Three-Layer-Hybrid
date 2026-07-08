@@ -17,32 +17,36 @@ class TestKeywordDocumentClassifier:
     # === 阶段1: 标准证件测试 ===
 
     def test_classify_id_card(self, classifier):
-        """身份证：公民身份号码"""
+        """身份证：公民身份号码 → 身份证正面"""
         ocr_texts = ["姓名 张三", "性别 男", "公民身份号码 110101199001011234"]
         info = classifier.classify("/tmp/id_card.jpg", ocr_texts)
-        assert info.doc_type == DocumentType.ID_CARD
+        # 现在会识别为身份证正面（有姓名、性别、公民身份号码）
+        assert info.doc_type == DocumentType.ID_CARD_FRONT
         assert info.confidence == 0.95
         assert info.metadata["route"] == "standard_certificate"
 
     def test_classify_id_card_back(self, classifier):
-        """身份证反面：签发机关"""
+        """身份证反面：签发机关 → 身份证背面"""
         ocr_texts = ["签发机关 北京市公安局", "有效期限 2020.01.01-2040.01.01"]
         info = classifier.classify("/tmp/id_card_back.jpg", ocr_texts)
-        assert info.doc_type == DocumentType.ID_CARD
+        # 现在会识别为身份证背面（有签发机关、有效期限）
+        assert info.doc_type == DocumentType.ID_CARD_BACK
         assert info.confidence == 0.95
 
     def test_classify_marriage_certificate(self, classifier):
-        """结婚证：结婚证字号"""
+        """结婚证：结婚证字号 → 结婚证内容页"""
         ocr_texts = ["结婚证字号 J12345", "持证人 张三", "登记日期 2020年1月1日"]
         info = classifier.classify("/tmp/marriage.jpg", ocr_texts)
-        assert info.doc_type == DocumentType.MARRIAGE_CERTIFICATE
+        # 现在会识别为结婚证内容页（有结婚证字号、持证人、登记日期）
+        assert info.doc_type == DocumentType.MARRIAGE_CERTIFICATE_CONTENT
         assert info.confidence == 0.95
 
     def test_classify_household_register(self, classifier):
-        """户口本：常住人口登记卡"""
+        """户口本：常住人口登记卡 → 户口本个人页"""
         ocr_texts = ["常住人口登记卡", "姓名 李四", "户主姓名 李大山"]
         info = classifier.classify("/tmp/hukou.jpg", ocr_texts)
-        assert info.doc_type == DocumentType.HOUSEHOLD_REGISTER
+        # 现在会识别为户口本个人页（有常住人口登记卡）
+        assert info.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT
         assert info.confidence == 0.95
 
     def test_classify_property_certificate(self, classifier):
@@ -53,16 +57,17 @@ class TestKeywordDocumentClassifier:
         assert info.confidence == 0.95
 
     def test_classify_marriage_certificate_backup(self, classifier):
-        """结婚证备选强信号：持证人 + 登记日期"""
+        """结婚证备选强信号：持证人 + 登记日期 → 结婚证内容页"""
         # 没有结婚证字号，但有持证人和登记日期
         ocr_texts = ["持证人 张三", "登记日期 2020年5月20日"]
         info = classifier.classify("/tmp/marriage_backup.jpg", ocr_texts)
-        assert info.doc_type == DocumentType.MARRIAGE_CERTIFICATE
+        # 现在会识别为结婚证内容页（有持证人、登记日期）
+        assert info.doc_type == DocumentType.MARRIAGE_CERTIFICATE_CONTENT
         assert info.confidence == 0.90
         assert info.metadata["route"] == "backup_certificate"
 
     def test_classify_marriage_certificate_backup_with_gender(self, classifier):
-        """结婚证备选强信号：持证人 + 登记日期 + 其他字段"""
+        """结婚证备选强信号：持证人 + 登记日期 + 其他字段 → 结婚证内容页"""
         # 模拟真实结婚证的OCR文本
         ocr_texts = [
             "持证人张梅梅",
@@ -71,7 +76,8 @@ class TestKeywordDocumentClassifier:
             "女方姓名 张梅梅",
         ]
         info = classifier.classify("/tmp/marriage_real.jpg", ocr_texts)
-        assert info.doc_type == DocumentType.MARRIAGE_CERTIFICATE
+        # 现在会识别为结婚证内容页（有持证人、登记日期）
+        assert info.doc_type == DocumentType.MARRIAGE_CERTIFICATE_CONTENT
         assert info.confidence == 0.90
 
     # === 阶段2: 标准单证测试 ===
@@ -152,7 +158,8 @@ class TestKeywordDocumentClassifier:
     # === 便捷方法测试 ===
 
     def test_classify_from_text(self, classifier):
-        """从文本分类"""
+        """从文本分类 → 户口本个人页"""
         text = "常住人口登记卡 姓名 李四"
         info = classifier.classify_from_text("/tmp/hukou.jpg", text)
-        assert info.doc_type == DocumentType.HOUSEHOLD_REGISTER
+        # 现在会识别为户口本个人页（有常住人口登记卡）
+        assert info.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT

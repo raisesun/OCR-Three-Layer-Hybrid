@@ -1,0 +1,143 @@
+[
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202406240010/2b7aee7102a44d579ea92d011dc9995a.jpeg",
+    "case_id": "202406240010",
+    "doc_type": "购房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {
+      "合同编号": "202406240010",
+      "买受人": "秦国庆",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202404010024/ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+    "case_id": "202404010024",
+    "doc_type": "购房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {
+      "合同编号": "202404010024",
+      "买受人": "贾杏旺,王娜",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202404250008/d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+    "case_id": "202404250008",
+    "doc_type": "购房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {
+      "合同编号": "20104250009",
+      "买受人": "李金宝",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202407200006/2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+    "case_id": "202407200006",
+    "doc_type": "购房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {
+      "签订日期": "2024年7月20日"
+    },
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202402270015/3418882883ff478095435aa96e25a272.jpeg",
+    "case_id": "202402270015",
+    "doc_type": "购房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {
+      "合同编号": "202402270015",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202410220008/25fc387ef8df4a068b6b70967873302e.jpeg",
+    "case_id": "202410220008",
+    "doc_type": "购房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {
+      "合同编号": "202410220008",
+      "买受人": "王宁",
+      "出卖人": "蚌埠宏翔置业有限公司"
+    },
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202502050035/21721add1dee4fc6a9c2ff37dc6c5d45.jpeg",
+    "case_id": "202502050035",
+    "doc_type": "购房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {},
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202410090006/942b7e1a18664ee2ab542c98410cfd79.jpeg",
+    "case_id": "202410090006",
+    "doc_type": "购房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {
+      "合同编号": "202410090006",
+      "总价款": "880000元"
+    },
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2026-0126003/e9505e57b2d646b9a06c121fe96a8a4a.jpg",
+    "case_id": "BBJZ-2026-0126003",
+    "doc_type": "存量房-合同",
+    "key_list": [
+      "合同编号",
+      "买受人",
+      "出卖人",
+      "房屋地址"
+    ],
+    "ref_fields": {},
+    "ocr_texts": []
+  }
+]

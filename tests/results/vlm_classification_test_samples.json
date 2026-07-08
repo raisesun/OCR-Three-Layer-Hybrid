@@ -1,0 +1,32 @@
+[
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202406240010/2b7aee7102a44d579ea92d011dc9995a.jpeg",
+    "case_id": "202406240010",
+    "cert_code": "购房合同",
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202404010024/ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+    "case_id": "202404010024",
+    "cert_code": "购房合同",
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202404250008/d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+    "case_id": "202404250008",
+    "cert_code": "购房合同",
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202407200006/2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+    "case_id": "202407200006",
+    "cert_code": "购房合同",
+    "ocr_texts": []
+  },
+  {
+    "image_path": "/Users/dongsun/Github/sample-OCR/增量房图片资料/202402270015/3418882883ff478095435aa96e25a272.jpeg",
+    "case_id": "202402270015",
+    "cert_code": "购房合同",
+    "ocr_texts": []
+  }
+]

@@ -36,7 +36,8 @@ class TestPlanEPlusPipeline:
         result = pipeline.process("/tmp/id.jpg", ocr_texts)
 
         assert result.success is True
-        assert result.doc_type == DocumentType.ID_CARD
+        # 现在会识别为身份证正面
+        assert result.doc_type == DocumentType.ID_CARD_FRONT
         assert result.layer == ProcessingLayer.RULE
         assert result.fields["姓名"] == "张三"
         assert result.fields["公民身份号码"] == "110101199001011234"
@@ -46,7 +47,8 @@ class TestPlanEPlusPipeline:
         result = pipeline.process("/tmp/marriage.jpg", ocr_texts)
 
         assert result.success is True
-        assert result.doc_type == DocumentType.MARRIAGE_CERTIFICATE
+        # 现在会识别为结婚证内容页
+        assert result.doc_type == DocumentType.MARRIAGE_CERTIFICATE_CONTENT
         assert result.layer == ProcessingLayer.RULE
         assert result.fields["持证人"] == "张三"
         assert result.fields["结婚证字号"] == "J12345"
@@ -150,7 +152,7 @@ class TestPlanEPlusPipeline:
         ocr_texts = ["常住人口登记卡", "姓名 张三", "户主姓名 李四"]
         result = pipeline.process("/tmp/hukou.jpg", ocr_texts)
 
-        # 户口本现在由规则层处理
+        # 户口本现在由规则层处理，识别为个人页
         assert result.success is True
-        assert result.doc_type == DocumentType.HOUSEHOLD_REGISTER
+        assert result.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT
         assert result.layer == ProcessingLayer.RULE

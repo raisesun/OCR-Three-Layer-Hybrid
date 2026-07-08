@@ -8,6 +8,16 @@ import re
 from typing import Dict, List
 
 from ocr_three_layer_hybrid.extractors.base_extractor import BaseExtractor
+from ocr_three_layer_hybrid.extractors.regex_patterns import (
+    extract_id_card_number,
+    extract_gender,
+    extract_name,
+    extract_ethnicity,
+    extract_issuing_authority,
+    extract_validity_period,
+    extract_address,
+    extract_birth_date,
+)
 from ocr_three_layer_hybrid.interfaces import DocumentType
 
 
@@ -48,8 +58,9 @@ class PersonalIdExtractor(BaseExtractor):
         if "姓名" in key_list:
             # 格式1（优先）：标签+同行值 "姓名XXX" 或 "姓名 XXX"（预处理后的常见格式）
             # 这种格式在身份证正面和预处理后都常见
+            # 注意：预处理可能移除字间空格，所以名字后可能是任何非中文字符或行尾
             match = re.search(
-                r"(?<!户主)姓\s*名\s*[:：]?\s*([一-鿿]{2,4})(?=\s|$)", full_text
+                r"(?<!户主)姓\s*名\s*[:：]?\s*([一-鿿]{2,4})(?=[\s\d\-—:：;；,，.。、/／()（）\[\]【】]|$|[^一-鿿])", full_text
             )
             # 格式2：值+标签 "XXX\n姓名"（OCR输出值在标签之前）
             if not match:
@@ -162,8 +173,8 @@ class PersonalIdExtractor(BaseExtractor):
                 fields["住址"] = ""
 
         if "公民身份号码" in key_list:
-            match = re.search(r"(\d{17}[\dXx])", full_text)
-            fields["公民身份号码"] = match.group(1).upper() if match else ""
+            id_number = extract_id_card_number(full_text)
+            fields["公民身份号码"] = id_number.upper() if id_number else ""
 
         # 背面字段：签发机关
         if "签发机关" in key_list:

@@ -1,0 +1,135 @@
+{
+  "model_name": "Qwen2.5-VL-7B",
+  "total_samples": 9,
+  "total_fields": 17,
+  "total_matched": 12,
+  "accuracy": 0.7058823529411765,
+  "total_time": 804.74684715271,
+  "avg_time": 89.4163163503011,
+  "details": [
+    {
+      "index": 1,
+      "image": "2b7aee7102a44d579ea92d011dc9995a.jpeg",
+      "case_id": "202406240010",
+      "doc_type": "购房-合同",
+      "extracted_fields": {
+        "合同编号": "202406240010",
+        "买受人": "秦国庆",
+        "出卖人": "蚌埠宏翔置业有限公司"
+      },
+      "accuracy": 1.0,
+      "matched": 3,
+      "total_extracted": 3,
+      "time": 283.1048879623413
+    },
+    {
+      "index": 2,
+      "image": "ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+      "case_id": "202404010024",
+      "doc_type": "购房-合同",
+      "extracted_fields": {
+        "合同编号": "202404010024",
+        "买受人": "贾杏旺,王娜",
+        "出卖人": "蚌埠宏翔置业有限公司"
+      },
+      "accuracy": 1.0,
+      "matched": 3,
+      "total_extracted": 3,
+      "time": 67.82642531394958
+    },
+    {
+      "index": 3,
+      "image": "d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+      "case_id": "202404250008",
+      "doc_type": "购房-合同",
+      "extracted_fields": {
+        "买受人": "李金宝",
+        "出卖人": "蚌埠宏翔置业有限公司",
+        "房屋地址": "安徽省蚌埠市禹会区张公山路118号2栋1单元17号"
+      },
+      "accuracy": 0.6666666666666666,
+      "matched": 2,
+      "total_extracted": 3,
+      "time": 66.66521906852722
+    },
+    {
+      "index": 4,
+      "image": "2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+      "case_id": "202407200006",
+      "doc_type": "购房-合同",
+      "extracted_fields": {
+        "合同编号": "202407200006"
+      },
+      "accuracy": 0.0,
+      "matched": 0,
+      "total_extracted": 1,
+      "time": 65.57868123054504
+    },
+    {
+      "index": 5,
+      "image": "3418882883ff478095435aa96e25a272.jpeg",
+      "case_id": "202402270015",
+      "doc_type": "购房-合同",
+      "extracted_fields": {
+        "合同编号": "202402270015",
+        "房屋地址": "蚌埠宏翔置业有限公司山水拾光小区"
+      },
+      "accuracy": 0.5,
+      "matched": 1,
+      "total_extracted": 2,
+      "time": 65.81760311126709
+    },
+    {
+      "index": 6,
+      "image": "25fc387ef8df4a068b6b70967873302e.jpeg",
+      "case_id": "202410220008",
+      "doc_type": "购房-合同",
+      "extracted_fields": {
+        "买受人": "王宁",
+        "出卖人": "蚌埠宏翔置业有限公司",
+        "房屋地址": "安徽省蚌埠市淮上区沫河口镇三铺村312-1号"
+      },
+      "accuracy": 0.6666666666666666,
+      "matched": 2,
+      "total_extracted": 3,
+      "time": 66.68088912963867
+    },
+    {
+      "index": 7,
+      "image": "21721add1dee4fc6a9c2ff37dc6c5d45.jpeg",
+      "case_id": "202502050035",
+      "doc_type": "购房-合同",
+      "extracted_fields": {
+        "房屋地址": "安徽省蚌埠市蚌山区山水拾光小区售楼部"
+      },
+      "accuracy": 0.0,
+      "matched": 0,
+      "total_extracted": 1,
+      "time": 65.0650691986084
+    },
+    {
+      "index": 8,
+      "image": "942b7e1a18664ee2ab542c98410cfd79.jpeg",
+      "case_id": "202410090006",
+      "doc_type": "购房-合同",
+      "extracted_fields": {
+        "合同编号": "202410090006"
+      },
+      "accuracy": 1.0,
+      "matched": 1,
+      "total_extracted": 1,
+      "time": 59.540751934051514
+    },
+    {
+      "index": 9,
+      "image": "e9505e57b2d646b9a06c121fe96a8a4a.jpg",
+      "case_id": "BBJZ-2026-0126003",
+      "doc_type": "存量房-合同",
+      "extracted_fields": {},
+      "accuracy": null,
+      "matched": 0,
+      "total_extracted": 0,
+      "time": 64.46732020378113
+    }
+  ]
+}

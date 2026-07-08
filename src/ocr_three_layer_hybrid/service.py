@@ -516,8 +516,14 @@ class OCRService:
         image_paths: List[str],
         doc_info: Any,
     ) -> Any:
-        """逐页处理并合并结果（适用于非多页专用文档类型）"""
-        from ocr_three_layer_hybrid.interfaces import ExtractionResult
+        """逐页处理并合并结果（支持可选字段和冲突检测）
+
+        合并策略：
+        1. 对于每个字段，取第一个非空值
+        2. 如果同一字段在不同页面有不同值，记录冲突
+        3. 可选字段缺失不影响成功判断
+        """
+        from ocr_three_layer_hybrid.interfaces import ExtractionResult, FieldConflict
 
         merged_fields: Dict[str, str] = {}
         all_success = True
@@ -525,12 +531,19 @@ class OCRService:
         last_layer = ProcessingLayer.VLM
         last_error = ""
 
-        for img_path in image_paths:
+        # 收集每页的提取结果（用于冲突检测）
+        page_results: List[tuple] = []  # (page_type, result)
+
+        for page_idx, img_path in enumerate(image_paths):
+            # 确定页面类型
+            page_type = f"page_{page_idx}"
+
             # 对每页进行OCR和处理
             ocr_text = self.run_ocr(img_path)
             ocr_texts = [ocr_text] if ocr_text else []
 
             result = self._pipeline.process(img_path, ocr_texts, doc_info=doc_info)
+            page_results.append((page_type, result))
 
             if result.success:
                 # 合并字段（取第一个非空值）
@@ -543,9 +556,56 @@ class OCRService:
             last_layer = result.layer
             total_time += result.time_cost
 
-        success = len([v for v in merged_fields.values() if v and v.strip()]) > 0
+        # 检测字段冲突（同一字段在不同页面有不同值）
+        conflicts: List[FieldConflict] = []
+        for page_idx, (page_type, result) in enumerate(page_results):
+            if not result.success:
+                continue
 
-        return ExtractionResult(
+            for key, value in result.fields.items():
+                if not value or not value.strip():
+                    continue
+
+                # 检查是否与其他页面的值冲突
+                for other_idx, (other_page_type, other_result) in enumerate(page_results):
+                    if other_idx <= page_idx or not other_result.success:
+                        continue
+
+                    other_value = other_result.fields.get(key, "")
+                    if not other_value or not other_value.strip():
+                        continue
+
+                    # 检测到冲突（同一字段，不同值）
+                    if value != other_value:
+                        conflict = FieldConflict(
+                            field_name=key,
+                            source_a_value=value,
+                            source_b_value=other_value,
+                            source_a_page=page_type,
+                            source_b_page=other_page_type,
+                            resolved_value=merged_fields.get(key, value),
+                        )
+                        conflicts.append(conflict)
+
+        # 获取字段配置，判断必须字段是否都填充
+        field_configs = self._pipeline.DEFAULT_FIELD_CONFIGS.get(doc_info.doc_type)
+
+        if field_configs:
+            # 检查必须字段是否都填充
+            required_filled = 0
+            required_total = len(field_configs.required_fields)
+            for field_config in field_configs.required_fields:
+                if merged_fields.get(field_config.name, "").strip():
+                    required_filled += 1
+
+            # 成功判断：必须字段全部填充
+            success = required_filled == required_total if required_total > 0 else len(merged_fields) > 0
+        else:
+            # 没有字段配置，使用原有逻辑
+            success = len([v for v in merged_fields.values() if v and v.strip()]) > 0
+
+        # 构建返回结果
+        extraction_result = ExtractionResult(
             doc_type=doc_info.doc_type,
             layer=last_layer,
             fields=merged_fields,
@@ -553,6 +613,12 @@ class OCRService:
             time_cost=total_time,
             error_message=last_error if not success else "",
         )
+
+        # 添加冲突信息
+        if conflicts:
+            extraction_result.field_conflicts = conflicts
+
+        return extraction_result
 
     # ========== 批量处理 ==========
 

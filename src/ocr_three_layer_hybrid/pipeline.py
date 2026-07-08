@@ -25,6 +25,11 @@ from ocr_three_layer_hybrid.interfaces import (
 )
 from ocr_three_layer_hybrid.classifier import KeywordDocumentClassifier
 from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
+from ocr_three_layer_hybrid.field_config import (
+    FieldConfig,
+    FieldPriority,
+    DocumentFieldConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +70,28 @@ class PlanEPlusPipeline:
             "男方身份证号",
             "女方身份证号",
         ],
+        DocumentType.MARRIAGE_CERTIFICATE_CONTENT: [
+            "持证人",
+            "登记日期",
+            "结婚证字号",
+            "男方姓名",
+            "女方姓名",
+            "男方身份证号",
+            "女方身份证号",
+        ],
+        DocumentType.MARRIAGE_CERTIFICATE_STAMP: [
+            # 盖章页通常不需要提取字段
+        ],
         DocumentType.HOUSEHOLD_REGISTER: [
+            "户主姓名",
+            "户号",
+            "住址",
+            "姓名",
+            "与户主关系",
+            "性别",
+            "公民身份号码",
+        ],
+        DocumentType.HOUSEHOLD_REGISTER_CONTENT: [
             "户主姓名",
             "户号",
             "住址",
@@ -310,6 +336,61 @@ class PlanEPlusPipeline:
             "监管金额",
             "监管机构",
         ],
+    }
+
+    # 文档类型的详细字段配置（区分必须/可选字段）
+    # 用于多页文档的字段合并和冲突检测
+    DEFAULT_FIELD_CONFIGS: Dict[DocumentType, DocumentFieldConfig] = {
+        # 购房合同 - 内容页
+        DocumentType.PURCHASE_CONTRACT_CONTENT: DocumentFieldConfig(
+            required_fields=[
+                FieldConfig(name="总价款", priority=FieldPriority.REQUIRED),
+                FieldConfig(name="签订日期", priority=FieldPriority.REQUIRED),
+                FieldConfig(name="建筑面积", priority=FieldPriority.REQUIRED),
+            ],
+            optional_fields=[
+                # 这些字段主要在首页，内容页可能没有
+                FieldConfig(name="合同编号", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="买受人", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="出卖人", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="房屋地址", priority=FieldPriority.OPTIONAL),
+            ]
+        ),
+        # 购房合同 - 首页
+        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: DocumentFieldConfig(
+            required_fields=[],  # 首页没有必须字段（都是可选）
+            optional_fields=[
+                FieldConfig(name="合同编号", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="买受人", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="出卖人", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="房屋坐落", priority=FieldPriority.OPTIONAL),
+            ]
+        ),
+        # 存量房合同 - 内容页
+        DocumentType.STOCK_CONTRACT_CONTENT: DocumentFieldConfig(
+            required_fields=[
+                FieldConfig(name="总价款", priority=FieldPriority.REQUIRED),
+                FieldConfig(name="签订日期", priority=FieldPriority.REQUIRED),
+                FieldConfig(name="建筑面积", priority=FieldPriority.REQUIRED),
+            ],
+            optional_fields=[
+                # 这些字段主要在首页，内容页可能没有
+                FieldConfig(name="合同编号", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="买受人", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="出卖人", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="房屋地址", priority=FieldPriority.OPTIONAL),
+            ]
+        ),
+        # 存量房合同 - 首页
+        DocumentType.STOCK_CONTRACT_FIRST_PAGE: DocumentFieldConfig(
+            required_fields=[],  # 首页没有必须字段（都是可选）
+            optional_fields=[
+                FieldConfig(name="合同编号", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="买受人", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="出卖人", priority=FieldPriority.OPTIONAL),
+                FieldConfig(name="房屋坐落", priority=FieldPriority.OPTIONAL),
+            ]
+        ),
     }
 
     # 文档类型到默认处理层的映射（v2.1：规则层优先，封面页跳过）

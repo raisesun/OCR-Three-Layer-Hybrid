@@ -1,0 +1,240 @@
+[
+  {
+    "model_name": "Qwen2.5-VL-3B",
+    "total_samples": 9,
+    "success_count": 9,
+    "total_fields": 15,
+    "total_matched": 11,
+    "total_time": 2366.0063812732697,
+    "accuracy": 0.7333333333333333,
+    "details": [
+      {
+        "index": 1,
+        "image": "2b7aee7102a44d579ea92d011dc9995a.jpeg",
+        "case_id": "202406240010",
+        "classified_type": "购房合同",
+        "success": true,
+        "extracted_fields": 3,
+        "matched_fields": 3,
+        "accuracy": 1.0,
+        "ocr_time": 39.06,
+        "process_time": 0.02
+      },
+      {
+        "index": 2,
+        "image": "ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+        "case_id": "202404010024",
+        "classified_type": "购房合同",
+        "success": true,
+        "extracted_fields": 3,
+        "matched_fields": 3,
+        "accuracy": 1.0,
+        "ocr_time": 29.75,
+        "process_time": 0.0
+      },
+      {
+        "index": 3,
+        "image": "d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+        "case_id": "202404250008",
+        "classified_type": "购房合同",
+        "success": true,
+        "extracted_fields": 3,
+        "matched_fields": 2,
+        "accuracy": 0.6666666666666666,
+        "ocr_time": 186.7,
+        "process_time": 0.0
+      },
+      {
+        "index": 4,
+        "image": "2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+        "case_id": "202407200006",
+        "classified_type": "购房合同-内容页",
+        "success": true,
+        "extracted_fields": 1,
+        "matched_fields": 0,
+        "accuracy": 0.0,
+        "ocr_time": 1029.76,
+        "process_time": 0.01
+      },
+      {
+        "index": 5,
+        "image": "3418882883ff478095435aa96e25a272.jpeg",
+        "case_id": "202402270015",
+        "classified_type": "购房合同-内容页",
+        "success": true,
+        "extracted_fields": 1,
+        "matched_fields": 0,
+        "accuracy": 0.0,
+        "ocr_time": 481.67,
+        "process_time": 0.01
+      },
+      {
+        "index": 6,
+        "image": "25fc387ef8df4a068b6b70967873302e.jpeg",
+        "case_id": "202410220008",
+        "classified_type": "购房合同",
+        "success": true,
+        "extracted_fields": 3,
+        "matched_fields": 2,
+        "accuracy": 0.6666666666666666,
+        "ocr_time": 161.85,
+        "process_time": 0.0
+      },
+      {
+        "index": 7,
+        "image": "21721add1dee4fc6a9c2ff37dc6c5d45.jpeg",
+        "case_id": "202502050035",
+        "classified_type": "购房合同-签署页",
+        "success": true,
+        "extracted_fields": 0,
+        "matched_fields": 0,
+        "accuracy": null,
+        "ocr_time": 191.44,
+        "process_time": 0.0
+      },
+      {
+        "index": 8,
+        "image": "942b7e1a18664ee2ab542c98410cfd79.jpeg",
+        "case_id": "202410090006",
+        "classified_type": "购房合同-内容页",
+        "success": true,
+        "extracted_fields": 1,
+        "matched_fields": 1,
+        "accuracy": 1.0,
+        "ocr_time": 85.97,
+        "process_time": 0.0
+      },
+      {
+        "index": 9,
+        "image": "e9505e57b2d646b9a06c121fe96a8a4a.jpg",
+        "case_id": "BBJZ-2026-0126003",
+        "classified_type": "存量房合同-签署页",
+        "success": true,
+        "extracted_fields": 0,
+        "matched_fields": 0,
+        "accuracy": null,
+        "ocr_time": 159.76,
+        "process_time": 0.0
+      }
+    ]
+  },
+  {
+    "model_name": "Qwen2.5-VL-7B",
+    "total_samples": 9,
+    "success_count": 9,
+    "total_fields": 15,
+    "total_matched": 11,
+    "total_time": 2428.724795818329,
+    "accuracy": 0.7333333333333333,
+    "details": [
+      {
+        "index": 1,
+        "image": "2b7aee7102a44d579ea92d011dc9995a.jpeg",
+        "case_id": "202406240010",
+        "classified_type": "购房合同",
+        "success": true,
+        "extracted_fields": 3,
+        "matched_fields": 3,
+        "accuracy": 1.0,
+        "ocr_time": 42.13,
+        "process_time": 0.0
+      },
+      {
+        "index": 2,
+        "image": "ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+        "case_id": "202404010024",
+        "classified_type": "购房合同",
+        "success": true,
+        "extracted_fields": 3,
+        "matched_fields": 3,
+        "accuracy": 1.0,
+        "ocr_time": 36.84,
+        "process_time": 0.0
+      },
+      {
+        "index": 3,
+        "image": "d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+        "case_id": "202404250008",
+        "classified_type": "购房合同",
+        "success": true,
+        "extracted_fields": 3,
+        "matched_fields": 2,
+        "accuracy": 0.6666666666666666,
+        "ocr_time": 209.97,
+        "process_time": 0.0
+      },
+      {
+        "index": 4,
+        "image": "2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+        "case_id": "202407200006",
+        "classified_type": "购房合同-内容页",
+        "success": true,
+        "extracted_fields": 1,
+        "matched_fields": 0,
+        "accuracy": 0.0,
+        "ocr_time": 1069.1,
+        "process_time": 0.01
+      },
+      {
+        "index": 5,
+        "image": "3418882883ff478095435aa96e25a272.jpeg",
+        "case_id": "202402270015",
+        "classified_type": "购房合同-内容页",
+        "success": true,
+        "extracted_fields": 1,
+        "matched_fields": 0,
+        "accuracy": 0.0,
+        "ocr_time": 500.47,
+        "process_time": 0.01
+      },
+      {
+        "index": 6,
+        "image": "25fc387ef8df4a068b6b70967873302e.jpeg",
+        "case_id": "202410220008",
+        "classified_type": "购房合同",
+        "success": true,
+        "extracted_fields": 3,
+        "matched_fields": 2,
+        "accuracy": 0.6666666666666666,
+        "ocr_time": 163.19,
+        "process_time": 0.0
+      },
+      {
+        "index": 7,
+        "image": "21721add1dee4fc6a9c2ff37dc6c5d45.jpeg",
+        "case_id": "202502050035",
+        "classified_type": "购房合同-签署页",
+        "success": true,
+        "extracted_fields": 0,
+        "matched_fields": 0,
+        "accuracy": null,
+        "ocr_time": 184.85,
+        "process_time": 0.0
+      },
+      {
+        "index": 8,
+        "image": "942b7e1a18664ee2ab542c98410cfd79.jpeg",
+        "case_id": "202410090006",
+        "classified_type": "购房合同-内容页",
+        "success": true,
+        "extracted_fields": 1,
+        "matched_fields": 1,
+        "accuracy": 1.0,
+        "ocr_time": 79.66,
+        "process_time": 0.0
+      },
+      {
+        "index": 9,
+        "image": "e9505e57b2d646b9a06c121fe96a8a4a.jpg",
+        "case_id": "BBJZ-2026-0126003",
+        "classified_type": "存量房合同-签署页",
+        "success": true,
+        "extracted_fields": 0,
+        "matched_fields": 0,
+        "accuracy": null,
+        "ocr_time": 142.47,
+        "process_time": 0.0
+      }
+    ]
+  }
+]

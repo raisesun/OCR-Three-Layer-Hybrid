@@ -58,9 +58,10 @@ class OCRTextPreprocessor:
         """
         文本清理
 
-        1. 移除多余空格
-        2. 规范化空白字符
-        3. 移除特殊控制字符
+        1. 移除OCR输出的字间空格（PaddleOCR-VL等模型的常见输出格式）
+        2. 移除多余空格
+        3. 规范化空白字符
+        4. 移除特殊控制字符
         """
         result = text
 
@@ -73,18 +74,71 @@ class OCRTextPreprocessor:
         # 3. 规范化空白字符（制表符、换页符等转为空格）
         result = re.sub(r"[\t\f\v]", " ", result)
 
-        # 4. 移除行首行尾多余空格（保留换行符）
+        # 4. 移除OCR输出的字间空格（逐行处理，只处理"字间空格模式"的行）
+        # 字间空格模式：一行中大部分中文字符之间都有单空格
+        # 例如："商 品 房 买 卖 合 同" → "商品房买卖合同"
+        # 但对于："姓名 张三" → 保留（不是字间空格模式）
+        lines = result.split("\n")
+        processed_lines = []
+        for line in lines:
+            processed_lines.append(self._remove_ocr_char_spacing(line))
+        result = "\n".join(processed_lines)
+
+        # 5. 移除行首行尾多余空格（保留换行符）
         lines = result.split("\n")
         lines = [line.strip() for line in lines]
         result = "\n".join(lines)
 
-        # 5. 压缩连续多个空格为单个空格
+        # 6. 压缩连续多个空格为单个空格
         result = re.sub(r" {2,}", " ", result)
 
-        # 6. 压缩连续多个换行为单个换行
+        # 7. 压缩连续多个换行为单个换行
         result = re.sub(r"\n{3,}", "\n\n", result)
 
         return result
+
+    def _remove_ocr_char_spacing(self, line: str) -> str:
+        """移除OCR输出的字间空格（仅当行呈现"字间空格模式"时）
+
+        字间空格模式：行内用空格分隔后，大部分"部分"都是单字符
+        例如："商 品 房 买 卖 合 同" → 分割后每个部分都是单字 → "商品房买卖合同"
+        例如："合 同 编 号 ： 2 0 2 4" → 分割后每个部分都是单字/标点 → "合同编号：2024"
+        但对于："姓名 张三" → 分割后"姓名"是2字 → 保留
+        但对于："姓名 张三 公民身份号码" → 分割后"姓名"、"公民身份号码"是多字 → 保留
+        """
+        if not line or len(line.strip()) < 3:
+            return line
+
+        # 按空格分割（包括多个空格）
+        parts = line.split()
+
+        if len(parts) < 3:
+            # 部分太少，不处理
+            return line.strip()
+
+        # 统计"单字符部分"vs"多字符部分"
+        single_char_parts = 0
+        multi_char_parts = 0
+
+        for part in parts:
+            # 计算内容字符数（去除标点）
+            content_chars = re.findall(r"[一-鿿\d]", part)
+            if len(content_chars) <= 1:
+                single_char_parts += 1
+            else:
+                multi_char_parts += 1
+
+        total = single_char_parts + multi_char_parts
+        if total == 0:
+            return line.strip()
+
+        # 如果超过80%的部分都是单字符，且至少有3个单字符部分，认为是字间空格模式
+        ratio = single_char_parts / total
+        if ratio >= 0.8 and single_char_parts >= 3:
+            # 移除所有空格
+            return re.sub(r"\s+", "", line)
+        else:
+            return line.strip()
 
     def _standardize_format(self, text: str) -> str:
         """

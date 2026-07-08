@@ -1,7 +1,7 @@
 # OCR API 服务接口文档
 
-## 版本: v1.0.0
-## 更新日期: 2026-07-05
+## 版本: v1.1.0
+## 更新日期: 2026-07-08
 
 ---
 
@@ -9,38 +9,52 @@
 
 ### 1.1 服务简介
 
-OCR API 服务提供文档识别和字段提取能力，支持图片和PDF文件的处理。
+OCR API 服务提供文档识别和字段提取能力，支持图片和PDF文件的异步批量处理。
 
 **核心能力**：
 - 文档分类：自动识别文档类型（身份证、户口本、结婚证等）
 - 字段提取：从文档中提取结构化字段
-- 多格式支持：图片（JPG/PNG/BMP）和PDF（扫描件+文字版）
-- 双模式处理：同步（实时）和异步（大批量）
+- 多格式支持：图片（JPG/PNG/BMP/TIFF）和 PDF
+- 异步处理：大批量文件异步提交，支持进度查询和任务取消
+
+**开放接口**（共 5 个）：
+
+| # | 方法 | 路径 | 功能 |
+|---|------|------|------|
+| 1 | GET | `/health` | 健康检查 |
+| 2 | POST | `/api/v1/ocr/async` | 大批量异步提交 |
+| 3 | GET | `/api/v1/task/{task_id}` | 查询任务状态 |
+| 4 | POST | `/api/v1/task/{task_id}/cancel` | 取消任务 |
+| 5 | GET | `/api/v1/quota` | 配额查询 |
 
 ### 1.2 服务地址
 
 | 环境 | 地址 | 说明 |
 |------|------|------|
-| 开发环境 | `http://localhost:8000` | 本地开发 |
-| 测试环境 | `http://ocr-test.internal:8080` | 局域网测试 |
-| 生产环境 | `https://ocr.api.example.com` | 公网生产 |
+| 开发环境 | `http://localhost:8888` | 本地开发 |
+| API 文档 | `http://localhost:8888/docs` | Swagger UI（自动生成） |
 
 ### 1.3 快速开始
 
 ```bash
-# 1. 获取API Key
-# 联系管理员获取
+# 1. 设置 API Key（环境变量）
+export OCR_API_KEYS="your_api_key_here"
 
-# 2. 测试健康检查
-curl http://localhost:8000/health
+# 2. 启动服务
+python demo/server.py
 
-# 3. 处理单张图片
-curl -X POST http://localhost:8000/api/v1/ocr/single \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -F "file=@test.jpg"
+# 3. 健康检查
+curl http://localhost:8888/health
 
-# 4. 查看API文档
-# 浏览器访问: http://localhost:8000/docs
+# 4. 提交异步任务
+curl -X POST http://localhost:8888/api/v1/ocr/async \
+  -H "Authorization: Bearer $OCR_API_KEYS" \
+  -F "files=@test1.jpg" \
+  -F "files=@test2.jpg"
+
+# 5. 查询任务状态
+curl http://localhost:8888/api/v1/task/{task_id} \
+  -H "Authorization: Bearer $OCR_API_KEYS"
 ```
 
 ---
@@ -55,35 +69,28 @@ curl -X POST http://localhost:8000/api/v1/ocr/single \
 Authorization: Bearer {API_KEY}
 ```
 
-### 2.2 API Key 管理
+### 2.2 API Key 配置
 
-#### 获取API Key
-联系系统管理员申请，提供以下信息：
-- 应用名称
-- 使用场景说明
-- 预期调用量
+通过环境变量配置允许的 API Key 列表（逗号分隔）：
 
-#### API Key 权限
+```bash
+export OCR_API_KEYS="key1,key2,key3"
+```
 
-| 权限 | 说明 |
-|------|------|
-| `ocr.read` | 调用OCR识别接口 |
-| `ocr.write` | 上传文件（通常与read一起授予） |
-| `task.read` | 查询任务状态 |
-| `admin` | 管理权限（查看用量、重置Key等） |
+未配置 `OCR_API_KEYS` 时，所有请求将返回 401 错误。
 
-#### API Key 限制
+### 2.3 API Key 限制
 
 | 限制项 | 默认值 | 说明 |
 |--------|--------|------|
-| 速率限制 | 100次/分钟 | 可根据需求调整 |
+| 速率限制 | 100次/分钟（6000次/小时） | 可通过配额接口查询 |
 | 文件大小 | 20MB | 单个文件最大 |
-| 批量数量 | 50个 | 单次批量处理最大文件数 |
-| 异步队列 | 100个 | 同时进行的异步任务数 |
+| 异步文件数 | 500个 | 单次异步提交最大文件数 |
+| 异步并发 | 100个 | 同时进行的异步任务数 |
 
 ---
 
-## 三、接口列表
+## 三、接口详情
 
 ### 3.1 健康检查
 
@@ -92,6 +99,8 @@ Authorization: Bearer {API_KEY}
 ```
 GET /health
 ```
+
+**认证**: 不需要
 
 **请求参数**: 无
 
@@ -102,174 +111,34 @@ GET /health
   "data": {
     "status": "healthy",
     "version": "1.0.0",
-    "uptime": 86400,
+    "uptime": 86400.5,
     "checks": {
-      "database": "ok",
       "pp_ocr": "ok",
       "vlm_service": "ok",
       "disk_space": "ok"
     }
   },
-  "message": "success"
+  "message": "success",
+  "request_id": null
 }
 ```
+
+**状态说明**:
+| status 值 | 含义 |
+|-----------|------|
+| `healthy` | 所有依赖正常 |
+| `degraded` | 部分依赖异常 |
 
 **状态码**:
 | 状态码 | 说明 |
 |--------|------|
-| 200 | 服务正常 |
-| 503 | 服务不可用 |
+| 200 | 服务可用 |
 
 ---
 
-### 3.2 同步单张处理
+### 3.2 异步任务提交
 
-处理单张图片/PDF，实时返回结果。
-
-```
-POST /api/v1/ocr/single
-Content-Type: multipart/form-data
-Authorization: Bearer {API_KEY}
-```
-
-**请求参数**:
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| file | File | 是 | 图片/PDF文件，支持JPG/PNG/BMP/PDF |
-| doc_type | String | 否 | 指定文档类型，不传则自动分类 |
-| enable_vlm | Boolean | 否 | 是否启用VLM层，默认true |
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "data": {
-    "classification": {
-      "doc_type": "身份证-正面",
-      "confidence": 0.95,
-      "route": "standard_certificate",
-      "signal": "公民身份号码"
-    },
-    "extraction": {
-      "success": true,
-      "layer": "rule",
-      "fields": {
-        "姓名": "张三",
-        "性别": "男",
-        "民族": "汉",
-        "出生": "1990年1月1日",
-        "住址": "北京市XX区XX路XX号",
-        "公民身份号码": "110101199001011234"
-      },
-      "vlm_fallback_enabled": true,
-      "vlm_fallback_triggered": false,
-      "vlm_fallback_fields": []
-    },
-    "timing": {
-      "classify_ms": 2.5,
-      "extract_ms": 150.3,
-      "total_ms": 152.8
-    },
-    "image_info": {
-      "filename": "test.jpg",
-      "size_bytes": 1024000,
-      "format": "JPEG",
-      "dimensions": "1920x1080"
-    }
-  },
-  "message": "success"
-}
-```
-
-**错误响应**:
-```json
-{
-  "code": 400,
-  "data": null,
-  "message": "文件格式不支持，仅支持JPG/PNG/BMP/PDF"
-}
-```
-
-**状态码**:
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 处理成功 |
-| 400 | 请求参数错误 |
-| 401 | 认证失败 |
-| 413 | 文件过大 |
-| 429 | 请求频率超限 |
-| 500 | 服务器内部错误 |
-| 503 | VLM服务不可用（已降级） |
-
-**限制**:
-- 文件大小: ≤20MB
-- 处理时间: 规则层<10秒，VLM层<180秒
-- 超时设置: 建议客户端设置180秒超时
-
----
-
-### 3.3 同步批量处理
-
-处理多张图片/PDF，实时返回所有结果。
-
-```
-POST /api/v1/ocr/batch
-Content-Type: multipart/form-data
-Authorization: Bearer {API_KEY}
-```
-
-**请求参数**:
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| files | File[] | 是 | 多个图片/PDF文件，最多50个 |
-| doc_type | String | 否 | 指定文档类型，所有文件统一分类 |
-| enable_vlm | Boolean | 否 | 是否启用VLM层，默认true |
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "data": {
-    "results": [
-      {
-        "filename": "id_card.jpg",
-        "status": "success",
-        "classification": { ... },
-        "extraction": { ... },
-        "timing": { ... }
-      },
-      {
-        "filename": "hukou.pdf",
-        "status": "success",
-        "classification": { ... },
-        "extraction": { ... },
-        "timing": { ... }
-      }
-    ],
-    "summary": {
-      "total": 2,
-      "success": 2,
-      "failed": 0,
-      "total_time_ms": 350.5,
-      "avg_time_ms": 175.25
-    }
-  },
-  "message": "success"
-}
-```
-
-**限制**:
-- 文件数量: ≤50个
-- 总大小: ≤100MB
-- 处理时间: 可能较长，建议设置300秒超时
-
----
-
-### 3.4 异步任务提交
-
-提交大批量处理任务，立即返回任务ID。
+提交大批量处理任务，立即返回任务ID。后台异步处理，通过查询接口获取进度和结果。
 
 ```
 POST /api/v1/ocr/async
@@ -281,37 +150,58 @@ Authorization: Bearer {API_KEY}
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| files | File[] | 是 | 多个图片/PDF文件 |
-| callback_url | String | 否 | 结果回调URL，处理完成后POST通知 |
-| priority | String | 否 | 优先级：normal（默认）/ urgent |
-| enable_vlm | Boolean | 否 | 是否启用VLM层，默认true |
+| files | File[] | 是 | 图片/PDF 文件列表，最多 500 个 |
+| callback_url | String | 否 | 结果回调 URL（预留，暂未实现） |
+| priority | String | 否 | 优先级：`normal`（默认）/ `urgent` |
+| enable_vlm | Boolean | 否 | 是否启用 VLM 层，默认 `true` |
+
+**支持的文件格式**: JPG, JPEG, PNG, BMP, PDF, TIFF
 
 **响应示例**:
 ```json
 {
   "code": 202,
   "data": {
-    "task_id": "task_20260705_abc123",
+    "task_id": "task_20260708_a1b2c3d4e5f6",
     "status": "pending",
-    "submitted_at": "2026-07-05T10:30:00Z",
+    "submitted_at": "2026-07-08T10:30:00",
     "estimated_time": 120,
     "file_count": 10,
     "priority": "normal"
   },
-  "message": "任务已提交"
+  "message": "任务已提交",
+  "request_id": null
 }
 ```
 
+**错误响应**:
+```json
+{
+  "code": 400,
+  "data": null,
+  "message": "文件数量超限：最多 500 个，当前 600 个",
+  "request_id": null
+}
+```
+
+**状态码**:
+| 状态码 | 说明 |
+|--------|------|
+| 202 | 任务已接受 |
+| 400 | 请求参数错误（文件格式不支持、数量超限等） |
+| 401 | 认证失败 |
+| 413 | 文件过大（>20MB） |
+
 **限制**:
-- 文件数量: ≤500个
-- 总大小: ≤500MB
-- 队列长度: 最多100个待处理任务
+- 文件数量: ≤ 500 个
+- 单文件大小: ≤ 20MB
+- 同时进行的任务: ≤ 100 个
 
 ---
 
-### 3.5 查询任务状态
+### 3.3 查询任务状态
 
-查询异步任务的处理状态和结果。
+查询异步任务的处理状态、进度和结果。
 
 ```
 GET /api/v1/task/{task_id}
@@ -322,79 +212,115 @@ Authorization: Bearer {API_KEY}
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| task_id | String | 任务ID |
+| task_id | String | 任务 ID |
 
-**响应示例 - 处理中**:
+**响应示例 — 处理中**:
 ```json
 {
   "code": 200,
   "data": {
-    "task_id": "task_20260705_abc123",
+    "task_id": "task_20260708_a1b2c3d4e5f6",
     "status": "processing",
     "progress": 60,
     "processed": 6,
     "total": 10,
-    "submitted_at": "2026-07-05T10:30:00Z",
-    "started_at": "2026-07-05T10:30:05Z",
-    "estimated_remaining": 48
+    "submitted_at": "2026-07-08T10:30:00",
+    "started_at": "2026-07-08T10:30:05",
+    "completed_at": null,
+    "estimated_remaining": 48,
+    "result": null,
+    "error": null
   },
-  "message": "success"
+  "message": "success",
+  "request_id": null
 }
 ```
 
-**响应示例 - 已完成**:
+**响应示例 — 已完成**:
 ```json
 {
   "code": 200,
   "data": {
-    "task_id": "task_20260705_abc123",
+    "task_id": "task_20260708_a1b2c3d4e5f6",
     "status": "completed",
     "progress": 100,
     "processed": 10,
     "total": 10,
-    "submitted_at": "2026-07-05T10:30:00Z",
-    "started_at": "2026-07-05T10:30:05Z",
-    "completed_at": "2026-07-05T10:32:05Z",
+    "submitted_at": "2026-07-08T10:30:00",
+    "started_at": "2026-07-08T10:30:05",
+    "completed_at": "2026-07-08T10:32:05",
+    "estimated_remaining": null,
     "result": {
-      "results": [ ... ],
-      "summary": { ... }
-    }
+      "results": [
+        {
+          "file_name": "id_card.jpg",
+          "status": "success",
+          "classification": {
+            "doc_type": "身份证",
+            "doc_type_label": "身份证",
+            "confidence": 0.95,
+            "route": "standard_certificate",
+            "signal": "公民身份号码"
+          },
+          "extraction": {
+            "success": true,
+            "layer": "rule",
+            "fields": {
+              "姓名": "张三",
+              "公民身份号码": "110101199001011234"
+            }
+          },
+          "timing": {
+            "classify_ms": 2.5,
+            "extract_ms": 150.3,
+            "total_ms": 152.8
+          }
+        }
+      ],
+      "summary": {
+        "total": 10,
+        "success": 9,
+        "failed": 1,
+        "total_time_ms": 120500,
+        "avg_time_ms": 12050.0
+      }
+    },
+    "error": null
   },
-  "message": "success"
+  "message": "success",
+  "request_id": null
 }
 ```
 
-**响应示例 - 失败**:
+**响应示例 — 任务不存在**:
 ```json
 {
-  "code": 200,
-  "data": {
-    "task_id": "task_20260705_abc123",
-    "status": "failed",
-    "progress": 30,
-    "processed": 3,
-    "total": 10,
-    "error": "VLM服务超时，已处理3张后失败",
-    "partial_result": {
-      "results": [ ... ]
-    }
-  },
-  "message": "任务失败"
+  "code": 404,
+  "data": null,
+  "message": "任务不存在: task_invalid_id",
+  "request_id": null
 }
 ```
 
-**任务状态**:
-| 状态 | 说明 |
-|------|------|
-| pending | 等待处理 |
-| processing | 处理中 |
-| completed | 已完成 |
-| failed | 失败 |
-| cancelled | 已取消 |
+**任务状态说明**:
+| 状态 | 说明 | 可取消 |
+|------|------|--------|
+| `pending` | 等待处理 | ✅ |
+| `processing` | 处理中（progress 表示进度百分比） | ✅ |
+| `completed` | 已完成（result 包含完整结果） | ❌ |
+| `failed` | 失败（error 包含错误信息） | ❌ |
+| `cancelled` | 已取消 | ❌ |
+
+**状态码**:
+| 状态码 | 说明 |
+|--------|------|
+| 200 | 成功 |
+| 401 | 认证失败 |
+| 404 | 任务不存在 |
 
 ---
 
-### 3.6 取消任务
+### 3.4 取消任务
 
 取消正在处理的异步任务。
 
@@ -403,23 +329,103 @@ POST /api/v1/task/{task_id}/cancel
 Authorization: Bearer {API_KEY}
 ```
 
+**路径参数**:
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| task_id | String | 任务 ID |
+
 **响应示例**:
 ```json
 {
   "code": 200,
   "data": {
-    "task_id": "task_20260705_abc123",
+    "task_id": "task_20260708_a1b2c3d4e5f6",
     "status": "cancelled",
     "processed": 5,
     "total": 10
   },
-  "message": "任务已取消"
+  "message": "任务已取消",
+  "request_id": null
+}
+```
+
+**错误响应**:
+```json
+{
+  "code": 400,
+  "data": null,
+  "message": "任务状态为 completed，无法取消（仅 pending/processing 可取消）",
+  "request_id": null
 }
 ```
 
 **限制**:
-- 仅可取消 pending 或 processing 状态的任务
-- 已处理的部分结果不会返回
+- 仅可取消 `pending` 或 `processing` 状态的任务
+- 取消是异步的，可能不会立即停止当前正在处理的文件
+- 已完成的文件结果会被保留但不返回
+
+**状态码**:
+| 状态码 | 说明 |
+|--------|------|
+| 200 | 取消成功 |
+| 400 | 任务状态不允许取消 |
+| 401 | 认证失败 |
+| 404 | 任务不存在 |
+
+---
+
+### 3.5 配额查询
+
+查询 API 调用配额使用情况。
+
+```
+GET /api/v1/quota
+Authorization: Bearer {API_KEY}
+```
+
+**请求参数**: 无
+
+**响应示例**:
+```json
+{
+  "code": 200,
+  "data": {
+    "api_calls": {
+      "used": 450,
+      "limit": 6000,
+      "reset_at": "2026-07-08T11:00:00"
+    },
+    "storage": {
+      "used_mb": 1024.5,
+      "limit_mb": 10240
+    },
+    "async_tasks": {
+      "pending": 5,
+      "limit": 100
+    }
+  },
+  "message": "success",
+  "request_id": null
+}
+```
+
+**字段说明**:
+| 字段 | 说明 |
+|------|------|
+| `api_calls.used` | 当前小时已调用次数 |
+| `api_calls.limit` | 每小时上限（默认 6000） |
+| `api_calls.reset_at` | 配额重置时间 |
+| `storage.used_mb` | 已用存储空间 (MB) |
+| `storage.limit_mb` | 存储上限 (MB)（默认 10240 = 10GB） |
+| `async_tasks.pending` | 当前排队/处理中的任务数 |
+| `async_tasks.limit` | 并发上限（默认 100） |
+
+**状态码**:
+| 状态码 | 说明 |
+|--------|------|
+| 200 | 成功 |
+| 401 | 认证失败 |
 
 ---
 
@@ -429,44 +435,52 @@ Authorization: Bearer {API_KEY}
 
 | 类型代码 | 中文名称 | 说明 |
 |----------|----------|------|
-| `id_card` | 身份证 | 自动识别正反面 |
-| `id_card_front` | 身份证-正面 | |
-| `id_card_back` | 身份证-背面 | |
-| `household_register` | 户口本 | 自动识别首页/个人页 |
-| `household_register_cover` | 户口本-首页 | |
-| `household_register_content` | 户口本-个人页 | |
-| `marriage_certificate` | 结婚证 | 自动识别封面/内容页/盖章页 |
-| `divorce_certificate` | 离婚证 | 自动识别封面/内容页/盖章页 |
-| `property_certificate` | 不动产权证书 | 自动识别首页/内容页/附图页 |
-| `invoice` | 发票 | |
-| `purchase_contract` | 购房合同 | 自动识别首页/内容页/签署页 |
-| `stock_contract` | 存量房合同 | 自动识别首页/内容页/签署页 |
-| `fund_supervision` | 资金监管协议 | 自动识别首页/信息页/签章页 |
-| `fund_supervision_certificate` | 资金监管凭证 | |
-| `driver_license` | 驾驶证 | 自动识别正反面 |
-| `vehicle_license` | 行驶证 | 自动识别正反面 |
-| `bank_card` | 银行卡 | 自动识别正反面 |
-| `air_waybill` | 空运提单 | |
-| `express_waybill` | 快递单 | |
-| `unknown` | 未知 | 无法识别的文档 |
+| `身份证` | 身份证 | 自动识别正反面 |
+| `户口本` | 户口本 | 自动识别首页/个人页 |
+| `结婚证` | 结婚证 | |
+| `离婚证` | 离婚证 | |
+| `不动产权证书` | 不动产权证书 | |
+| `发票` | 发票 | |
+| `购房合同` | 购房合同 | 多页文档 |
+| `存量房合同` | 存量房合同 | 多页文档 |
+| `资金监管协议` | 资金监管协议 | |
+| `驾驶证` | 驾驶证 | |
+| `行驶证` | 行驶证 | |
+| `银行卡` | 银行卡 | |
+| `空运提单` | 空运提单 | |
+| `快递单` | 快递单 | |
+| `未知` | 未知 | 无法识别的文档 |
 
 ### 4.2 处理层
 
 | 层代码 | 说明 | 平均耗时 |
 |--------|------|----------|
-| `rule` | 规则层（正则表达式） | 10-50ms |
-| `vlm` | VLM层（多模态大模型） | 30-120s |
+| `rule` | 规则层（正则表达式 + 位置感知） | 10-50ms |
+| `vlm` | VLM层（多模态大模型兜底） | 30-120s |
 
-### 4.3 分类路由
+### 4.3 统一响应格式
 
-| 路由代码 | 说明 |
-|----------|------|
-| `standard_certificate` | 标准证件强信号匹配 |
-| `backup_certificate` | 备选强信号匹配 |
-| `additional_backup` | 更多备选信号匹配 |
-| `standard_document` | 标准单证强信号匹配 |
-| `contract_field_combination` | 合同字段组合匹配 |
-| `vlm_fallback_required` | VLM兜底（无法识别） |
+所有接口返回统一的 JSON 格式：
+
+**成功响应**:
+```json
+{
+  "code": 200,
+  "data": { ... },
+  "message": "success",
+  "request_id": null
+}
+```
+
+**错误响应**:
+```json
+{
+  "code": 400,
+  "data": null,
+  "message": "错误描述",
+  "request_id": null
+}
+```
 
 ---
 
@@ -477,107 +491,96 @@ Authorization: Bearer {API_KEY}
 | 错误码 | 说明 | 处理建议 |
 |--------|------|----------|
 | 200 | 成功 | - |
-| 202 | 任务已接受 | 使用task_id查询结果 |
+| 202 | 任务已接受 | 使用 task_id 查询结果 |
 | 400 | 请求参数错误 | 检查请求参数 |
-| 401 | 认证失败 | 检查API Key |
-| 403 | 权限不足 | 联系管理员提升权限 |
-| 413 | 文件过大 | 压缩文件或分批处理 |
-| 429 | 请求频率超限 | 降低请求频率 |
+| 401 | 认证失败 | 检查 API Key |
+| 404 | 资源不存在 | 检查 task_id |
+| 413 | 文件过大 | 压缩文件或减小单文件大小 |
 | 500 | 服务器内部错误 | 联系技术支持 |
-| 503 | 服务不可用 | 稍后重试 |
-
-### 5.2 错误响应格式
-
-```json
-{
-  "code": 400,
-  "data": null,
-  "message": "错误描述",
-  "details": {
-    "field": "file",
-    "issue": "文件格式不支持"
-  },
-  "request_id": "req_abc123"
-}
-```
 
 ---
 
 ## 六、使用示例
 
-### 6.1 Python示例
+### 6.1 Python 示例
 
 ```python
 import requests
-import json
+import time
 
-# 配置
-API_BASE = "http://localhost:8000"
+API_BASE = "http://localhost:8888"
 API_KEY = "your_api_key_here"
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
 # 1. 健康检查
-response = requests.get(f"{API_BASE}/health")
-print(response.json())
+resp = requests.get(f"{API_BASE}/health")
+print(resp.json())
 
-# 2. 同步单张处理
-with open("test.jpg", "rb") as f:
-    response = requests.post(
-        f"{API_BASE}/api/v1/ocr/single",
-        headers=headers,
-        files={"file": ("test.jpg", f, "image/jpeg")}
-    )
-    result = response.json()
-    print(f"文档类型: {result['data']['classification']['doc_type']}")
-    print(f"提取字段: {result['data']['extraction']['fields']}")
-
-# 3. 异步批量处理
+# 2. 提交异步任务
 files = []
-for i in range(10):
-    files.append(("files", open(f"page_{i}.jpg", "rb")))
+for f in ["doc1.jpg", "doc2.jpg", "doc3.pdf"]:
+    files.append(("files", open(f, "rb")))
 
-response = requests.post(
+resp = requests.post(
     f"{API_BASE}/api/v1/ocr/async",
     headers=headers,
     files=files,
-    data={"callback_url": "https://your-app.com/callback"}
 )
-task_id = response.json()["data"]["task_id"]
-print(f"任务ID: {task_id}")
+task_id = resp.json()["data"]["task_id"]
+print(f"任务已提交: {task_id}")
 
-# 4. 查询任务状态
-response = requests.get(
-    f"{API_BASE}/api/v1/task/{task_id}",
-    headers=headers
-)
-print(response.json())
+# 3. 轮询任务状态
+while True:
+    resp = requests.get(
+        f"{API_BASE}/api/v1/task/{task_id}",
+        headers=headers,
+    )
+    data = resp.json()["data"]
+    status = data["status"]
+    progress = data["progress"]
+    print(f"进度: {progress}% ({data['processed']}/{data['total']})")
+
+    if status == "completed":
+        results = data["result"]["results"]
+        summary = data["result"]["summary"]
+        print(f"完成! 成功={summary['success']}, 失败={summary['failed']}")
+        break
+    elif status == "failed":
+        print(f"失败: {data.get('error')}")
+        break
+
+    time.sleep(5)  # 每 5 秒查询一次
+
+# 4. 查询配额
+resp = requests.get(f"{API_BASE}/api/v1/quota", headers=headers)
+quota = resp.json()["data"]
+print(f"API 调用: {quota['api_calls']['used']}/{quota['api_calls']['limit']}")
 ```
 
-### 6.2 cURL示例
+### 6.2 cURL 示例
 
 ```bash
-# 同步单张处理
-curl -X POST http://localhost:8000/api/v1/ocr/single \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -F "file=@test.jpg" \
-  -F "enable_vlm=true"
+# 健康检查
+curl http://localhost:8888/health
 
-# 同步批量处理
-curl -X POST http://localhost:8000/api/v1/ocr/batch \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -F "files=@file1.jpg" \
-  -F "files=@file2.jpg" \
-  -F "files=@file3.jpg"
-
-# 异步任务提交
-curl -X POST http://localhost:8000/api/v1/ocr/async \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -F "files=@batch/*.jpg" \
-  -F "callback_url=https://your-app.com/callback"
+# 提交异步任务
+curl -X POST http://localhost:8888/api/v1/ocr/async \
+  -H "Authorization: Bearer $API_KEY" \
+  -F "files=@doc1.jpg" \
+  -F "files=@doc2.jpg" \
+  -F "files=@doc3.pdf"
 
 # 查询任务状态
-curl -X GET http://localhost:8000/api/v1/task/task_abc123 \
-  -H "Authorization: Bearer YOUR_API_KEY"
+curl http://localhost:8888/api/v1/task/task_20260708_a1b2c3d4e5f6 \
+  -H "Authorization: Bearer $API_KEY"
+
+# 取消任务
+curl -X POST http://localhost:8888/api/v1/task/task_20260708_a1b2c3d4e5f6/cancel \
+  -H "Authorization: Bearer $API_KEY"
+
+# 查询配额
+curl http://localhost:8888/api/v1/quota \
+  -H "Authorization: Bearer $API_KEY"
 ```
 
 ---
@@ -586,101 +589,84 @@ curl -X GET http://localhost:8000/api/v1/task/task_abc123 \
 
 ### 7.1 默认限制
 
-| 限制项 | 默认值 | 可申请调整 |
-|--------|--------|------------|
-| API调用频率 | 100次/分钟 | 是 |
-| 单文件大小 | 20MB | 是 |
-| 批量文件数 | 50个 | 是 |
-| 异步队列长度 | 100个 | 是 |
-| 总存储配额 | 10GB | 是 |
+| 限制项 | 默认值 | 说明 |
+|--------|--------|------|
+| API 调用频率 | 6000次/小时（100次/分钟） | 按小时重置 |
+| 单文件大小 | 20MB | 单个文件最大 |
+| 异步提交文件数 | 500 个 | 单次提交最多 |
+| 异步并发任务 | 100 个 | 同时处理的任务上限 |
+| 存储配额 | 10GB | 上传文件总空间 |
 
-### 7.2 配额查询
+### 7.2 环境变量
 
-```
-GET /api/v1/quota
-Authorization: Bearer {API_KEY}
-```
-
-**响应示例**:
-```json
-{
-  "code": 200,
-  "data": {
-    "api_calls": {
-      "used": 450,
-      "limit": 6000,
-      "reset_at": "2026-07-05T11:00:00Z"
-    },
-    "storage": {
-      "used_mb": 1024,
-      "limit_mb": 10240
-    },
-    "async_tasks": {
-      "pending": 5,
-      "limit": 100
-    }
-  },
-  "message": "success"
-}
-```
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `OCR_API_KEYS` | API Key 列表（逗号分隔） | 空（必须配置） |
+| `DEBUG` | 启用调试路由 | `false` |
+| `OCR_DB_PATH` | SQLite 数据库路径 | `/tmp/ocr_tasks.db` |
+| `OCR_PORT` | 服务端口 | `8888` |
 
 ---
 
 ## 八、最佳实践
 
-### 8.1 性能优化
+### 8.1 处理模式选择
 
-1. **选择合适的处理模式**
-   - 1-10张：使用同步API
-   - 10-100张：使用异步API
-   - >100张：分批提交异步任务
+- **1-10 张**: 使用异步 API，简单高效
+- **10-500 张**: 使用异步 API，一次提交
+- **>500 张**: 分批提交多个异步任务
 
-2. **指定文档类型**
-   - 如果已知文档类型，传入`doc_type`参数可跳过分类步骤
-   - 节省1-5ms分类时间
+### 8.2 轮询策略
 
-3. **控制VLM使用**
-   - 简单文档（身份证、发票）可禁用VLM：`enable_vlm=false`
-   - 复杂文档（合同、户口本）建议启用VLM
+- 查询间隔建议 5-10 秒
+- 根据 `estimated_remaining` 字段动态调整间隔
+- 大文件多的任务可适当增大间隔
 
-### 8.2 错误处理
+### 8.3 错误处理
 
-1. **重试策略**
-   - 500/503错误：指数退避重试
-   - 429错误：等待限流重置
-   - 400/401错误：不重试，修复请求
+- 401 错误：检查 API Key 是否正确
+- 413 错误：压缩文件或分批提交
+- 500 错误：指数退避重试（1s, 2s, 4s, 8s...）
 
-2. **超时设置**
-   - 同步单张：180秒
-   - 同步批量：300秒
-   - 异步查询：30秒
+### 8.4 安全建议
 
-### 8.3 安全建议
-
-1. **API Key保护**
-   - 不要在前端代码中暴露API Key
-   - 使用环境变量或密钥管理服务存储
-   - 定期轮换API Key
-
-2. **HTTPS**
-   - 生产环境必须使用HTTPS
-   - 不要通过HTTP传输API Key
+- 不要在前端代码中暴露 API Key
+- 使用环境变量或密钥管理服务存储
+- 生产环境建议配置 HTTPS（通过反向代理）
 
 ---
 
 ## 九、更新日志
 
+### v1.1.0 (2026-07-08)
+- 限制开放接口为 5 个（移除同步单张/批量处理）
+- 新增 SQLite 持久化任务管理
+- 新增 API Key 认证
+- 新增配额查询接口
+- 调试功能降级为环境变量控制（DEBUG=true）
+
 ### v1.0.0 (2026-07-05)
-- 初始版本发布
-- 支持同步单张/批量处理
-- 支持异步任务处理
-- 支持图片和PDF文件
-- API Key认证
+- 初始版本（设计文档）
 
 ---
 
-## 十、相关文档
+## 十、调试模式
 
-- [代码执行流程图](代码执行流程图.md) — 了解OCR处理流程
-- [扩展指南：新增证件类型](扩展指南_新增证件类型.md) — 了解如何扩展支持新文档类型
-- [技术方案分析](../analysis/analysis_20260705_OCR_API服务技术方案.md) — 详细的技术方案分析
+设置 `DEBUG=true` 可启用额外的调试路由，用于本地开发和测试：
+
+```bash
+DEBUG=true python demo/server.py
+```
+
+调试路由包括：
+- `GET /` — Demo UI 主页
+- `POST /api/process` — 单图处理（传路径）
+- `POST /api/process/batch` — 按 Case 批量处理
+- `POST /api/process/batch/directory` — 目录批量处理
+- `GET /api/directories` — 目录浏览
+- `GET /api/baseline/cases` — 基线数据列表
+- `POST /api/baseline/compare` — 基线对比
+- `GET /api/stats/dashboard` — 统计面板
+- `POST /api/upload` — 文件上传
+
+**注意**: 调试路由不应暴露给外部用户。

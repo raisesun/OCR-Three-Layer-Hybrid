@@ -75,7 +75,14 @@ class TestVLMExtractionLayerUnit:
     def test_build_prompt_household_register(self):
         layer = self._create_layer()
         key_list = ["姓名", "户主", "出生日期", "民族"]
-        prompt = layer._build_prompt(DocumentType.HOUSEHOLD_REGISTER, key_list)
+        # 创建DocumentInfo对象
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            ocr_texts=[],
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            confidence=0.9,
+        )
+        prompt = layer._build_prompt(doc_info, key_list)
 
         # 验证Prompt包含关键字段
         assert "户口本" in prompt or "户" in prompt
@@ -87,7 +94,14 @@ class TestVLMExtractionLayerUnit:
     def test_build_prompt_with_image_path(self):
         layer = self._create_layer()
         key_list = ["姓名"]
-        prompt = layer._build_prompt(DocumentType.HOUSEHOLD_REGISTER, key_list)
+        # 创建DocumentInfo对象
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            ocr_texts=[],
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            confidence=0.9,
+        )
+        prompt = layer._build_prompt(doc_info, key_list)
         assert isinstance(prompt, str)
         assert len(prompt) > 0
 

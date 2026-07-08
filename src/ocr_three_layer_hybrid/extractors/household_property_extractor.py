@@ -1,15 +1,27 @@
 # -*- coding: utf-8 -*-
 """户口本和房产证提取器"""
 
+import logging
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from ocr_three_layer_hybrid.extractors.base_extractor import BaseExtractor
 from ocr_three_layer_hybrid.interfaces import DocumentType
 
+logger = logging.getLogger(__name__)
+
 
 class HouseholdPropertyExtractor(BaseExtractor):
     """户口本和房产证字段提取器"""
+
+    def __init__(self, position_extractor=None):
+        """
+        初始化提取器
+
+        Args:
+            position_extractor: 位置标注提取器（可选）
+        """
+        self._position_extractor = position_extractor
 
     def extract_household_register(
         self, full_text: str, key_list: List[str], image_path: str = ""
@@ -58,6 +70,20 @@ class HouseholdPropertyExtractor(BaseExtractor):
 
         # 第2层：正则提取（补充位置标注未覆盖的字段）
         # 只填充 fields 中尚未有值的字段
+
+        if "户别" in key_list and "户别" not in fields:
+            # 匹配"户别 XXX"或"户 别 XXX"
+            # 使用简单方法：匹配到下一个字段标签（户主、户号、住址）之前
+            match = re.search(r"户\s*别\s+(.+?)(?=\n|户\s*主|户\s*号|住\s*址|$)", full_text, re.MULTILINE)
+            if match:
+                value = match.group(1).strip()
+                # 过滤噪声
+                if value and value not in ("户别", "户 别"):
+                    fields["户别"] = value
+                else:
+                    fields["户别"] = ""
+            else:
+                fields["户别"] = ""
 
         if ("户主姓名" in key_list or "户主" in key_list) and "户主姓名" not in fields:
             # OCR 可能输出 "户 主 姓 名"（字间有空格）

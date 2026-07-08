@@ -114,6 +114,21 @@ class DocumentInfo:
 
 
 @dataclass
+class FieldConflict:
+    """字段冲突信息
+
+    当同一字段在不同页面提取到不同值时，记录冲突信息。
+    """
+
+    field_name: str  # 字段名称
+    source_a_value: str  # 来源A的值
+    source_b_value: str  # 来源B的值
+    source_a_page: str = ""  # 来源A的页面（如 "first_page"）
+    source_b_page: str = ""  # 来源B的页面（如 "content"）
+    resolved_value: str = ""  # 解决后的值（可选，默认为来源A的值）
+
+
+@dataclass
 class ExtractionResult:
     """字段提取结果"""
 
@@ -126,10 +141,29 @@ class ExtractionResult:
     raw_text: str = ""
     vlm_fallback_triggered: bool = False  # 是否触发了VLM字段级兜底
     vlm_fallback_fields: List[str] = field(default_factory=list)  # 触发兜底的字段名
+    field_conflicts: List[FieldConflict] = field(default_factory=list)  # 字段冲突列表
 
     def get(self, key: str, default: str = "") -> str:
         """安全获取字段值"""
         return self.fields.get(key, default)
+
+    def has_conflicts(self) -> bool:
+        """是否有字段冲突"""
+        return len(self.field_conflicts) > 0
+
+    def get_conflict_summary(self) -> List[Dict[str, str]]:
+        """获取冲突摘要（用于前端展示或日志记录）"""
+        return [
+            {
+                "field": c.field_name,
+                "source_a_value": c.source_a_value,
+                "source_b_value": c.source_b_value,
+                "source_a_page": c.source_a_page,
+                "source_b_page": c.source_b_page,
+                "resolved_value": c.resolved_value or c.source_a_value,
+            }
+            for c in self.field_conflicts
+        ]
 
 
 class IDocumentClassifier(ABC):
