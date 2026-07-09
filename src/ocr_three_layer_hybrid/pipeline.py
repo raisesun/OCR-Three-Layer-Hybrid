@@ -29,6 +29,7 @@ from ocr_three_layer_hybrid.field_config import (
     FieldConfig,
     FieldPriority,
     DocumentFieldConfig,
+    get_default_document_field_configs,
 )
 
 logger = logging.getLogger(__name__)
@@ -91,13 +92,20 @@ class PlanEPlusPipeline:
             "性别",
             "公民身份号码",
         ],
-        DocumentType.HOUSEHOLD_REGISTER_CONTENT: [
+        # 户口本首页（户信息）：户别/户主姓名/户号/住址
+        DocumentType.HOUSEHOLD_REGISTER_COVER: [
+            "户别",
             "户主姓名",
             "户号",
             "住址",
+        ],
+        # 户口本人页（个人信息）：姓名/与户主关系/性别/出生日期/民族/公民身份号码
+        DocumentType.HOUSEHOLD_REGISTER_CONTENT: [
             "姓名",
             "与户主关系",
             "性别",
+            "出生日期",
+            "民族",
             "公民身份号码",
         ],
         DocumentType.PROPERTY_CERTIFICATE: [
@@ -113,10 +121,18 @@ class PlanEPlusPipeline:
             "使用期限",
         ],
         DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE: [
-            # 首页字段（通常不需要提取，但可以记录）
-            "登记机构",
             "编号",
             "登记日期",
+        ],
+        # 不动产权证书内容页：核心数据
+        DocumentType.PROPERTY_CERTIFICATE_CONTENT: [
+            "证书号",
+            "权利人",
+            "共有情况",
+            "不动产单元号",
+            "房屋地址",
+            "建筑面积",
+            "用途",
         ],
         DocumentType.INVOICE: [
             "发票代码",
@@ -254,6 +270,7 @@ class PlanEPlusPipeline:
             "房屋坐落",
             "建筑面积",
             "监管总额",
+            "收款单位",
         ],
         DocumentType.DIVORCE_CERTIFICATE: [
             # 离婚证基本信息
@@ -272,6 +289,22 @@ class PlanEPlusPipeline:
             "原配偶出生日期",
             "原配偶身份证件号",
             # 其他
+            "备注",
+        ],
+        # 离婚证内容页：13 字段（与基础类型相同）
+        DocumentType.DIVORCE_CERTIFICATE_CONTENT: [
+            "离婚证字号",
+            "登记日期",
+            "持证人",
+            "持证人性别",
+            "持证人民族",
+            "持证人出生日期",
+            "持证人身份证件号",
+            "原配偶姓名",
+            "原配偶性别",
+            "原配偶民族",
+            "原配偶出生日期",
+            "原配偶身份证件号",
             "备注",
         ],
         DocumentType.DIVORCE_AGREEMENT: [
@@ -339,59 +372,9 @@ class PlanEPlusPipeline:
     }
 
     # 文档类型的详细字段配置（区分必须/可选字段）
-    # 用于多页文档的字段合并和冲突检测
-    DEFAULT_FIELD_CONFIGS: Dict[DocumentType, DocumentFieldConfig] = {
-        # 购房合同 - 内容页
-        DocumentType.PURCHASE_CONTRACT_CONTENT: DocumentFieldConfig(
-            required_fields=[
-                FieldConfig(name="总价款", priority=FieldPriority.REQUIRED),
-                FieldConfig(name="签订日期", priority=FieldPriority.REQUIRED),
-                FieldConfig(name="建筑面积", priority=FieldPriority.REQUIRED),
-            ],
-            optional_fields=[
-                # 这些字段主要在首页，内容页可能没有
-                FieldConfig(name="合同编号", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="买受人", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="出卖人", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="房屋地址", priority=FieldPriority.OPTIONAL),
-            ]
-        ),
-        # 购房合同 - 首页
-        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: DocumentFieldConfig(
-            required_fields=[],  # 首页没有必须字段（都是可选）
-            optional_fields=[
-                FieldConfig(name="合同编号", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="买受人", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="出卖人", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="房屋坐落", priority=FieldPriority.OPTIONAL),
-            ]
-        ),
-        # 存量房合同 - 内容页
-        DocumentType.STOCK_CONTRACT_CONTENT: DocumentFieldConfig(
-            required_fields=[
-                FieldConfig(name="总价款", priority=FieldPriority.REQUIRED),
-                FieldConfig(name="签订日期", priority=FieldPriority.REQUIRED),
-                FieldConfig(name="建筑面积", priority=FieldPriority.REQUIRED),
-            ],
-            optional_fields=[
-                # 这些字段主要在首页，内容页可能没有
-                FieldConfig(name="合同编号", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="买受人", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="出卖人", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="房屋地址", priority=FieldPriority.OPTIONAL),
-            ]
-        ),
-        # 存量房合同 - 首页
-        DocumentType.STOCK_CONTRACT_FIRST_PAGE: DocumentFieldConfig(
-            required_fields=[],  # 首页没有必须字段（都是可选）
-            optional_fields=[
-                FieldConfig(name="合同编号", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="买受人", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="出卖人", priority=FieldPriority.OPTIONAL),
-                FieldConfig(name="房屋坐落", priority=FieldPriority.OPTIONAL),
-            ]
-        ),
-    }
+    # 用于 RULE 层失败判定和 VLM 兜底决策
+    # 完整配置由 field_config.get_default_document_field_configs() 提供
+    DEFAULT_FIELD_CONFIGS: Dict[DocumentType, DocumentFieldConfig] = get_default_document_field_configs()
 
     # 文档类型到默认处理层的映射（v2.1：规则层优先，封面页跳过）
     DEFAULT_LAYER_ROUTING: Dict[DocumentType, ProcessingLayer] = {

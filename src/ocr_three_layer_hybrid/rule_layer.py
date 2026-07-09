@@ -108,13 +108,20 @@ class RuleExtractionLayer(IExtractionLayer):
             # === OCR文本预处理 ===
             full_text = preprocess_text(full_text)
 
-            # === 封面页/盖章页处理：直接返回空字段 ===
+            # === 封面页/盖章页/附图页处理：明确定义不提取 ===
             if doc_info.doc_type in [
+                # 结婚证
                 DocumentType.DIVORCE_CERTIFICATE_COVER,
                 DocumentType.DIVORCE_CERTIFICATE_STAMP,
                 DocumentType.MARRIAGE_CERTIFICATE_COVER,
                 DocumentType.MARRIAGE_CERTIFICATE_STAMP,
-                DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP,  # 资金监管协议签章页
+                # 资金监管协议签章页
+                DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP,
+                # 购房合同/存量房合同签署页
+                DocumentType.PURCHASE_CONTRACT_STAMP,
+                DocumentType.STOCK_CONTRACT_STAMP,
+                # 不动产权证书附图页（明确定义不提取）
+                DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
             ]:
                 # 封面页和盖章页不需要提取个人信息
                 return ExtractionResult(
@@ -161,11 +168,11 @@ class RuleExtractionLayer(IExtractionLayer):
             ]:
                 # 内容页使用新的提取逻辑（支持表格布局）
                 fields = self._household_property_extractor.extract_property_certificate_content(full_text, key_list)
-            elif doc_info.doc_type in [
-                DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE,
-                DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
-            ]:
-                # 首页和附图页不需要提取字段
+            elif doc_info.doc_type == DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE:
+                # 首页：编号 + 登记日期
+                fields = self._household_property_extractor.extract_property_certificate_first_page(full_text, key_list)
+            elif doc_info.doc_type == DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT:
+                # 附图页：明确定义不提取
                 fields = {k: "" for k in key_list}
             elif doc_info.doc_type == DocumentType.INVOICE:
                 fields = self._financial_extractor.extract_invoice(full_text, key_list)

@@ -13,7 +13,20 @@
 - **文件**: `src/ocr_three_layer_hybrid/service.py:545`
 - **问题**: `_extract_multi_page_merge` 中所有页使用首页的 `doc_info`，户口本/结婚证等多页文档内容页全部按封面类型处理
 - **影响**: 内容页返回空字段
-- **修复状态**: 🔴 待修复
+- **深度分析**: 详见 `analysis_20260709_01_多页文档分类复用深度分析.md`
+  - 实际关联 8 个子问题（key_lists 缺失、路由类型不匹配、跳过列表不完整等）
+  - 最严重：DIVORCE_CERTIFICATE_CONTENT key_list 为空 → 离婚证整本提取失败
+- **修复状态**: 🟡 已修复（2026-07-09）
+  - 扩展 `field_config.py`：34 个文档类型的 required/optional/skip 配置
+  - 新增 `FieldDetail` + `FieldStatus`：区分 extracted/located_empty/not_found
+  - 补齐 `DEFAULT_KEY_LISTS`：HOUSEHOLD_REGISTER_COVER、DIVORCE_CERTIFICATE_CONTENT、PROPERTY_CERTIFICATE_CONTENT、FUND_SUPERVISION_CERTIFICATE(收款单位)
+  - 新增 `extract_property_certificate_first_page()`：房产证首页编号+登记日期
+  - 新增 民族+出生日期 提取到 `extract_household_register()`
+  - 补齐规则层跳过列表：新增 PROPERTY_CERTIFICATE_ATTACHMENT、合同签署页
+  - 重构 `_extract_multi_page_merge`：逐页独立分类 + field_config 驱动 + RULE 失败 VLM 兜底
+  - 废弃 `multi_page_types`：所有类型统一走逐页 merge
+  - 新增 `_get_base_doc_type()`：结果返回基础类型
+  - 104 测试通过，无回归
 
 ### #2 已取消任务被覆盖为 completed（竞态）
 - **文件**: `src/ocr_api/common/task_manager.py:153,473`
@@ -235,6 +248,7 @@
 
 | 编号 | 修复日期 | 修复方式 | 备注 |
 |------|----------|----------|------|
+| #1 | 2026-07-09 | 逐页独立分类 + field_config 驱动 + VLM 兜底 | ✅ 8 文件 611+/185-，104 测试通过 |
 | #21 | 2026-07-09 | 方案 B：提取 prompt_templates.py + 公共后缀 | ✅ vlm_layer.py 895→406 行，109 测试通过 |
 | — | — | — | 其他编号等待用户确认修复顺序 |
 

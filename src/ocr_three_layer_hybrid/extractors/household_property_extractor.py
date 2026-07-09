@@ -274,6 +274,33 @@ class HouseholdPropertyExtractor(BaseExtractor):
                 )
             fields["性别"] = match.group(1) if match else ""
 
+        if "出生日期" in key_list:
+            # 格式1：出生日期 1990年1月1日
+            match = re.search(
+                r"(?:出\s*生\s*日\s*期|出\s*生)\s*[:：]?\s*(\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日?)",
+                full_text,
+            )
+            if not match:
+                # 格式2：1990.01.01 或 1990/01/01
+                match = re.search(
+                    r"(?:出\s*生\s*日\s*期|出\s*生)\s*[:：]?\s*(\d{4}[./]\d{1,2}[./]\d{1,2})",
+                    full_text,
+                )
+            fields["出生日期"] = match.group(1).strip() if match else ""
+
+        if "民族" in key_list:
+            # 格式1：民族 汉 或 民 族 汉族
+            match = re.search(r"民\s*族\s*[:：]?\s*([^\s\n]{1,5})", full_text)
+            if match:
+                value = match.group(1).strip()
+                # 过滤噪声
+                if value and value not in ("民族", "民 族"):
+                    fields["民族"] = value
+                else:
+                    fields["民族"] = ""
+            else:
+                fields["民族"] = ""
+
         if "公民身份号码" in key_list or "身份证号" in key_list:
             # OCR 可能输出 "公 民 身 份 号 码" 或 "公民身份证件编号"（字间有空格）
             match = re.search(
@@ -561,6 +588,48 @@ class HouseholdPropertyExtractor(BaseExtractor):
             )
             if match:
                 fields["使用期限"] = match.group(1)
+
+        return fields
+
+    def extract_property_certificate_first_page(
+        self, full_text: str, key_list: List[str]
+    ) -> Dict[str, str]:
+        """
+        从不动产权证书首页提取字段（编号 + 登记日期）
+
+        首页通常是证书的发证信息页，包含：
+        - 编号：不动产权证书编号（如"编号 № 34026135082"）
+        - 登记日期：登记日期（如"登记日期 2025年03月20日"）
+        """
+        fields: Dict[str, str] = {}
+
+        if "编号" in key_list:
+            # 格式1：编号 № XXXXX
+            match = re.search(r"编\s*号\s*[№#]+\s*([A-Z0-9]+)", full_text)
+            if not match:
+                # 格式2：编号: XXXXX
+                match = re.search(r"编\s*号\s*[:：]?\s*([A-Z0-9]+)", full_text)
+            if not match:
+                # 格式3：皖(2025)蚌埠市不动产权第XXXXX号
+                match = re.search(
+                    r"[一-龥]*\s*[（(]\s*\d{4}\s*[）)]\s*[一-龥]+\s*市?\s*不动产权第\s*([A-Z0-9]+)\s*号",
+                    full_text,
+                )
+            fields["编号"] = match.group(1).strip() if match else ""
+
+        if "登记日期" in key_list:
+            # 格式1：登记日期 2025年03月20日
+            match = re.search(
+                r"登\s*记\s*日\s*期\s*[:：]?\s*(\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日)",
+                full_text,
+            )
+            if not match:
+                # 格式2：2025-03-20 或 2025/03/20
+                match = re.search(
+                    r"登\s*记\s*日\s*期\s*[:：]?\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2})",
+                    full_text,
+                )
+            fields["登记日期"] = match.group(1).strip() if match else ""
 
         return fields
 

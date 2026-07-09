@@ -128,6 +128,30 @@ class FieldConflict:
     resolved_value: str = ""  # 解决后的值（可选，默认为来源A的值）
 
 
+class FieldStatus(str, Enum):
+    """字段提取状态
+
+    区分 RULE 层提取结果的三种情况，用于日志记录和 VLM 兜底决策。
+    """
+    EXTRACTED = "extracted"        # 找到了字段且值非空
+    LOCATED_EMPTY = "located_empty"  # 正则匹配到了字段位置，但值为空（如"户主姓名：    "）
+    NOT_FOUND = "not_found"        # 正则完全没有匹配到该字段
+
+
+@dataclass
+class FieldDetail:
+    """字段提取明细
+
+    记录每个字段的提取状态，用于：
+    1. 日志中区分"找到字段但值为空"和"字段未找到"
+    2. 判断 RULE 层是否失败（required 字段状态 != EXTRACTED）
+    3. VLM 兜底时只填充缺失的字段
+    """
+    name: str
+    value: str = ""
+    status: FieldStatus = FieldStatus.NOT_FOUND
+
+
 @dataclass
 class ExtractionResult:
     """字段提取结果"""
@@ -142,6 +166,7 @@ class ExtractionResult:
     vlm_fallback_triggered: bool = False  # 是否触发了VLM字段级兜底
     vlm_fallback_fields: List[str] = field(default_factory=list)  # 触发兜底的字段名
     field_conflicts: List[FieldConflict] = field(default_factory=list)  # 字段冲突列表
+    field_details: List[FieldDetail] = field(default_factory=list)  # 字段提取明细
 
     def get(self, key: str, default: str = "") -> str:
         """安全获取字段值"""

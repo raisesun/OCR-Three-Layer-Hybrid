@@ -22,10 +22,13 @@ from typing import Any, Dict, List, Optional
 
 from ocr_three_layer_hybrid.config import OCRConfig
 from ocr_three_layer_hybrid.external_services import VLMClient
-from ocr_three_layer_hybrid.interfaces import DocumentType, ProcessingLayer
+from ocr_three_layer_hybrid.interfaces import (
+    DocumentType, DocumentInfo, ExtractionResult, FieldDetail, FieldStatus, ProcessingLayer,
+)
 from ocr_three_layer_hybrid.classifier import KeywordDocumentClassifier
 from ocr_three_layer_hybrid.vlm_layer import VLMExtractionLayer
 from ocr_three_layer_hybrid.pipeline import PlanEPlusPipeline
+from ocr_three_layer_hybrid.field_config import DocumentFieldConfig, get_default_document_field_configs
 
 # ========== Pipeline 元数据常量（供前端流程图使用） ==========
 
@@ -389,10 +392,10 @@ class OCRService:
         max_pages: int = 15,
     ) -> Dict[str, Any]:
         """
-        处理多页文档：分类 + 多页提取 + 字段合并
+        处理多页文档：逐页独立分类 + 逐页 RULE 提取 + 失败页 VLM 兜底 + 字段合并
 
-        适用于购房合同、存量房合同、房产证等多页文档。
-        先对第一页进行分类，如果是多页文档类型则使用VLM层的多页提取功能。
+        核心原则：RULE 优先，VLM 兜底。
+        所有文档类型统一走逐页分类 → 提取 → 合并流程。
 
         Args:
             image_paths: 图片路径列表（按页码排序）
@@ -416,43 +419,34 @@ class OCRService:
         total_start = time.time()
         pages_to_process = image_paths[:max_pages]
 
-        # 1. 对第一页进行OCR和分类
+        # 1. 对第一页进行OCR和分类（仅用于日志和返回结果的 doc_type）
         first_page_text = self.run_ocr(pages_to_process[0])
         first_page_texts = [first_page_text] if first_page_text else []
 
         classify_start = time.time()
-        doc_info = self._classifier.classify(pages_to_process[0], first_page_texts)
+        first_doc_info = self._classifier.classify(pages_to_process[0], first_page_texts)
         classify_time = time.time() - classify_start
 
-        doc_type = doc_info.doc_type
+        # 获取基础文档类型（用于返回结果）
+        base_doc_type = self._get_base_doc_type(first_doc_info.doc_type)
+
         logger.info(
-            "[多页] 文档类型=%s | 总页数=%d | 处理页数=%d",
-            doc_type.value,
+            "[多页] 基础类型=%s | 首页细分=%s | 总页数=%d | 处理页数=%d",
+            base_doc_type.value,
+            first_doc_info.doc_type.value,
             len(image_paths),
             len(pages_to_process),
         )
 
-        # 2. 根据文档类型选择提取策略
-        multi_page_types = {
-            DocumentType.PURCHASE_CONTRACT,
-            DocumentType.STOCK_CONTRACT,
-            DocumentType.PROPERTY_CERTIFICATE,
-            DocumentType.UNKNOWN,  # UNKNOWN文档也使用VLM多页提取（VLM会识别类型+提取）
-        }
-
-        if doc_type in multi_page_types and len(pages_to_process) > 1:
-            # 多页文档：使用VLM层的多页提取
-            result = self._extract_multi_page_vlm(pages_to_process, doc_type)
-        else:
-            # 单页文档或不需要多页合并：逐页处理并合并
-            result = self._extract_multi_page_merge(pages_to_process, doc_info)
+        # 2. 所有类型统一走逐页分类 + 提取 + 合并
+        result = self._extract_multi_page_merge(pages_to_process, first_doc_info)
 
         extract_time = time.time() - total_start - classify_time
         total_time = time.time() - total_start
 
         logger.info(
-            "[多页] 完成 | 类型=%s | 页数=%d | 成功字段=%d | 分类=%.1fms | 提取=%.1fms | 总计=%.1fms",
-            doc_type.value,
+            "[多页] 完成 | 基础类型=%s | 页数=%d | 成功字段=%d | 分类=%.1fms | 提取=%.1fms | 总计=%.1fms",
+            base_doc_type.value,
             len(pages_to_process),
             len([v for v in result.fields.values() if v and v.strip()]),
             round(classify_time * 1000, 1),
@@ -461,7 +455,7 @@ class OCRService:
         )
 
         return {
-            "classification": self._build_classification_dict(doc_info),
+            "classification": self._build_classification_dict(first_doc_info),
             "extraction": {
                 "success": result.success,
                 "layer": result.layer.value if result.layer else "none",
@@ -471,7 +465,7 @@ class OCRService:
             "multi_page": {
                 "total_pages": len(image_paths),
                 "processed_pages": len(pages_to_process),
-                "doc_type": doc_type.value,
+                "doc_type": base_doc_type.value,
             },
             "timing": {
                 "classify_ms": round(classify_time * 1000, 1),
@@ -481,144 +475,245 @@ class OCRService:
             "image_paths": image_paths,
         }
 
-    def _extract_multi_page_vlm(
-        self,
-        image_paths: List[str],
-        doc_type: DocumentType,
-    ) -> Any:
-        """使用VLM层的多页提取功能"""
-        # 获取VLM层和字段列表
-        vlm_layer = self._pipeline._get_layer(ProcessingLayer.VLM)
-        if vlm_layer is None:
-            from ocr_three_layer_hybrid.interfaces import ExtractionResult
+    def _get_base_doc_type(self, doc_type: DocumentType) -> DocumentType:
+        """获取基础文档类型（去除页面类型后缀）
 
-            return ExtractionResult(
-                doc_type=doc_type,
-                layer=ProcessingLayer.VLM,
-                fields={},
-                success=False,
-                error_message="VLM层不可用",
-            )
-
-        # 获取文档类型的默认字段列表
-        key_list = self._pipeline.key_lists.get(doc_type, [])
-
-        # 调用多页提取
-        return vlm_layer.extract_multi_page(  # type: ignore[attr-defined]
-            image_paths=image_paths,
-            key_list=key_list,
-            doc_type=doc_type,
-            max_pages=15,
-        )
+        例如：HOUSEHOLD_REGISTER_COVER → HOUSEHOLD_REGISTER
+              PURCHASE_CONTRACT_FIRST_PAGE → PURCHASE_CONTRACT
+              DIVORCE_CERTIFICATE_CONTENT → DIVORCE_CERTIFICATE
+        """
+        base_mapping = {
+            # 身份证
+            DocumentType.ID_CARD_FRONT: DocumentType.ID_CARD,
+            DocumentType.ID_CARD_BACK: DocumentType.ID_CARD,
+            # 结婚证
+            DocumentType.MARRIAGE_CERTIFICATE_COVER: DocumentType.MARRIAGE_CERTIFICATE,
+            DocumentType.MARRIAGE_CERTIFICATE_CONTENT: DocumentType.MARRIAGE_CERTIFICATE,
+            DocumentType.MARRIAGE_CERTIFICATE_STAMP: DocumentType.MARRIAGE_CERTIFICATE,
+            # 离婚证
+            DocumentType.DIVORCE_CERTIFICATE_COVER: DocumentType.DIVORCE_CERTIFICATE,
+            DocumentType.DIVORCE_CERTIFICATE_CONTENT: DocumentType.DIVORCE_CERTIFICATE,
+            DocumentType.DIVORCE_CERTIFICATE_STAMP: DocumentType.DIVORCE_CERTIFICATE,
+            # 户口本
+            DocumentType.HOUSEHOLD_REGISTER_COVER: DocumentType.HOUSEHOLD_REGISTER,
+            DocumentType.HOUSEHOLD_REGISTER_CONTENT: DocumentType.HOUSEHOLD_REGISTER,
+            # 不动产权证书
+            DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE: DocumentType.PROPERTY_CERTIFICATE,
+            DocumentType.PROPERTY_CERTIFICATE_CONTENT: DocumentType.PROPERTY_CERTIFICATE,
+            DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT: DocumentType.PROPERTY_CERTIFICATE,
+            # 购房合同
+            DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: DocumentType.PURCHASE_CONTRACT,
+            DocumentType.PURCHASE_CONTRACT_CONTENT: DocumentType.PURCHASE_CONTRACT,
+            DocumentType.PURCHASE_CONTRACT_STAMP: DocumentType.PURCHASE_CONTRACT,
+            # 存量房合同
+            DocumentType.STOCK_CONTRACT_FIRST_PAGE: DocumentType.STOCK_CONTRACT,
+            DocumentType.STOCK_CONTRACT_CONTENT: DocumentType.STOCK_CONTRACT,
+            DocumentType.STOCK_CONTRACT_STAMP: DocumentType.STOCK_CONTRACT,
+            # 资金监管协议
+            DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE: DocumentType.FUND_SUPERVISION,
+            DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE: DocumentType.FUND_SUPERVISION,
+            DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP: DocumentType.FUND_SUPERVISION,
+            DocumentType.FUND_SUPERVISION_CERTIFICATE: DocumentType.FUND_SUPERVISION,
+        }
+        return base_mapping.get(doc_type, doc_type)
 
     def _extract_multi_page_merge(
         self,
         image_paths: List[str],
-        doc_info: Any,
+        first_page_doc_info: Any,
     ) -> Any:
-        """逐页处理并合并结果（支持可选字段和冲突检测）
+        """逐页独立分类 + RULE 提取 + 失败页 VLM 兜底 + 字段合并
 
-        合并策略：
-        1. 对于每个字段，取第一个非空值
-        2. 如果同一字段在不同页面有不同值，记录冲突
-        3. 可选字段缺失不影响成功判断
+        核心流程：
+        1. 首页复用已有分类，后续页独立分类
+        2. 根据 field_configs 判断是否跳过（skip=True 的页面不提取）
+        3. RULE 层提取后检查必填字段是否满足
+        4. 必填字段未满足 → 该页 VLM 兜底
+        5. 合并所有页的提取结果（取第一个非空值）
+        6. 返回基础文档类型（非首页细分类型）
         """
         from ocr_three_layer_hybrid.interfaces import ExtractionResult, FieldConflict
 
+        # 获取字段配置（用于判断 skip 和 required）
+        field_configs = get_default_document_field_configs()
+
         merged_fields: Dict[str, str] = {}
-        all_success = True
         total_time = 0.0
-        last_layer = ProcessingLayer.VLM
+        last_layer = ProcessingLayer.RULE
         last_error = ""
+        any_vlm_fallback = False
 
         # 收集每页的提取结果（用于冲突检测）
         page_results: List[tuple] = []  # (page_type, result)
 
         for page_idx, img_path in enumerate(image_paths):
-            # 确定页面类型
             page_type = f"page_{page_idx}"
 
-            # 对每页进行OCR和处理
+            # === 1. 分类：首页复用，后续页独立分类 ===
+            if page_idx == 0:
+                page_doc_info = first_page_doc_info
+            else:
+                ocr_text_for_classify = self.run_ocr(img_path)
+                ocr_texts_for_classify = [ocr_text_for_classify] if ocr_text_for_classify else []
+                page_doc_info = self._classifier.classify(img_path, ocr_texts_for_classify)
+
+            current_doc_type = page_doc_info.doc_type
+
+            # === 2. 获取该细分类型的字段配置 ===
+            config = field_configs.get(current_doc_type)
+            if config is None:
+                # 没有配置的类型，跳过
+                logger.info(
+                    "[多页] 页 %d | %s | 无字段配置，跳过",
+                    page_idx, current_doc_type.value,
+                )
+                continue
+
+            # === 3. 检查是否跳过 ===
+            if config.skip:
+                logger.info(
+                    "[多页] 页 %d | %s | 跳过（明确定义不提取）",
+                    page_idx, current_doc_type.value,
+                )
+                continue
+
+            all_field_names = config.get_all_field_names()
+            if not all_field_names:
+                # 配置存在但没有字段定义，跳过
+                continue
+
+            # === 4. RULE 层提取 ===
             ocr_text = self.run_ocr(img_path)
             ocr_texts = [ocr_text] if ocr_text else []
 
-            result = self._pipeline.process(img_path, ocr_texts, doc_info=doc_info)
+            result = self._pipeline.process(img_path, ocr_texts, doc_info=page_doc_info)
             page_results.append((page_type, result))
-
-            if result.success:
-                # 合并字段（取第一个非空值）
-                for key, value in result.fields.items():
-                    if value and value.strip() and not merged_fields.get(key):
-                        merged_fields[key] = value
-            else:
-                last_error = result.error_message
-
             last_layer = result.layer
             total_time += result.time_cost
 
-        # 检测字段冲突（同一字段在不同页面有不同值）
+            if not result.success and result.error_message:
+                last_error = result.error_message
+                logger.warning(
+                    "[多页] 页 %d | %s | RULE 层失败: %s",
+                    page_idx, current_doc_type.value, result.error_message,
+                )
+
+            # === 5. 检查必填字段，决定是否需要 VLM 兜底 ===
+            missing_required = config.get_missing_required_fields(result.fields)
+
+            if missing_required:
+                logger.info(
+                    "[多页] 页 %d | %s | RULE层缺失必填字段: %s → VLM兜底",
+                    page_idx, current_doc_type.value, missing_required,
+                )
+                any_vlm_fallback = True
+
+                # VLM 兜底：用所有字段名构建 prompt
+                vlm_result = self._vlm_fallback_for_page(page_doc_info, all_field_names)
+
+                if vlm_result and vlm_result.success:
+                    # 方案 C：只用 VLM 填充 RULE 缺失的字段，已有的不覆盖
+                    for field_name in missing_required:
+                        vlm_value = vlm_result.fields.get(field_name, "")
+                        rule_value = result.fields.get(field_name, "")
+                        if vlm_value and vlm_value.strip():
+                            if rule_value and rule_value.strip() and rule_value != vlm_value:
+                                logger.info(
+                                    "[VLM兜底] 页 %d | 字段'%s': RULE='%s', VLM='%s' → 保留RULE值",
+                                    page_idx, field_name, rule_value, vlm_value,
+                                )
+                            else:
+                                result.fields[field_name] = vlm_value
+                                logger.info(
+                                    "[VLM兜底] 页 %d | 字段'%s' 由VLM填充: '%s'",
+                                    page_idx, field_name, vlm_value,
+                                )
+                    result.vlm_fallback_triggered = True
+                    result.vlm_fallback_fields = missing_required
+
+            # === 6. 合并字段到最终结果（取第一个非空值） ===
+            for key, value in result.fields.items():
+                if value and value.strip() and not merged_fields.get(key):
+                    merged_fields[key] = value
+
+        # === 7. 检测字段冲突 ===
         conflicts: List[FieldConflict] = []
         for page_idx, (page_type, result) in enumerate(page_results):
             if not result.success:
                 continue
-
             for key, value in result.fields.items():
                 if not value or not value.strip():
                     continue
-
-                # 检查是否与其他页面的值冲突
                 for other_idx, (other_page_type, other_result) in enumerate(page_results):
                     if other_idx <= page_idx or not other_result.success:
                         continue
-
                     other_value = other_result.fields.get(key, "")
                     if not other_value or not other_value.strip():
                         continue
-
-                    # 检测到冲突（同一字段，不同值）
                     if value != other_value:
-                        conflict = FieldConflict(
+                        conflicts.append(FieldConflict(
                             field_name=key,
                             source_a_value=value,
                             source_b_value=other_value,
                             source_a_page=page_type,
                             source_b_page=other_page_type,
                             resolved_value=merged_fields.get(key, value),
-                        )
-                        conflicts.append(conflict)
+                        ))
 
-        # 获取字段配置，判断必须字段是否都填充
-        field_configs = self._pipeline.DEFAULT_FIELD_CONFIGS.get(doc_info.doc_type)
+        # === 8. 成功判断：基于基础类型的 field_configs ===
+        base_doc_type = self._get_base_doc_type(first_page_doc_info.doc_type)
+        base_config = field_configs.get(base_doc_type)
 
-        if field_configs:
-            # 检查必须字段是否都填充
-            required_filled = 0
-            required_total = len(field_configs.required_fields)
-            for field_config in field_configs.required_fields:
-                if merged_fields.get(field_config.name, "").strip():
-                    required_filled += 1
-
-            # 成功判断：必须字段全部填充
-            success = required_filled == required_total if required_total > 0 else len(merged_fields) > 0
+        if base_config and base_config.required_fields:
+            # 检查合并后的必填字段是否都填充
+            missing = base_config.get_missing_required_fields(merged_fields)
+            success = len(missing) == 0
+            if not success:
+                logger.info("[多页] 合并后仍缺失必填字段: %s", missing)
         else:
-            # 没有字段配置，使用原有逻辑
+            # 没有配置或没有必填字段，只要有非空字段就算成功
             success = len([v for v in merged_fields.values() if v and v.strip()]) > 0
 
-        # 构建返回结果
+        # === 9. 构建返回结果 ===
         extraction_result = ExtractionResult(
-            doc_type=doc_info.doc_type,
+            doc_type=base_doc_type,  # 返回基础类型
             layer=last_layer,
             fields=merged_fields,
             success=success,
             time_cost=total_time,
             error_message=last_error if not success else "",
+            vlm_fallback_triggered=any_vlm_fallback,
         )
 
-        # 添加冲突信息
         if conflicts:
             extraction_result.field_conflicts = conflicts
 
         return extraction_result
+
+    def _vlm_fallback_for_page(
+        self,
+        doc_info: DocumentInfo,
+        field_names: List[str],
+    ) -> Optional[ExtractionResult]:
+        """对单页进行 VLM 兜底提取
+
+        Args:
+            doc_info: 页面分类信息
+            field_names: 需要提取的字段列表
+
+        Returns:
+            VLM 提取结果，失败返回 None
+        """
+        try:
+            vlm_layer = self._pipeline._get_layer(ProcessingLayer.VLM)
+            if vlm_layer is None:
+                return None
+
+            # 使用 VLM 层提取（传入完整的字段列表）
+            return vlm_layer.extract(doc_info, field_names)
+        except Exception as e:
+            logger.warning("[VLM兜底] 页提取失败: %s", e)
+            return None
 
     # ========== 批量处理 ==========
 

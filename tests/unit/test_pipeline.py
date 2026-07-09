@@ -7,6 +7,7 @@
 import pytest
 from unittest.mock import Mock
 from ocr_three_layer_hybrid.pipeline import PlanEPlusPipeline
+from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
 from ocr_three_layer_hybrid.interfaces import (
     DocumentType,
     ProcessingLayer,
@@ -156,3 +157,75 @@ class TestPlanEPlusPipeline:
         assert result.success is True
         assert result.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT
         assert result.layer == ProcessingLayer.RULE
+
+
+class TestDefaultKeyListsNew:
+    """测试 DEFAULT_KEY_LISTS 中新增/修正的文档类型"""
+
+    @pytest.fixture
+    def pipeline(self):
+        rule_layer = RuleExtractionLayer()
+        return PlanEPlusPipeline(rule_layer=rule_layer)
+
+    def test_household_register_cover_key_list(self, pipeline):
+        """测试户口本首页 key_list：户别/户主姓名/户号/住址"""
+        key_list = pipeline.DEFAULT_KEY_LISTS[DocumentType.HOUSEHOLD_REGISTER_COVER]
+        assert "户别" in key_list
+        assert "户主姓名" in key_list
+        assert "户号" in key_list
+        assert "住址" in key_list
+        # 不应包含个人页字段
+        assert "公民身份号码" not in key_list
+
+    def test_household_register_content_key_list(self, pipeline):
+        """测试户口本个人页 key_list：姓名/与户主关系/性别/出生日期/民族/公民身份号码"""
+        key_list = pipeline.DEFAULT_KEY_LISTS[DocumentType.HOUSEHOLD_REGISTER_CONTENT]
+        assert "姓名" in key_list
+        assert "与户主关系" in key_list
+        assert "性别" in key_list
+        assert "出生日期" in key_list
+        assert "民族" in key_list
+        assert "公民身份号码" in key_list
+        # 不应包含首页字段
+        assert "户主姓名" not in key_list
+        assert "户号" not in key_list
+
+    def test_divorce_certificate_content_key_list(self, pipeline):
+        """测试离婚证内容页 key_list：13 字段"""
+        key_list = pipeline.DEFAULT_KEY_LISTS[DocumentType.DIVORCE_CERTIFICATE_CONTENT]
+        assert "离婚证字号" in key_list
+        assert "持证人身份证件号" in key_list
+        assert "原配偶身份证件号" in key_list
+        assert "备注" in key_list
+        assert len(key_list) == 13
+
+    def test_property_certificate_first_page_key_list(self, pipeline):
+        """测试房产证首页 key_list：编号/登记日期"""
+        key_list = pipeline.DEFAULT_KEY_LISTS[DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE]
+        assert "编号" in key_list
+        assert "登记日期" in key_list
+        assert len(key_list) == 2
+
+    def test_property_certificate_content_key_list(self, pipeline):
+        """测试房产证内容页 key_list：核心数据字段"""
+        key_list = pipeline.DEFAULT_KEY_LISTS[DocumentType.PROPERTY_CERTIFICATE_CONTENT]
+        assert "证书号" in key_list
+        assert "权利人" in key_list
+        assert "共有情况" in key_list
+        assert "不动产单元号" in key_list
+        assert "房屋地址" in key_list
+        assert "建筑面积" in key_list
+        assert "用途" in key_list
+        # 不应包含旧字段"登记机构"
+        assert "登记机构" not in key_list
+
+    def test_fund_supervision_certificate_has_shoukuan(self, pipeline):
+        """测试资金监管凭证 key_list 包含收款单位"""
+        key_list = pipeline.DEFAULT_KEY_LISTS[DocumentType.FUND_SUPERVISION_CERTIFICATE]
+        assert "收款单位" in key_list
+
+    def test_default_field_configs_from_global_config(self, pipeline):
+        """测试 DEFAULT_FIELD_CONFIGS 来自 get_default_document_field_configs()"""
+        from ocr_three_layer_hybrid.field_config import get_default_document_field_configs
+        expected = get_default_document_field_configs()
+        assert pipeline.DEFAULT_FIELD_CONFIGS == expected

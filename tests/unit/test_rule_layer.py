@@ -222,3 +222,103 @@ class TestRuleExtractionLayer:
         assert result.fields["姓名"] == "张三"
         assert result.fields["性别"] == "男"
         assert "性别" not in result.fields["姓名"]
+
+
+class TestRuleLayerSkipTypes:
+    """测试规则层跳过列表（封面页、盖章页、附图页、签署页）"""
+
+    @pytest.fixture
+    def layer(self):
+        return RuleExtractionLayer(position_extractor=None)
+
+    def test_skip_property_certificate_attachment(self, layer):
+        """测试不动产权证书附图页返回空字段"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/attachment.jpg",
+            doc_type=DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+            ocr_texts=["附图页 房屋坐落"],
+        )
+        key_list = ["证书号", "权利人", "房屋地址"]
+        result = layer.extract(doc_info, key_list)
+        assert result.success is True
+        assert all(v == "" for v in result.fields.values())
+
+    def test_skip_purchase_contract_stamp(self, layer):
+        """测试购房合同签署页返回空字段"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/stamp.jpg",
+            doc_type=DocumentType.PURCHASE_CONTRACT_STAMP,
+            ocr_texts=["签署页 签章"],
+        )
+        key_list = ["合同编号", "买受人", "总价款"]
+        result = layer.extract(doc_info, key_list)
+        assert result.success is True
+        assert all(v == "" for v in result.fields.values())
+
+    def test_skip_stock_contract_stamp(self, layer):
+        """测试存量房合同签署页返回空字段"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/stamp.jpg",
+            doc_type=DocumentType.STOCK_CONTRACT_STAMP,
+            ocr_texts=["签署页 签章"],
+        )
+        key_list = ["合同编号", "买受人", "总价款"]
+        result = layer.extract(doc_info, key_list)
+        assert result.success is True
+        assert all(v == "" for v in result.fields.values())
+
+    def test_skip_marriage_certificate_cover(self, layer):
+        """测试结婚证封面页返回空字段"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/cover.jpg",
+            doc_type=DocumentType.MARRIAGE_CERTIFICATE_COVER,
+            ocr_texts=["结婚证"],
+        )
+        key_list = ["结婚证字号", "持证人"]
+        result = layer.extract(doc_info, key_list)
+        assert result.success is True
+        assert all(v == "" for v in result.fields.values())
+
+    def test_skip_fund_supervision_stamp(self, layer):
+        """测试资金监管协议签章页返回空字段"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/stamp.jpg",
+            doc_type=DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP,
+            ocr_texts=["资金监管协议 签章"],
+        )
+        key_list = ["编号", "甲方", "乙方"]
+        result = layer.extract(doc_info, key_list)
+        assert result.success is True
+        assert all(v == "" for v in result.fields.values())
+
+
+class TestRuleLayerPropertyCertificateFirstPage:
+    """测试房产证首页路由到新提取器"""
+
+    @pytest.fixture
+    def layer(self):
+        return RuleExtractionLayer(position_extractor=None)
+
+    def test_extract_property_first_page_bianhao(self, layer):
+        """测试房产证首页提取编号"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/property_first.jpg",
+            doc_type=DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE,
+            ocr_texts=["编号 № 34026135082 登记日期 2025年03月20日"],
+        )
+        key_list = ["编号", "登记日期"]
+        result = layer.extract(doc_info, key_list)
+        assert result.success is True
+        assert result.fields["编号"] == "34026135082"
+
+    def test_extract_property_first_page_dengji_riqi(self, layer):
+        """测试房产证首页提取登记日期"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/property_first.jpg",
+            doc_type=DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE,
+            ocr_texts=["编号 № 34026135082 登记日期 2025年03月20日"],
+        )
+        key_list = ["编号", "登记日期"]
+        result = layer.extract(doc_info, key_list)
+        assert result.success is True
+        assert "2025" in result.fields["登记日期"]
