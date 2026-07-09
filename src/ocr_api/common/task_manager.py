@@ -28,6 +28,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
+from ocr_api.common.logger import set_log_context, clear_log_context
+
 logger = logging.getLogger(__name__)
 
 
@@ -597,12 +599,15 @@ class TaskWorker:
         """
         import json
 
+        # 设置日志上下文（后续日志自动包含 task_id）
+        set_log_context(task_id=task_id)
+
         total = len(files)
-        logger.info("[Worker] 开始处理任务 | id=%s | files=%s", task_id, total)
+        logger.info("[Worker] 开始处理任务 | files=%d", total)
 
         # 标记处理中（如果任务已被取消，则 status 不是 pending，返回 False）
         if not self._tm.mark_processing(task_id):
-            logger.info("[Worker] 任务状态非 pending，跳过处理 | id=%s", task_id)
+            logger.info("[Worker] 任务状态非 pending，跳过处理")
             return
         start_time = time.time()
 
@@ -610,7 +615,7 @@ class TaskWorker:
             for idx, file_info in enumerate(files):
                 # 检查取消标志
                 if self._tm.is_cancelled(task_id):
-                    logger.info("[Worker] 任务已取消 | id=%s | 进度=%s/%s", task_id, idx, total)
+                    logger.info("[Worker] 任务已取消 | progress=%d/%d", idx, total)
                     return
 
                 file_name = file_info["file_name"]
@@ -626,31 +631,34 @@ class TaskWorker:
 
                     # 存储成功结果
                     result_json = json.dumps(result, ensure_ascii=False)
+                    file_duration_ms = int((time.time() - file_start) * 1000)
                     self._tm.update_file_result(
                         task_id=task_id,
                         file_name=file_name,
                         status="success",
                         result_json=result_json,
-                        timing_ms=int((time.time() - file_start) * 1000),
+                        timing_ms=file_duration_ms,
                     )
                     self._tm.increment_processed(task_id)
                     logger.info(
-                        f"[Worker] 文件处理成功 | task={task_id} | file={file_name} | "
-                        f"进度={idx + 1}/{total}"
+                        "[Worker] 文件处理成功 | file=%s | progress=%d/%d | duration_ms=%d",
+                        file_name, idx + 1, total, file_duration_ms,
                     )
 
                 except Exception as e:
                     # 存储失败结果
+                    file_duration_ms = int((time.time() - file_start) * 1000)
                     self._tm.update_file_result(
                         task_id=task_id,
                         file_name=file_name,
                         status="failed",
                         error_message=str(e),
-                        timing_ms=int((time.time() - file_start) * 1000),
+                        timing_ms=file_duration_ms,
                     )
                     self._tm.increment_processed(task_id)
                     logger.error(
-                        f"[Worker] 文件处理失败 | task={task_id} | file={file_name} | error={e}"
+                        "[Worker] 文件处理失败 | file=%s | error=%s",
+                        file_name, e,
                     )
 
             # 所有文件处理完成
@@ -658,14 +666,14 @@ class TaskWorker:
             # 标记完成（如果中途被取消，SQL WHERE 守卫会阻止覆盖，返回 False）
             if self._tm.mark_completed(task_id, total_time_ms):
                 logger.info(
-                    f"[Worker] 任务完成 | id={task_id} | 耗时={total_time_ms}ms"
+                    "[Worker] 任务完成 | total_time_ms=%d", total_time_ms,
                 )
             else:
                 logger.info(
-                    f"[Worker] 任务未能标记完成（已被取消/失败）| id={task_id}"
+                    "[Worker] 任务未能标记完成（已被取消/失败）",
                 )
 
         except Exception as e:
             total_time_ms = int((time.time() - start_time) * 1000)
             self._tm.mark_failed(task_id, str(e))
-            logger.error("[Worker] 任务异常 | id=%s | error=%s", task_id, e)
+            logger.error("[Worker] 任务异常 | error=%s", e)

@@ -50,7 +50,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-from ocr_three_layer_hybrid.service import setup_logging, OCRService
+# 结构化日志模块
+from ocr_api.common.logger import setup_logging as setup_structured_logging, get_logger
+from ocr_three_layer_hybrid.service import OCRService
 from ocr_three_layer_hybrid.config import UPLOAD_DIR
 
 # 通用组件（可复用）
@@ -75,8 +77,9 @@ DB_PATH = os.getenv("OCR_DB_PATH", "/tmp/ocr_tasks.db")
 
 # ========== 初始化日志 ==========
 
-setup_logging(level="DEBUG" if DEBUG else "INFO")
-server_logger = logging.getLogger("ocr_three_layer_hybrid.server")
+# 使用结构化日志（支持 JSON 格式，通过 OCR_LOG_FORMAT 环境变量控制）
+setup_structured_logging(level="DEBUG" if DEBUG else "INFO")
+server_logger = get_logger("ocr_three_layer_hybrid.server")
 
 
 # ========== 工厂函数（支持依赖注入，方便测试） ==========

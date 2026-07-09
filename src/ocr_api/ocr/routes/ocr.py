@@ -15,6 +15,7 @@ from fastapi import APIRouter, UploadFile, File, Form, Request, Depends, HTTPExc
 from ocr_api.common.auth import APIKeyAuthenticator
 from ocr_api.common.schemas import APIResponse
 from ocr_api.common.task_manager import TaskManager, TaskWorker
+from ocr_api.common.logger import set_log_context, clear_log_context
 from ocr_three_layer_hybrid.config import SUPPORTED_FILE_EXTENSIONS, UPLOAD_DIR
 
 logger = logging.getLogger(__name__)
@@ -58,8 +59,12 @@ def create_ocr_router(
         # 1. 认证
         api_key = authenticator.verify(request)
 
+        # 设置日志上下文（后续日志自动包含 api_key）
+        set_log_context(api_key=f"{api_key[:8]}...")
+
         # 2. 记录 API 调用
         task_manager.record_api_call(api_key, "POST /api/v1/ocr/async")
+        logger.info("收到 OCR 任务提交请求 | files=%d", len(files))
 
         # 3. 校验文件数量
         if len(files) > 500:
@@ -130,6 +135,10 @@ def create_ocr_router(
             api_key=api_key,
         )
 
+        # 更新日志上下文（添加 task_id）
+        set_log_context(task_id=task_id)
+        logger.info("任务已创建 | task_id=%s | files=%d", task_id, len(saved_files))
+
         # 7. 记录文件关联
         for sf in saved_files:
             task_manager.add_file_result(
@@ -141,6 +150,8 @@ def create_ocr_router(
         # 7. 启动后台处理
         worker = TaskWorker(task_manager, ocr_service)
         asyncio.create_task(worker.process(task_id, saved_files))
+
+        logger.info("任务已提交到后台处理 | task_id=%s", task_id)
 
         # 8. 返回响应
         from datetime import datetime

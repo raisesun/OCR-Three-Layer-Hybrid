@@ -15,6 +15,7 @@ from fastapi import APIRouter, Request, HTTPException, Query
 from ocr_api.common.auth import APIKeyAuthenticator
 from ocr_api.common.schemas import APIResponse
 from ocr_api.common.task_manager import TaskManager
+from ocr_api.common.logger import set_log_context, clear_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ def create_task_router(
         """
         # 认证
         api_key = authenticator.verify(request)
+        set_log_context(api_key=f"{api_key[:8]}...")
         task_manager.record_api_call(api_key, "GET /api/v1/tasks")
 
         # 查询任务列表
@@ -64,6 +66,9 @@ def create_task_router(
             page=page,
             size=size,
         )
+
+        logger.info("列出任务 | status=%s | page=%d | size=%d | total=%d",
+                     status, page, size, result["total"])
 
         return APIResponse(
             code=200,
@@ -86,6 +91,7 @@ def create_task_router(
         """
         # 认证
         api_key = authenticator.verify(request)
+        set_log_context(api_key=f"{api_key[:8]}...", task_id=task_id)
         task_manager.record_api_call(api_key, f"GET /api/v1/task/{task_id}")
 
         # 查询任务
@@ -115,6 +121,7 @@ def create_task_router(
         """
         # 认证
         api_key = authenticator.verify(request)
+        set_log_context(api_key=f"{api_key[:8]}...", task_id=task_id)
         task_manager.record_api_call(api_key, f"POST /api/v1/task/{task_id}/cancel")
 
         # 检查任务是否存在
@@ -135,6 +142,8 @@ def create_task_router(
                 status_code=400,
                 detail=f"任务状态为 {current_status}，无法取消（仅 pending/processing 可取消）",
             )
+
+        logger.info("任务已取消 | processed=%d/%d", task["processed_count"], task["file_count"])
 
         return APIResponse(
             code=200,
