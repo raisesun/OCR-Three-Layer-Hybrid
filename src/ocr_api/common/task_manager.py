@@ -346,6 +346,92 @@ class TaskManager:
 
     # ========== 查询接口 ==========
 
+    def list_tasks(
+        self,
+        api_key: str,
+        status_filter: Optional[str] = None,
+        page: int = 1,
+        size: int = 20,
+    ) -> Dict[str, Any]:
+        """列出任务（支持分页和状态过滤）
+
+        Args:
+            api_key: API Key（租户隔离）
+            status_filter: 状态过滤（可选，如 "pending", "processing", "completed", "failed", "cancelled"）
+            page: 页码（从 1 开始）
+            size: 每页大小（默认 20）
+
+        Returns:
+            {
+                "tasks": [...],  # 任务列表（不含详细结果）
+                "total": 100,    # 总任务数
+                "page": 1,       # 当前页码
+                "size": 20,      # 每页大小
+                "pages": 5       # 总页数
+            }
+        """
+        conn = self._get_conn()
+
+        # 构建 WHERE 子句
+        where_clauses = ["api_key = ?"]
+        params: List[Any] = [api_key]
+
+        if status_filter:
+            where_clauses.append("status = ?")
+            params.append(status_filter)
+
+        where_sql = " AND ".join(where_clauses)
+
+        # 查询总数
+        count_sql = f"SELECT COUNT(*) as cnt FROM tasks WHERE {where_sql}"
+        total = conn.execute(count_sql, params).fetchone()["cnt"]
+
+        # 计算分页
+        offset = (page - 1) * size
+        pages = (total + size - 1) // size if total > 0 else 0
+
+        # 查询任务列表（按创建时间倒序）
+        list_sql = f"""
+            SELECT id, status, file_count, processed_count, priority,
+                   callback_url, created_at, started_at, completed_at,
+                   total_time_ms, error_message
+            FROM tasks
+            WHERE {where_sql}
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+        """
+        rows = conn.execute(list_sql, params + [size, offset]).fetchall()
+
+        tasks = []
+        for row in rows:
+            task = dict(row)
+            # 计算进度百分比
+            total_files = task["file_count"]
+            processed = task["processed_count"]
+            progress = int((processed / total_files * 100) if total_files > 0 else 0)
+
+            tasks.append({
+                "task_id": task["id"],
+                "status": task["status"],
+                "file_count": total_files,
+                "processed_count": processed,
+                "progress": progress,
+                "priority": task["priority"],
+                "created_at": task["created_at"],
+                "started_at": task["started_at"],
+                "completed_at": task["completed_at"],
+                "total_time_ms": task["total_time_ms"],
+                "error_message": task["error_message"],
+            })
+
+        return {
+            "tasks": tasks,
+            "total": total,
+            "page": page,
+            "size": size,
+            "pages": pages,
+        }
+
     def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
         """获取任务状态（含进度和结果）"""
         task = self.get_task(task_id)
