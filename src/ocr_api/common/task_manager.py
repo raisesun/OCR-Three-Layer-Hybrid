@@ -78,7 +78,8 @@ class TaskManager:
                 created_at TEXT NOT NULL,
                 started_at TEXT,
                 completed_at TEXT,
-                total_time_ms INTEGER DEFAULT 0
+                total_time_ms INTEGER DEFAULT 0,
+                error_message TEXT
             );
 
             CREATE TABLE IF NOT EXISTS task_results (
@@ -108,6 +109,12 @@ class TaskManager:
             CREATE INDEX IF NOT EXISTS idx_api_usage_key_time
                 ON api_usage(api_key, called_at);
         """)
+        # 向后兼容迁移：已有数据库可能缺少 error_message 列
+        try:
+            conn.execute("ALTER TABLE tasks ADD COLUMN error_message TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # 列已存在
         conn.commit()
 
     # ========== 任务生命周期 ==========
@@ -140,26 +147,42 @@ class TaskManager:
             return dict(row)
         return None
 
-    def mark_processing(self, task_id: str):
-        """标记任务为处理中"""
+    def mark_processing(self, task_id: str) -> bool:
+        """标记任务为处理中
+
+        Returns:
+            True 表示成功更新，False 表示任务不在 pending 状态（可能已被取消）
+        """
         now = datetime.now().isoformat()
         conn = self._get_conn()
-        conn.execute(
-            "UPDATE tasks SET status = 'processing', started_at = ? WHERE id = ?",
+        cursor = conn.execute(
+            "UPDATE tasks SET status = 'processing', started_at = ? "
+            "WHERE id = ? AND status = 'pending'",
             (now, task_id),
         )
         conn.commit()
+        return cursor.rowcount > 0
 
-    def mark_completed(self, task_id: str, total_time_ms: int = 0):
-        """标记任务为已完成"""
+    def mark_completed(self, task_id: str, total_time_ms: int = 0) -> bool:
+        """标记任务为已完成
+
+        Returns:
+            True 表示成功更新，False 表示任务不在 processing 状态（已被取消/失败）
+        """
         now = datetime.now().isoformat()
         conn = self._get_conn()
-        conn.execute(
-            "UPDATE tasks SET status = 'completed', completed_at = ?, total_time_ms = ? WHERE id = ?",
+        cursor = conn.execute(
+            "UPDATE tasks SET status = 'completed', completed_at = ?, total_time_ms = ? "
+            "WHERE id = ? AND status = 'processing'",
             (now, total_time_ms, task_id),
         )
         conn.commit()
-        logger.info(f"[TaskManager] 任务完成 | id={task_id} | 耗时={total_time_ms}ms")
+        success = cursor.rowcount > 0
+        if success:
+            logger.info(f"[TaskManager] 任务完成 | id={task_id} | 耗时={total_time_ms}ms")
+        else:
+            logger.info(f"[TaskManager] 任务完成跳过（状态已变更）| id={task_id}")
+        return success
 
     def mark_cancelled(self, task_id: str) -> bool:
         """标记任务为已取消
@@ -184,16 +207,26 @@ class TaskManager:
         logger.info(f"[TaskManager] 任务已取消 | id={task_id}")
         return True
 
-    def mark_failed(self, task_id: str, error_message: str):
-        """标记任务为失败"""
+    def mark_failed(self, task_id: str, error_message: str) -> bool:
+        """标记任务为失败
+
+        Returns:
+            True 表示成功更新，False 表示任务不在 processing 状态（已被取消/完成）
+        """
         now = datetime.now().isoformat()
         conn = self._get_conn()
-        conn.execute(
-            "UPDATE tasks SET status = 'failed', completed_at = ? WHERE id = ?",
-            (now, task_id),
+        cursor = conn.execute(
+            "UPDATE tasks SET status = 'failed', completed_at = ?, error_message = ? "
+            "WHERE id = ? AND status = 'processing'",
+            (now, error_message, task_id),
         )
         conn.commit()
-        logger.error(f"[TaskManager] 任务失败 | id={task_id} | error={error_message}")
+        success = cursor.rowcount > 0
+        if success:
+            logger.error(f"[TaskManager] 任务失败 | id={task_id} | error={error_message}")
+        else:
+            logger.info(f"[TaskManager] 任务失败跳过（状态已变更）| id={task_id}")
+        return success
 
     # ========== 文件结果管理 ==========
 
@@ -288,7 +321,7 @@ class TaskManager:
             "completed_at": task["completed_at"],
             "estimated_remaining": estimated_remaining,
             "result": result,
-            "error": None,  # TODO: 存储失败原因
+            "error": task.get("error_message"),
         }
 
     def _build_result(
@@ -418,7 +451,10 @@ class TaskWorker:
         total = len(files)
         logger.info(f"[Worker] 开始处理任务 | id={task_id} | files={total}")
 
-        self._tm.mark_processing(task_id)
+        # 标记处理中（如果任务已被取消，则 status 不是 pending，返回 False）
+        if not self._tm.mark_processing(task_id):
+            logger.info(f"[Worker] 任务状态非 pending，跳过处理 | id={task_id}")
+            return
         start_time = time.time()
 
         try:
@@ -470,10 +506,15 @@ class TaskWorker:
 
             # 所有文件处理完成
             total_time_ms = int((time.time() - start_time) * 1000)
-            self._tm.mark_completed(task_id, total_time_ms)
-            logger.info(
-                f"[Worker] 任务完成 | id={task_id} | 耗时={total_time_ms}ms"
-            )
+            # 标记完成（如果中途被取消，SQL WHERE 守卫会阻止覆盖，返回 False）
+            if self._tm.mark_completed(task_id, total_time_ms):
+                logger.info(
+                    f"[Worker] 任务完成 | id={task_id} | 耗时={total_time_ms}ms"
+                )
+            else:
+                logger.info(
+                    f"[Worker] 任务未能标记完成（已被取消/失败）| id={task_id}"
+                )
 
         except Exception as e:
             total_time_ms = int((time.time() - start_time) * 1000)
