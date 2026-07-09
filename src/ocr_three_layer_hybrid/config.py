@@ -8,10 +8,17 @@
 """
 
 import os
+import tempfile
 from dataclasses import dataclass, field
+from pathlib import Path
 
 # 支持的文件扩展名（统一常量，避免多处定义不一致）
 SUPPORTED_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".pdf"}
+
+# 上传文件目录（统一常量）
+# 优先使用环境变量 OCR_UPLOAD_DIR，否则使用临时目录
+UPLOAD_DIR = Path(os.getenv("OCR_UPLOAD_DIR", tempfile.mkdtemp(prefix="ocr_uploads_")))
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @dataclass
@@ -83,7 +90,7 @@ class OCRConfig:
     vlm_service: VLMServiceConfig = field(default_factory=VLMServiceConfig)
     qwen_vl_service: QwenVLServiceConfig = field(default_factory=QwenVLServiceConfig)
     enable_position_extraction: bool = True  # 启用位置标注提取（户口本首页）
-    enable_vlm_field_fallback: bool = True  # 启用字段级VLM兜底（校验失败时触发）
+    enable_vlm_field_fallback: bool = True  # 启用Rule层字段级VLM重试（校验失败时触发）
 
     # OCR 引擎配置（Phase 2 优化）
     # 注意：分层策略（tiered）测试失败，准确率下降且速度变慢，不推荐使用
@@ -106,7 +113,7 @@ class OCRConfig:
     # 1. VLM提取层：分类为"未知"时使用
     vlm_extraction_engine: str = "qwen2_5_vl_7b"
 
-    # 2. VLM兜底处理器：规则层字段校验失败时触发
+    # 2. Rule层字段级VLM重试处理器：规则层字段校验失败时触发
     vlm_fallback_engine: str = "qwen2_5_vl_7b"
 
     # 3. VLM纯OCR：用于纯文本提取（如需要）

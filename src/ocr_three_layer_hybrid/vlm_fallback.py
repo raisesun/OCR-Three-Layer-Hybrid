@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-第3层：VLM兜底层
-当规则层/位置标注层的字段校验失败时，触发VLM重新提取
+Rule层字段级VLM重试（原"第3层"）
+
+当规则层/位置标注层的字段校验失败时，触发VLM聚焦重试。
 
 流程：
 1. 规则层/位置标注层提取字段
@@ -10,7 +11,8 @@
 3. 校验失败的字段 → 构建VLM Prompt → 调用VLM重新提取
 4. 合并VLM结果（只覆盖失败字段）
 
-当前使用 GLM-OCR (port 8080) 作为VLM服务。
+注意：这不是独立的处理层，而是 Rule 层(2A) 的子步骤。
+当前使用 Qwen2.5-VL-7B (port 8082) 作为VLM服务。
 """
 
 import json
@@ -28,20 +30,21 @@ from ocr_three_layer_hybrid.json_utils import parse_json_from_response
 logger = logging.getLogger(__name__)
 
 
-class VLMFallbackHandler:
-    """VLM兜底处理器
+class VLMFieldRetryHandler:
+    """Rule层字段级VLM重试处理器
 
-    校验规则层/位置标注层的提取结果，失败字段触发VLM重新提取。
+    校验规则层/位置标注层的提取结果，失败字段触发VLM聚焦重试。
+    这是 Rule 层(2A)的子步骤，不是独立的处理层。
 
     Usage:
-        handler = VLMFallbackHandler(vlm_client)
+        handler = VLMFieldRetryHandler(vlm_client)
         failed = handler.get_failed_fields(fields)
         if failed:
             vlm_result = handler.fallback_extract(image_path, failed, doc_type)
-            # 合并结果
+            # 合并结果（只覆盖失败字段）
     """
 
-    # 各文档类型的VLM兜底Prompt模板
+    # 各文档类型的Rule层VLM重试Prompt模板
     FALLBACK_PROMPTS: Dict[DocumentType, str] = {
         DocumentType.HOUSEHOLD_REGISTER: (
             "你是一名专业的户口本信息提取专家。请仔细识别图片中的内容，"
@@ -126,7 +129,7 @@ class VLMFallbackHandler:
         return self.validator.get_failed_fields(fields)
 
     def should_fallback(self, fields: Dict[str, str]) -> bool:
-        """判断是否需要VLM兜底"""
+        """判断是否需要Rule层VLM重试"""
         failed = self.get_failed_fields(fields)
         return len(failed) > 0
 
@@ -157,7 +160,7 @@ class VLMFallbackHandler:
         prompt = self._build_prompt(doc_type, failed_fields)
 
         try:
-            logger.info(f"[VLM兜底] 调用VLM重新提取: {failed_fields}")
+            logger.info("[Rule层VLM重试] 调用VLM重新提取: %s", failed_fields)
             response = self.vlm_client.call(
                 prompt=prompt,
                 image_path=image_path,
@@ -170,7 +173,7 @@ class VLMFallbackHandler:
             call_time = time.time() - start_time
             self._total_time += call_time
             logger.info(
-                f"[VLM兜底] 完成 | 字段={failed_fields} | "
+                f"[Rule层VLM重试] 完成 | 字段={failed_fields} | "
                 f"结果={fields} | 耗时={call_time:.1f}s"
             )
             return fields
@@ -178,11 +181,11 @@ class VLMFallbackHandler:
         except Exception as e:
             call_time = time.time() - start_time
             self._total_time += call_time
-            logger.error(f"[VLM兜底] 失败: {e} | 耗时={call_time:.1f}s")
+            logger.error("[Rule层VLM重试] 失败: %s | 耗时=%.1fs", e, call_time)
             return {}
 
     def _build_prompt(self, doc_type: DocumentType, fields: List[str]) -> str:
-        """构建VLM兜底Prompt"""
+        """构建Rule层VLM重试Prompt"""
         # 获取模板
         template = self.FALLBACK_PROMPTS.get(doc_type, self.DEFAULT_FALLBACK_PROMPT)
 
@@ -205,7 +208,7 @@ class VLMFallbackHandler:
         # 使用公共工具函数解析 JSON
         parsed = parse_json_from_response(response)
         if parsed is None:
-            logger.warning(f"[VLM兜底] JSON解析失败: {response[:200]}")
+            logger.warning("[Rule层VLM重试] JSON解析失败: %.200s", response)
             return {}
 
         # 只保留期望字段

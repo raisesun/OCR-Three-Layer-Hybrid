@@ -130,8 +130,18 @@ def extract_issuing_authority(full_text: str) -> Optional[str]:
     Returns:
         签发机关名称（如"北京市公安局朝阳分局"），如果未找到则返回None
     """
-    match = re.search(ISSUING_AUTHORITY_PATTERN, full_text)
-    return match.group(1) if match else None
+    # 格式1：标签+值（多种变体，包括派出所）
+    match = re.search(r"签发机关\s*([一-龥()（）]+(?:公安局|分局|派出所))", full_text)
+    if not match:
+        match = re.search(
+            r"签发机关\s*([一-鿿]+(?:公安局|分局|派出所)[一-鿿]*)", full_text
+        )
+    # 格式2：值+标签（反向顺序）
+    if not match:
+        match = re.search(
+            r"([一-鿿]+(?:公安局|分局|派出所)[一-鿿]*)\s*\n\s*签发机关", full_text
+        )
+    return match.group(1).strip() if match else None
 
 
 def extract_validity_period(full_text: str) -> Optional[str]:
@@ -143,13 +153,23 @@ def extract_validity_period(full_text: str) -> Optional[str]:
     Returns:
         有效期限（如"2020.01.01-2040.01.01"或"2020.01.01-长期"），如果未找到则返回None
     """
-    # 优先匹配日期范围
-    match = re.search(VALIDITY_PERIOD_RANGE_PATTERN, full_text)
+    # 格式1：标签+值（日期范围）
+    match = re.search(
+        r"有效期限\s*(\d{4}\.\d{2}\.\d{2}-\d{4}\.\d{2}\.\d{2})", full_text
+    )
     if match:
         return match.group(1)
 
-    # 尝试匹配长期
-    match = re.search(VALIDITY_PERIOD_LONG_TERM_PATTERN, full_text)
+    # 格式1b：标签+值（长期）
+    match = re.search(r"有效期限\s*(\d{4}\.\d{2}\.\d{2}-长期)", full_text)
+    if match:
+        return match.group(1)
+
+    # 格式2：值+标签（反向顺序）
+    match = re.search(
+        r"(\d{4}\.\d{2}\.\d{2}-\d{4}\.\d{2}\.\d{2})\s*\n\s*有效期限",
+        full_text,
+    )
     if match:
         return match.group(1)
 

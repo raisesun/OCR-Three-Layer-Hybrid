@@ -335,12 +335,12 @@ class FinancialExtractor(BaseExtractor):
             if party in key_list:
                 # 模式1: "甲方（卖方）：褚作宝" / "乙方｛买方｝：尹笑男"
                 match = re.search(
-                    rf"{party}[（(｛{{][^）)）}}｝]*[）)）}}｝]\s*[:：]\s*([一-龥]+)",
+                    rf"{party}[（(｛{{][^）)）}}｝]*[）)）}}｝]\s*[:：]\s*([一-鿿]+)",
                     full_text,
                 )
                 if not match:
                     # 模式2: "甲方：xxx"
-                    match = re.search(rf"{party}\s*[:：]\s*([一-龥]+)", full_text)
+                    match = re.search(rf"{party}\s*[:：]\s*([一-鿿]+)", full_text)
                 fields[party] = match.group(1) if match else ""
 
         # 签署日期
@@ -402,7 +402,7 @@ class FinancialExtractor(BaseExtractor):
         if "不动产权证号" in key_list:
             # 模式1: "皖（2024）蚌埠市不动产权第XXXXXXX号"
             match = re.search(
-                r"[一-龥]*\s*[（(]\s*\d{4}\s*[）)]\s*[一-龥]+\s*市?\s*不动产权第\s*[A-Z0-9]+\s*号",
+                r"[一-鿿]*\s*[（(]\s*\d{4}\s*[）)]\s*[一-鿿]+\s*市?\s*不动产权第\s*[A-Z0-9]+\s*号",
                 full_text,
                 re.DOTALL,  # 允许跨行匹配
             )
@@ -654,7 +654,7 @@ class FinancialExtractor(BaseExtractor):
                 fields["买房人"] = value
             else:
                 # 模式2: "xxx\n买房人"（凭证格式，值在标签前面）
-                match = re.search(r"([一-龥]{2,4})\s*\n\s*买房人", full_text)
+                match = re.search(r"([一-鿿]{2,4})\s*\n\s*买房人", full_text)
                 if match:
                     fields["买房人"] = match.group(1).strip()
                 else:
@@ -664,7 +664,7 @@ class FinancialExtractor(BaseExtractor):
         if "买房人姓名" in key_list:
             # 模式1: "买房人姓名：xxx"
             match = re.search(
-                r"(?:买房人\s*姓名|姓\s*名)\s*[:：]?\s*([一-龥]{2,4})", full_text
+                r"(?:买房人\s*姓名|姓\s*名)\s*[:：]?\s*([一-鿿]{2,4})", full_text
             )
             if not match:
                 # 模式2: 复用"买房人"字段的值
@@ -774,23 +774,23 @@ class FinancialExtractor(BaseExtractor):
         if "收款单位" in key_list:
             # 模式1: "收款单位：xxx公司"
             match = re.search(
-                r"收款单位\s*[:：]\s*([一-龥]+(?:公司|集团|中心))", full_text
+                r"收款单位\s*[:：]\s*([一-鿿]+(?:公司|集团|中心))", full_text
             )
             if not match:
                 # 模式2: "收款单位签章：xxx"
                 match = re.search(
-                    r"收款单位签章\s*[:：]?\s*([一-龥]+(?:公司|集团|中心))", full_text
+                    r"收款单位签章\s*[:：]?\s*([一-鿿]+(?:公司|集团|中心))", full_text
                 )
             if not match:
                 # 模式3: 在"资金监管专用章"前的公司名
                 match = re.search(
-                    r"([一-龥]+(?:公司|集团|中心))\s*\n?\s*(?:资金监管)?专用章",
+                    r"([一-鿿]+(?:公司|集团|中心))\s*\n?\s*(?:资金监管)?专用章",
                     full_text,
                 )
             if not match:
                 # 模式4: 在"收款单位"附近的公司名
                 match = re.search(
-                    r"收款单位[^一-龥]*([一-龥]+(?:公司|集团|中心))", full_text
+                    r"收款单位[^一-鿿]*([一-鿿]+(?:公司|集团|中心))", full_text
                 )
             fields["收款单位"] = match.group(1) if match else ""
 

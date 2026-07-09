@@ -6,7 +6,7 @@
 测试内容：
 1. 位置标注提取器（position_extractor.py）
 2. 字段校验器（field_validator.py）
-3. VLM兜底处理器（vlm_fallback.py）
+3. Rule层VLM重试处理器（vlm_fallback.py）
 4. 集成到规则层和Pipeline
 """
 
@@ -22,7 +22,7 @@ if src_path not in sys.path:
 from ocr_three_layer_hybrid.config import OCRConfig
 from ocr_three_layer_hybrid.position_extractor import HouseholdPositionExtractor
 from ocr_three_layer_hybrid.field_validator import FieldValidator
-from ocr_three_layer_hybrid.vlm_fallback import VLMFallbackHandler
+from ocr_three_layer_hybrid.vlm_fallback import VLMFieldRetryHandler
 from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
 from ocr_three_layer_hybrid.pipeline import PlanEPlusPipeline
 from ocr_three_layer_hybrid.interfaces import DocumentType, DocumentInfo
@@ -84,9 +84,9 @@ def test_field_validator():
 
 
 def test_vlm_fallback_handler():
-    """测试VLM兜底处理器"""
+    """测试Rule层VLM重试处理器"""
     logger.info("=" * 60)
-    logger.info("测试3: VLM兜底处理器")
+    logger.info("测试3: Rule层VLM重试处理器")
     logger.info("=" * 60)
 
     # 创建模拟的VLM客户端
@@ -94,8 +94,8 @@ def test_vlm_fallback_handler():
         def call(self, prompt, image_path, max_tokens=2048):
             return '{"户主姓名": "测试姓名"}'
 
-    handler = VLMFallbackHandler(vlm_client=MockVLMClient())
-    logger.info("✓ VLM兜底处理器创建成功")
+    handler = VLMFieldRetryHandler(vlm_client=MockVLMClient())
+    logger.info("✓ Rule层VLM重试处理器创建成功")
 
     # 测试判断逻辑
     fields = {
@@ -108,7 +108,7 @@ def test_vlm_fallback_handler():
     logger.info(f"失败字段: {failed_fields}")
     assert "户主姓名" in failed_fields, "户主姓名应该被标记为失败（太短）"
     assert "住址" in failed_fields, "住址应该被标记为失败（太短）"
-    logger.info("✓ 测试通过: VLM兜底处理器\n")
+    logger.info("✓ 测试通过: Rule层VLM重试处理器\n")
 
 
 def test_rule_layer_integration():
@@ -143,7 +143,7 @@ def test_rule_layer_integration():
 def test_pipeline_integration():
     """测试Pipeline集成"""
     logger.info("=" * 60)
-    logger.info("测试5: Pipeline集成VLM兜底处理器")
+    logger.info("测试5: Pipeline集成Rule层VLM重试处理器")
     logger.info("=" * 60)
 
     # 创建配置（启用所有VLM功能）
@@ -160,8 +160,8 @@ def test_pipeline_integration():
     logger.info("✓ Pipeline创建成功")
 
     # 验证参数注入
-    assert pipeline.vlm_fallback_handler is None, "VLM兜底处理器应该为None"
-    logger.info("✓ VLM兜底处理器参数已注入（当前为None）")
+    assert pipeline.vlm_fallback_handler is None, "Rule层VLM重试处理器应该为None"
+    logger.info("✓ Rule层VLM重试处理器参数已注入（当前为None）")
 
     logger.info("✓ 测试通过: Pipeline集成\n")
 
@@ -176,14 +176,14 @@ def test_config_switches():
 
     # 验证默认值
     assert config.enable_position_extraction == True, "位置标注默认应该启用"
-    assert config.enable_vlm_field_fallback == True, "VLM兜底默认应该启用"
+    assert config.enable_vlm_field_fallback == True, "Rule层VLM重试默认应该启用"
     logger.info("✓ 配置默认值正确")
 
     # 测试可以修改
     config.enable_position_extraction = False
     config.enable_vlm_field_fallback = False
     assert config.enable_position_extraction == False, "位置标注应该可以关闭"
-    assert config.enable_vlm_field_fallback == False, "VLM兜底应该可以关闭"
+    assert config.enable_vlm_field_fallback == False, "Rule层VLM重试应该可以关闭"
     logger.info("✓ 配置可以修改")
 
     logger.info("✓ 测试通过: 配置开关\n")

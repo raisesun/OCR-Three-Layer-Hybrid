@@ -48,8 +48,8 @@ class TestVLMExtractionLayerUnit:
 
     def test_default_config(self):
         layer = self._create_layer()
-        assert layer.model_name == "GLM-OCR-Q8_0.gguf"
-        assert layer.base_url == "http://localhost:8080/v1"
+        assert layer.model_name == "qwen2.5-vl-7b"
+        assert layer.base_url == "http://localhost:8082/v1"
         assert layer.timeout == 120.0
 
     def test_custom_config(self):

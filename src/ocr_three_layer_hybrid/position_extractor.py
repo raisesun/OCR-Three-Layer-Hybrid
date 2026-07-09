@@ -17,6 +17,7 @@
 
 import logging
 import re
+import threading
 from dataclasses import dataclass
 from typing import Optional
 from pathlib import Path
@@ -58,7 +59,7 @@ class HouseholdPositionExtractor:
 
     通过 PaddleOCR 获取文本坐标，利用空间位置关系提取首页字段。
     可修复：列错位、标签+数据合并、长地址跨列等问题。
-    不可修复：OCR字符识别错误（如"王龙晨露"列合并），需VLM兜底。
+    不可修复：OCR字符识别错误（如"王龙晨露"列合并），需Rule层VLM重试。
 
     Usage:
         extractor = HouseholdPositionExtractor()
@@ -111,19 +112,23 @@ class HouseholdPositionExtractor:
 
     def __init__(self):
         self._ocr = None  # 延迟初始化
+        self._ocr_lock = threading.Lock()  # 线程安全锁
 
     def _get_ocr(self):
         """获取 PaddleOCR 实例（延迟初始化，首次调用约需10秒）"""
         if self._ocr is None:
-            try:
-                from paddleocr import PaddleOCR
+            with self._ocr_lock:
+                # 双重检查锁定模式
+                if self._ocr is None:
+                    try:
+                        from paddleocr import PaddleOCR
 
-                logger.info("初始化 PaddleOCR（首次加载需约10秒）...")
-                self._ocr = PaddleOCR(lang="ch")
-                logger.info("PaddleOCR 初始化完成")
-            except Exception as e:
-                logger.error(f"PaddleOCR 初始化失败: {e}")
-                raise
+                        logger.info("初始化 PaddleOCR（首次加载需约10秒）...")
+                        self._ocr = PaddleOCR(lang="ch")
+                        logger.info("PaddleOCR 初始化完成")
+                    except Exception as e:
+                        logger.error("PaddleOCR 初始化失败: %s", e)
+                        raise
         return self._ocr
 
     def _parse_ocr(
@@ -312,7 +317,7 @@ class HouseholdPositionExtractor:
                 and len(label_stripped) >= 1
                 and not self._is_label(label_stripped)
             ):
-                logger.debug(f"[{field_name}] 策略1a: 标签包含数据 '{label_stripped}'")
+                logger.debug("[%s] 策略1a: 标签包含数据 '%s'", field_name, label_stripped)
                 return label_stripped
 
             # 策略1b：标签右侧同行搜索
@@ -334,7 +339,7 @@ class HouseholdPositionExtractor:
                 if field_name == "住址":
                     merged = self._fix_address_order(merged)
                 if merged:
-                    logger.debug(f"[{field_name}] 策略1b: 同行搜索 '{merged}'")
+                    logger.debug("[%s] 策略1b: 同行搜索 '%s'", field_name, merged)
                     return merged
 
         # 策略2：直接搜索（不依赖标签）
@@ -355,10 +360,10 @@ class HouseholdPositionExtractor:
             merged = self._merge_items(candidates, candidates[0].rcy)
             merged = self._strip_label(merged)
             if merged:
-                logger.debug(f"[{field_name}] 策略2: 直接搜索 '{merged}'")
+                logger.debug("[%s] 策略2: 直接搜索 '%s'", field_name, merged)
                 return merged
 
-        logger.debug(f"[{field_name}] 未找到数据")
+        logger.debug("[%s] 未找到数据", field_name)
         return ""
 
     def _merge_items(self, items: List[OcrItem], ref_rcy: float) -> str:
@@ -396,19 +401,19 @@ class HouseholdPositionExtractor:
         """
         try:
             if not Path(image_path).exists():
-                logger.warning(f"图片不存在: {image_path}")
+                logger.warning("图片不存在: %s", image_path)
                 return {}
 
             all_items, doc_bounds = self._parse_ocr(image_path)
             if not all_items:
-                logger.warning(f"OCR无结果: {image_path}")
+                logger.warning("OCR无结果: %s", image_path)
                 return {}
 
             if not self.is_first_page(all_items):
-                logger.debug(f"非首页，跳过位置标注: {Path(image_path).name}")
+                logger.debug("非首页，跳过位置标注: %s", Path(image_path).name)
                 return {}
 
-            logger.info(f"检测到首页，执行位置标注提取: {Path(image_path).name}")
+            logger.info("检测到首页，执行位置标注提取: %s", Path(image_path).name)
 
             fields = {}
             for field_name, y_range, x_range in [
@@ -421,9 +426,9 @@ class HouseholdPositionExtractor:
                 if value:
                     fields[field_name] = value
 
-            logger.info(f"位置标注提取完成: {list(fields.keys())}")
+            logger.info("位置标注提取完成: %s", list(fields.keys()))
             return fields
 
         except Exception as e:
-            logger.error(f"位置标注提取失败: {image_path} - {e}")
+            logger.error("位置标注提取失败: %s - %s", image_path, e)
             return {}

@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-OCR三层混合架构 v2.0 — 编排管道
+OCR 两层混合架构 v2.1 — 编排管道
 将文档分类器、规则层、VLM层组合成完整流程
 
-v2.0 简化：
+架构：
+- Layer 1: 文档分类（关键词6级联）
+- Layer 2A: 规则层（正则/位置标注）+ 字段级VLM重试
+- Layer 2B: VLM层（未知文档直接提取）
+
+v2.1 变更：
 - 移除 LLM 层
 - 移除 VLM 分类兜底
-- 合同类文档路由到 VLM 层
+- 重命名 "第3层VLM兜底" → "Rule层字段级VLM重试"（非独立层）
 """
 
 import logging
@@ -30,351 +35,23 @@ from ocr_three_layer_hybrid.field_config import (
     FieldPriority,
     DocumentFieldConfig,
     get_default_document_field_configs,
+    get_default_key_lists,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class PlanEPlusPipeline:
-    """OCR三层混合架构 v2.0 管道"""
-
-    # 文档类型到默认字段的映射
-    DEFAULT_KEY_LISTS: Dict[DocumentType, List[str]] = {
-        DocumentType.ID_CARD: [
-            "姓名",
-            "性别",
-            "民族",
-            "出生",
-            "住址",
-            "公民身份号码",
-            "签发机关",
-            "有效期限",
-        ],
-        DocumentType.ID_CARD_FRONT: [
-            "姓名",
-            "性别",
-            "民族",
-            "出生",
-            "住址",
-            "公民身份号码",
-        ],
-        DocumentType.ID_CARD_BACK: [
-            "签发机关",
-            "有效期限",
-        ],
-        DocumentType.MARRIAGE_CERTIFICATE: [
-            "持证人",
-            "登记日期",
-            "结婚证字号",
-            "男方姓名",
-            "女方姓名",
-            "男方身份证号",
-            "女方身份证号",
-        ],
-        DocumentType.MARRIAGE_CERTIFICATE_CONTENT: [
-            "持证人",
-            "登记日期",
-            "结婚证字号",
-            "男方姓名",
-            "女方姓名",
-            "男方身份证号",
-            "女方身份证号",
-        ],
-        DocumentType.MARRIAGE_CERTIFICATE_STAMP: [
-            # 盖章页通常不需要提取字段
-        ],
-        DocumentType.HOUSEHOLD_REGISTER: [
-            "户主姓名",
-            "户号",
-            "住址",
-            "姓名",
-            "与户主关系",
-            "性别",
-            "公民身份号码",
-        ],
-        # 户口本首页（户信息）：户别/户主姓名/户号/住址
-        DocumentType.HOUSEHOLD_REGISTER_COVER: [
-            "户别",
-            "户主姓名",
-            "户号",
-            "住址",
-        ],
-        # 户口本人页（个人信息）：姓名/与户主关系/性别/出生日期/民族/公民身份号码
-        DocumentType.HOUSEHOLD_REGISTER_CONTENT: [
-            "姓名",
-            "与户主关系",
-            "性别",
-            "出生日期",
-            "民族",
-            "公民身份号码",
-        ],
-        DocumentType.PROPERTY_CERTIFICATE: [
-            "不动产编号",
-            "权利人",
-            "共有情况",
-            "坐落",
-            "不动产单元号",
-            "权利类型",
-            "权利性质",
-            "用途",
-            "面积",
-            "使用期限",
-        ],
-        DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE: [
-            "编号",
-            "登记日期",
-        ],
-        # 不动产权证书内容页：核心数据
-        DocumentType.PROPERTY_CERTIFICATE_CONTENT: [
-            "证书号",
-            "权利人",
-            "共有情况",
-            "不动产单元号",
-            "房屋地址",
-            "建筑面积",
-            "用途",
-        ],
-        DocumentType.INVOICE: [
-            "发票代码",
-            "发票号码",
-            "开票日期",
-            "价税合计",
-            "购买方名称",
-            "购买方纳税人识别号",
-            "销售方名称",
-            "销售方纳税人识别号",
-        ],
-        DocumentType.PURCHASE_CONTRACT: [
-            "合同编号",
-            "买受人",
-            "出卖人",
-            "总价款",
-            "签订日期",
-            "房屋地址",
-            "建筑面积",
-        ],
-        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE: [
-            "合同编号",
-            "买受人",
-            "出卖人",
-            "房屋坐落",
-        ],
-        DocumentType.PURCHASE_CONTRACT_CONTENT: [
-            "合同编号",
-            "买受人",
-            "出卖人",
-            "总价款",
-            "签订日期",
-            "房屋地址",
-            "建筑面积",
-        ],
-        DocumentType.PURCHASE_CONTRACT_STAMP: [
-            # 签署页通常不需要提取字段
-        ],
-        DocumentType.STOCK_CONTRACT: [
-            "合同编号",
-            "买受人",
-            "出卖人",
-            "总价款",
-            "签订日期",
-            "房屋地址",
-            "建筑面积",
-        ],
-        DocumentType.STOCK_CONTRACT_FIRST_PAGE: [
-            "合同编号",
-            "买受人",
-            "出卖人",
-            "房屋坐落",
-        ],
-        DocumentType.STOCK_CONTRACT_CONTENT: [
-            "合同编号",
-            "买受人",
-            "出卖人",
-            "总价款",
-            "签订日期",
-            "房屋地址",
-            "建筑面积",
-        ],
-        DocumentType.STOCK_CONTRACT_STAMP: [
-            # 签署页通常不需要提取字段
-        ],
-        DocumentType.FUND_SUPERVISION: [
-            # 协议首页字段
-            "编号",
-            "甲方",
-            "乙方",
-            "丙方",
-            "签署日期",
-            "网上签约备案合同号",
-            "房屋地址",
-            "建筑面积",
-            "不动产权证号",
-            "购房款",
-            "购房款(大写)",
-            "购房款(小写)",
-            "贷款(大写)",
-            "贷款(小写)",  # 可选字段，空值表示无贷款
-            # 协议信息页字段
-            "甲方姓名",
-            "甲方身份证号",
-            "甲方银行",
-            "甲方账号",
-            "乙方姓名",
-            "乙方身份证号",
-            "乙方银行",
-            "乙方账号",
-            # 兼容旧字段
-            "监管金额",
-            "监管账户",
-            "买方",
-            "买方身份证号",
-            "卖方",
-            "卖方身份证号",
-            "监管机构",
-            "监管期限",
-            "合同编号",
-            "签订日期",
-        ],
-        DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE: [
-            "编号",
-            "甲方",
-            "乙方",
-            "丙方",
-            "签署日期",
-            "网上签约备案合同号",
-            "房屋地址",
-            "建筑面积",
-            "不动产权证号",
-            "购房款",
-            "购房款(大写)",
-            "购房款(小写)",
-            "贷款(大写)",
-            "贷款(小写)",  # 可选字段，空值表示无贷款
-        ],
-        DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE: [
-            "甲方姓名",
-            "甲方身份证号",
-            "甲方银行",
-            "甲方账号",
-            "乙方姓名",
-            "乙方身份证号",
-            "乙方银行",
-            "乙方账号",
-        ],
-        DocumentType.FUND_SUPERVISION_CERTIFICATE: [
-            "协议编号",
-            "日期",
-            "买房人",
-            "买房人姓名",
-            "身份证号",
-            "房屋坐落",
-            "建筑面积",
-            "监管总额",
-            "收款单位",
-        ],
-        DocumentType.DIVORCE_CERTIFICATE: [
-            # 离婚证基本信息
-            "离婚证字号",
-            "登记日期",
-            # 持证人信息
-            "持证人",
-            "持证人性别",
-            "持证人民族",
-            "持证人出生日期",
-            "持证人身份证件号",
-            # 原配偶信息
-            "原配偶姓名",
-            "原配偶性别",
-            "原配偶民族",
-            "原配偶出生日期",
-            "原配偶身份证件号",
-            # 其他
-            "备注",
-        ],
-        # 离婚证内容页：13 字段（与基础类型相同）
-        DocumentType.DIVORCE_CERTIFICATE_CONTENT: [
-            "离婚证字号",
-            "登记日期",
-            "持证人",
-            "持证人性别",
-            "持证人民族",
-            "持证人出生日期",
-            "持证人身份证件号",
-            "原配偶姓名",
-            "原配偶性别",
-            "原配偶民族",
-            "原配偶出生日期",
-            "原配偶身份证件号",
-            "备注",
-        ],
-        DocumentType.DIVORCE_AGREEMENT: [
-            "男方姓名",
-            "男方身份证号",
-            "女方姓名",
-            "女方身份证号",
-            "离婚日期",
-            "财产分割约定",
-            "子女抚养",
-            "债务处理",
-            "其他约定",
-        ],
-        # 公证书（不需要提取字段，只需分类）
-        DocumentType.NOTARY_CERTIFICATE: [
-            "公证书编号",
-            "公证日期",
-            "公证事项",
-        ],
-        # 委托书（不需要提取字段，只需分类）
-        DocumentType.POWER_OF_ATTORNEY: [
-            "委托人",
-            "受托人",
-            "委托事项",
-            "委托日期",
-        ],
-        # UNKNOWN文档的通用字段列表（覆盖所有可能的字段）
-        DocumentType.UNKNOWN: [
-            # 通用字段
-            "文档类型",
-            "编号",
-            "日期",
-            "金额",
-            # 人员信息
-            "姓名",
-            "身份证号",
-            "买方",
-            "卖方",
-            "权利人",
-            # 房屋信息
-            "房屋地址",
-            "建筑面积",
-            "用途",
-            # 合同信息
-            "合同编号",
-            "买受人",
-            "出卖人",
-            "总价款",
-            "签订日期",
-            # 证件信息
-            "证书号",
-            "不动产单元号",
-            "共有情况",
-            # 发票信息
-            "发票代码",
-            "发票号码",
-            "开票日期",
-            "价税合计",
-            "购买方名称",
-            "销售方名称",
-            # 其他
-            "监管金额",
-            "监管机构",
-        ],
-    }
+    """OCR 两层混合架构 v2.1 管道"""
 
     # 文档类型的详细字段配置（区分必须/可选字段）
     # 用于 RULE 层失败判定和 VLM 兜底决策
     # 完整配置由 field_config.get_default_document_field_configs() 提供
     DEFAULT_FIELD_CONFIGS: Dict[DocumentType, DocumentFieldConfig] = get_default_document_field_configs()
+
+    # 从字段配置动态生成默认的 key_lists
+    # 内容由 field_config.get_default_key_lists() 提供，避免硬编码 ~250 行字典
+    DEFAULT_KEY_LISTS: Dict[DocumentType, List[str]] = get_default_key_lists()
 
     # 文档类型到默认处理层的映射（v2.1：规则层优先，封面页跳过）
     DEFAULT_LAYER_ROUTING: Dict[DocumentType, ProcessingLayer] = {
@@ -541,10 +218,11 @@ class PlanEPlusPipeline:
 
         if target_layer == ProcessingLayer.RULE:
             model_name = "正则表达式"
+            # rule_layer 始终在 __init__ 声明 _position_extractor（可能为 None），
+            # 用 getattr 默认值替代 hasattr+属性访问，避免属性不存在时的 AttributeError
             if (
                 self.rule_layer
-                and hasattr(self.rule_layer, "_position_extractor")
-                and self.rule_layer._position_extractor
+                and getattr(self.rule_layer, "_position_extractor", None)
             ):
                 if doc_info.doc_type == DocumentType.HOUSEHOLD_REGISTER:
                     model_name = "位置标注提取器(PaddleOCR)"
@@ -571,15 +249,15 @@ class PlanEPlusPipeline:
             extract_time,
         )
 
-        # 第2.5层：VLM字段级兜底（校验失败时触发）
+        # Rule层字段级VLM重试（校验失败时触发）
         if self.vlm_fallback_handler and result.success:
             fallback_start = time.time()
             result = self._apply_vlm_fallback(image_path, result, doc_info)
             fallback_time = time.time() - fallback_start
 
-            if fallback_time > 0.1:  # 只有实际触发兜底时才记录
+            if fallback_time > 0.1:  # 只有实际触发重试时才记录
                 logger.info(
-                    "[VLM兜底] %s | 完成 | 耗时=%.2fs",
+                    "[Rule层VLM重试] %s | 完成 | 耗时=%.2fs",
                     Path(image_path).name,
                     fallback_time,
                 )
@@ -591,11 +269,12 @@ class PlanEPlusPipeline:
         self, image_path: str, result: ExtractionResult, doc_info: DocumentInfo
     ) -> ExtractionResult:
         """
-        对提取结果进行校验，失败字段触发VLM兜底
+        对提取结果进行校验，失败字段触发VLM聚焦重试
 
-        仅对启用VLM兜底的文档类型生效（当前：户口本、结婚证、身份证）
+        仅对启用VLM重试的文档类型生效（当前：户口本、结婚证、身份证）
+        这是 Rule 层(2A) 的子步骤，不是独立的处理层。
         """
-        # 只对特定文档类型启用VLM字段级兜底
+        # 只对特定文档类型启用VLM字段级重试
         fallback_enabled_types = {
             DocumentType.HOUSEHOLD_REGISTER,
             DocumentType.MARRIAGE_CERTIFICATE,
@@ -610,7 +289,7 @@ class PlanEPlusPipeline:
                 return result
 
             logger.info(
-                f"[VLM兜底] {doc_info.doc_type.value} | 失败字段: {failed_fields}"
+                f"[Rule层VLM重试] {doc_info.doc_type.value} | 失败字段: {failed_fields}"
             )
             vlm_fields = self.vlm_fallback_handler.fallback_extract(
                 image_path, failed_fields, doc_info.doc_type
@@ -627,7 +306,7 @@ class PlanEPlusPipeline:
 
             return result
         except Exception as e:
-            logger.warning(f"[VLM兜底] 异常: {e}")
+            logger.warning("[Rule层VLM重试] 异常: %s", e)
             return result
 
     def _get_layer(self, layer: ProcessingLayer) -> Optional[IExtractionLayer]:

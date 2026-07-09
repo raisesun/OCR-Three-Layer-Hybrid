@@ -8,7 +8,7 @@ POST /api/v1/task/{task_id}/cancel   — 取消任务
 """
 
 import logging
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 
 from ocr_api.common.auth import APIKeyAuthenticator
 from ocr_api.common.schemas import APIResponse
@@ -49,10 +49,9 @@ def create_task_router(
         # 查询任务
         status = task_manager.get_task_status(task_id)
         if not status:
-            return APIResponse(
-                code=404,
-                data=None,
-                message=f"任务不存在: {task_id}",
+            raise HTTPException(
+                status_code=404,
+                detail=f"任务不存在: {task_id}",
             )
 
         return APIResponse(
@@ -76,29 +75,23 @@ def create_task_router(
         api_key = authenticator.verify(request)
         task_manager.record_api_call(api_key, f"POST /api/v1/task/{task_id}/cancel")
 
-        # 获取任务当前状态
+        # 检查任务是否存在
         task = task_manager.get_task(task_id)
         if not task:
-            return APIResponse(
-                code=404,
-                data=None,
-                message=f"任务不存在: {task_id}",
+            raise HTTPException(
+                status_code=404,
+                detail=f"任务不存在: {task_id}",
             )
 
-        if task["status"] not in ("pending", "processing"):
-            return APIResponse(
-                code=400,
-                data=None,
-                message=f"任务状态为 {task['status']}，无法取消（仅 pending/processing 可取消）",
-            )
-
-        # 执行取消
+        # 原子取消：SQL WHERE 守卫保证不会覆盖已完成/已取消的任务
         success = task_manager.mark_cancelled(task_id)
         if not success:
-            return APIResponse(
-                code=500,
-                data=None,
-                message="取消失败，请稍后重试",
+            # 取消失败，重新读取最新状态以返回准确的错误信息
+            current_task = task_manager.get_task(task_id)
+            current_status = current_task["status"] if current_task else "不存在"
+            raise HTTPException(
+                status_code=400,
+                detail=f"任务状态为 {current_status}，无法取消（仅 pending/processing 可取消）",
             )
 
         return APIResponse(

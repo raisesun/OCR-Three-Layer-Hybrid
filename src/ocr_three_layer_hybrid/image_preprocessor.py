@@ -64,7 +64,7 @@ def resize_image(
 
             # 检查是否需要缩放
             if max(width, height) <= max_side:
-                logger.debug(f"图片尺寸 {width}x{height} <= {max_side}，无需缩放")
+                logger.debug("图片尺寸 %sx%s <= %s，无需缩放", width, height, max_side)
                 return image_path, False
 
             # 计算缩放比例
@@ -88,12 +88,12 @@ def resize_image(
             # 保存图片
             img_resized.save(output_path, quality=quality, optimize=True)
 
-            logger.info(f"图片已保存到: {output_path}")
+            logger.info("图片已保存到: %s", output_path)
 
             return output_path, True
 
     except Exception as e:
-        logger.error(f"图片缩放失败: {e}")
+        logger.error("图片缩放失败: %s", e)
         return image_path, False
 
 
@@ -120,7 +120,7 @@ def ensure_max_size(
             if max(width, height) <= max_side:
                 return image_path  # 无需缩放
     except Exception as e:
-        logger.warning(f"无法检查图片尺寸: {e}")
+        logger.warning("无法检查图片尺寸: %s", e)
         return image_path
 
     # 需要缩放，创建临时文件
@@ -139,7 +139,7 @@ def ensure_max_size(
     output_path, resized = resize_image(image_path, max_side, temp_path)
 
     if resized:
-        logger.info(f"图片已缩放到临时目录: {output_path}")
+        logger.info("图片已缩放到临时目录: %s", output_path)
         return output_path
     else:
         return image_path
@@ -165,7 +165,7 @@ def get_image_info(image_path: str) -> dict:
                 "max_side": max(img.width, img.height),
             }
     except Exception as e:
-        logger.error(f"获取图片信息失败: {e}")
+        logger.error("获取图片信息失败: %s", e)
         return {}
 
 
@@ -290,10 +290,10 @@ class ImageEnhancer:
 
         # 小角度偏差不纠偏（< 1.0度，更保守）
         if abs(angle) < 1.0:
-            logger.debug(f"纠偏角度 {angle:.2f}° < 1.0°，跳过纠偏")
+            logger.debug("纠偏角度 %.2f° < 1.0°，跳过纠偏", angle)
             return image
 
-        logger.debug(f"纠偏角度: {angle:.2f}°")
+        logger.debug("纠偏角度: %.2f°", angle)
 
         # 旋转图像
         h, w = image.shape[:2]
@@ -379,7 +379,7 @@ def enhance_image(
         # 读取图片
         image = cv2.imread(image_path)
         if image is None:
-            logger.error(f"无法读取图片: {image_path}")
+            logger.error("无法读取图片: %s", image_path)
             return image_path
 
         # 创建增强器并处理
@@ -402,10 +402,10 @@ def enhance_image(
 
         # 保存处理后的图片
         cv2.imwrite(output_path, enhanced)
-        logger.info(f"图像增强完成: {output_path}")
+        logger.info("图像增强完成: %s", output_path)
 
         return output_path
 
     except Exception as e:
-        logger.error(f"图像增强失败: {e}")
+        logger.error("图像增强失败: %s", e)
         return image_path

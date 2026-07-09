@@ -275,7 +275,7 @@ class PPStructureV3Engine:
         if self._pipeline is None:
             from paddlex import create_pipeline
 
-            logger.info(f"初始化 PP-StructureV3 pipeline (device={self.device})...")
+            logger.info("初始化 PP-StructureV3 pipeline (device=%s)...", self.device)
             start = time.time()
             self._pipeline = create_pipeline(
                 pipeline="PP-StructureV3",
@@ -304,7 +304,7 @@ class PPStructureV3Engine:
         self._ensure_pipeline()
 
         input_desc = input_data if isinstance(input_data, str) else "ndarray"
-        logger.info(f"PP-StructureV3 开始推理: {input_desc}")
+        logger.info("PP-StructureV3 开始推理: %s", input_desc)
         start = time.time()
 
         # 图片预处理：缩放到 2000px 以内（经测试为准确率与性能的最佳平衡点）
@@ -314,7 +314,7 @@ class PPStructureV3Engine:
 
             processed_input = ensure_max_size(input_data, max_side=2000)
             if processed_input != input_data:
-                logger.info(f"图片已预处理（缩放）")
+                logger.info("图片已预处理（缩放）")
 
         output = self._pipeline.predict(processed_input)
         results = []
@@ -382,7 +382,7 @@ class PPStructureV3Engine:
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
             with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=2, ensure_ascii=False)
-            logger.info(f"结果已保存到: {save_path}")
+            logger.info("结果已保存到: %s", save_path)
 
         return output
 
@@ -392,7 +392,7 @@ class PPStructureV3Engine:
             try:
                 self._pipeline.close()
             except Exception as e:
-                logger.warning(f"关闭 PP-StructureV3 pipeline 失败: {e}")
+                logger.warning("关闭 PP-StructureV3 pipeline 失败: %s", e)
             finally:
                 self._pipeline = None
 
@@ -460,9 +460,9 @@ class PaddleOCREngine:
         if self._ocr_pipeline is None:
             from paddleocr import PaddleOCR
 
-            logger.info(f"初始化 PaddleOCR pipeline (device={self.device})...")
-            logger.info(f"  检测模型: {self.det_model_dir}")
-            logger.info(f"  识别模型: {self.rec_model_dir}")
+            logger.info("初始化 PaddleOCR pipeline (device=%s)...", self.device)
+            logger.info("  检测模型: %s", self.det_model_dir)
+            logger.info("  识别模型: %s", self.rec_model_dir)
             start = time.time()
             self._ocr_pipeline = PaddleOCR(
                 text_detection_model_dir=self.det_model_dir,
@@ -478,14 +478,14 @@ class PaddleOCREngine:
         if self.use_layout and self._layout_model is None:
             from paddlex import create_pipeline
 
-            logger.info(f"初始化 PP-DocLayoutV3 版面分析模型...")
-            logger.info(f"  模型路径: {self.layout_model_dir}")
+            logger.info("初始化 PP-DocLayoutV3 版面分析模型...")
+            logger.info("  模型路径: %s", self.layout_model_dir)
             start = time.time()
             self._layout_model = create_pipeline(
                 pipeline="PP-StructureV3",
                 layout_model_dir=self.layout_model_dir,
             )
-            logger.info(f"版面分析模型初始化完成，耗时: {time.time()-start:.1f}s")
+            logger.info("版面分析模型初始化完成，耗时: %.1fs", time.time()-start)
 
     def _run_layout_analysis(self, image_path: str) -> List[LayoutRegion]:
         """运行版面分析"""
@@ -607,7 +607,7 @@ class PaddleOCREngine:
             if isinstance(input_data, str)
             else (f"{len(input_data)}张" if isinstance(input_data, list) else "ndarray")
         )
-        logger.info(f"开始推理: {input_desc}")
+        logger.info("开始推理: %s", input_desc)
         start = time.time()
 
         # 版面分析（如果启用）
@@ -620,7 +620,7 @@ class PaddleOCREngine:
             try:
                 layout_regions = self._run_layout_analysis(input_data)
             except Exception as e:
-                logger.warning(f"版面分析失败，回退到无版面分析模式: {e}")
+                logger.warning("版面分析失败，回退到无版面分析模式: %s", e)
                 layout_regions = None
 
         # OCR 识别
@@ -661,7 +661,7 @@ class PaddleOCREngine:
             results.append(ocr_result)
 
         elapsed = time.time() - start
-        logger.info(f"推理完成，耗时: {elapsed:.1f}s，共{len(results)}页")
+        logger.info("推理完成，耗时: %.1fs，共%s页", elapsed, len(results))
 
         return results
 
@@ -685,7 +685,7 @@ class PaddleOCREngine:
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
             with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=2, ensure_ascii=False)
-            logger.info(f"结果已保存到: {save_path}")
+            logger.info("结果已保存到: %s", save_path)
 
         return output
 
@@ -695,7 +695,7 @@ class PaddleOCREngine:
             try:
                 self._ocr_pipeline.close()
             except Exception as e:
-                logger.warning(f"关闭 PP-OCR pipeline 失败: {e}")
+                logger.warning("关闭 PP-OCR pipeline 失败: %s", e)
             finally:
                 self._ocr_pipeline = None
         self._layout_model = None
@@ -751,7 +751,7 @@ class PaddleOCRVLLEngine:
             logger.info(
                 f"初始化 PaddleOCR-VL pipeline (version={self.pipeline_version})..."
             )
-            logger.info(f"  VLM 模型: {self.vl_rec_model_dir}")
+            logger.info("  VLM 模型: %s", self.vl_rec_model_dir)
             start = time.time()
             self._pipeline = PaddleOCRVL(
                 device=self.device,
@@ -761,7 +761,7 @@ class PaddleOCRVLLEngine:
                 use_doc_unwarping=False,
                 use_layout_detection=self.use_layout_detection,
             )
-            logger.info(f"VLM pipeline 初始化完成，耗时: {time.time()-start:.1f}s")
+            logger.info("VLM pipeline 初始化完成，耗时: %.1fs", time.time()-start)
 
     def predict(self, input_data: Union[str, np.ndarray]) -> List[OCRResult]:
         """
@@ -810,7 +810,7 @@ class PaddleOCRVLLEngine:
             results.append(ocr_result)
 
         elapsed = time.time() - start
-        logger.info(f"VLM 推理完成，耗时: {elapsed:.1f}s，共{len(results)}页")
+        logger.info("VLM 推理完成，耗时: %.1fs，共%s页", elapsed, len(results))
 
         return results
 
@@ -820,7 +820,7 @@ class PaddleOCRVLLEngine:
             try:
                 self._pipeline.close()
             except Exception as e:
-                logger.warning(f"关闭 VLM pipeline 失败: {e}")
+                logger.warning("关闭 VLM pipeline 失败: %s", e)
             finally:
                 self._pipeline = None
 

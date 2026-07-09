@@ -17,6 +17,7 @@ OCR API 服务 — 异步任务管理器
 可独立复用：其他项目可直接导入 TaskManager，只需提供 OCRService 实例。
 """
 
+import atexit
 import sqlite3
 import threading
 import time
@@ -51,18 +52,44 @@ class TaskManager:
         self._local = threading.local()
         self._cancel_flags: Dict[str, bool] = {}  # task_id -> cancelled
         self._init_db()
-        logger.info(f"[TaskManager] 初始化完成 | db={db_path} | 并发上限={max_concurrent}")
+        # 注册 atexit 钩子，确保进程退出时关闭连接
+        atexit.register(self.close)
+        logger.info("[TaskManager] 初始化完成 | db=%s | 并发上限=%s", db_path, max_concurrent)
 
     # ========== 数据库连接管理 ==========
 
     def _get_conn(self) -> sqlite3.Connection:
         """获取当前线程的 SQLite 连接（thread-local）"""
-        if not hasattr(self._local, "conn") or self._local.conn is None:
-            self._local.conn = sqlite3.connect(self._db_path)
-            self._local.conn.row_factory = sqlite3.Row
+        # threading.local 属性在首次访问前不存在；用 getattr 默认值替代 hasattr
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = sqlite3.connect(self._db_path)
+            conn.row_factory = sqlite3.Row
             # 启用 WAL 模式，提高并发读写性能
-            self._local.conn.execute("PRAGMA journal_mode=WAL")
-        return self._local.conn
+            conn.execute("PRAGMA journal_mode=WAL")
+            self._local.conn = conn
+        return conn
+
+    def close(self):
+        """关闭当前线程的 SQLite 连接"""
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            try:
+                conn.close()
+                logger.debug("[TaskManager] 连接已关闭 | thread=%s", threading.current_thread().name)
+            except Exception as e:
+                logger.warning("[TaskManager] 关闭连接失败: %s", e)
+            finally:
+                self._local.conn = None
+
+    def __enter__(self):
+        """支持上下文管理器"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """退出上下文时关闭连接"""
+        self.close()
+        return False
 
     def _init_db(self):
         """初始化数据库表结构"""
@@ -109,13 +136,40 @@ class TaskManager:
             CREATE INDEX IF NOT EXISTS idx_api_usage_key_time
                 ON api_usage(api_key, called_at);
         """)
-        # 向后兼容迁移：已有数据库可能缺少 error_message 列
+        # 向后兼容迁移：已有数据库可能缺少新列
+        migrations = [
+            ("ALTER TABLE tasks ADD COLUMN error_message TEXT", "error_message"),
+            ("ALTER TABLE tasks ADD COLUMN api_key TEXT", "api_key"),
+            ("ALTER TABLE task_results ADD COLUMN file_size INTEGER DEFAULT 0", "file_size"),
+        ]
+
+        for alter_sql, column_name in migrations:
+            try:
+                conn.execute(alter_sql)
+                conn.commit()
+            except sqlite3.OperationalError:
+                pass  # 列已存在
+
+        # 为旧数据填充 file_size（如果文件存在）
         try:
-            conn.execute("ALTER TABLE tasks ADD COLUMN error_message TEXT")
+            rows = conn.execute(
+                "SELECT id, file_path FROM task_results WHERE file_size = 0 OR file_size IS NULL"
+            ).fetchall()
+            updated_count = 0
+            for row in rows:
+                file_path = Path(row["file_path"])
+                if file_path.exists():
+                    file_size = file_path.stat().st_size
+                    conn.execute(
+                        "UPDATE task_results SET file_size = ? WHERE id = ?",
+                        (file_size, row["id"]),
+                    )
+                    updated_count += 1
             conn.commit()
-        except sqlite3.OperationalError:
-            pass  # 列已存在
-        conn.commit()
+            if updated_count > 0:
+                logger.info("[TaskManager] 迁移完成：更新了 %s 条记录的 file_size", updated_count)
+        except Exception as e:
+            logger.warning("[TaskManager] 迁移 file_size 失败: %s", e)
 
     # ========== 任务生命周期 ==========
 
@@ -124,6 +178,7 @@ class TaskManager:
         file_count: int,
         priority: str = "normal",
         callback_url: Optional[str] = None,
+        api_key: Optional[str] = None,
     ) -> str:
         """创建新任务，返回 task_id"""
         task_id = f"task_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:12]}"
@@ -131,12 +186,12 @@ class TaskManager:
 
         conn = self._get_conn()
         conn.execute(
-            """INSERT INTO tasks (id, status, file_count, priority, callback_url, created_at)
-               VALUES (?, 'pending', ?, ?, ?, ?)""",
-            (task_id, file_count, priority, callback_url, now),
+            """INSERT INTO tasks (id, status, file_count, priority, callback_url, created_at, api_key)
+               VALUES (?, 'pending', ?, ?, ?, ?, ?)""",
+            (task_id, file_count, priority, callback_url, now, api_key),
         )
         conn.commit()
-        logger.info(f"[TaskManager] 创建任务 | id={task_id} | files={file_count}")
+        logger.info("[TaskManager] 创建任务 | id=%s | files=%s | api_key=%s", task_id, file_count, api_key)
         return task_id
 
     def get_task(self, task_id: str) -> Optional[Dict[str, Any]]:
@@ -179,9 +234,11 @@ class TaskManager:
         conn.commit()
         success = cursor.rowcount > 0
         if success:
-            logger.info(f"[TaskManager] 任务完成 | id={task_id} | 耗时={total_time_ms}ms")
+            logger.info("[TaskManager] 任务完成 | id=%s | 耗时=%sms", task_id, total_time_ms)
+            # 清理取消标志，防止内存泄漏
+            self._cancel_flags.pop(task_id, None)
         else:
-            logger.info(f"[TaskManager] 任务完成跳过（状态已变更）| id={task_id}")
+            logger.info("[TaskManager] 任务完成跳过（状态已变更）| id=%s", task_id)
         return success
 
     def mark_cancelled(self, task_id: str) -> bool:
@@ -190,22 +247,20 @@ class TaskManager:
         Returns:
             True 表示成功取消，False 表示任务不存在或状态不允许取消
         """
-        task = self.get_task(task_id)
-        if not task:
-            return False
-        if task["status"] not in ("pending", "processing"):
-            return False
-
         now = datetime.now().isoformat()
         conn = self._get_conn()
-        conn.execute(
-            "UPDATE tasks SET status = 'cancelled', completed_at = ? WHERE id = ?",
+        # 使用 WHERE 子句确保原子性，避免 TOCTOU 竞态
+        cursor = conn.execute(
+            "UPDATE tasks SET status = 'cancelled', completed_at = ? "
+            "WHERE id = ? AND status IN ('pending', 'processing')",
             (now, task_id),
         )
         conn.commit()
-        self._cancel_flags[task_id] = True
-        logger.info(f"[TaskManager] 任务已取消 | id={task_id}")
-        return True
+        if cursor.rowcount > 0:
+            self._cancel_flags[task_id] = True
+            logger.info("[TaskManager] 任务已取消 | id=%s", task_id)
+            return True
+        return False
 
     def mark_failed(self, task_id: str, error_message: str) -> bool:
         """标记任务为失败
@@ -223,9 +278,11 @@ class TaskManager:
         conn.commit()
         success = cursor.rowcount > 0
         if success:
-            logger.error(f"[TaskManager] 任务失败 | id={task_id} | error={error_message}")
+            logger.error("[TaskManager] 任务失败 | id=%s | error=%s", task_id, error_message)
+            # 清理取消标志，防止内存泄漏
+            self._cancel_flags.pop(task_id, None)
         else:
-            logger.info(f"[TaskManager] 任务失败跳过（状态已变更）| id={task_id}")
+            logger.info("[TaskManager] 任务失败跳过（状态已变更）| id=%s", task_id)
         return success
 
     # ========== 文件结果管理 ==========
@@ -237,11 +294,14 @@ class TaskManager:
         file_path: str,
     ):
         """添加文件记录（初始状态 pending）"""
+        # 记录文件大小
+        file_size = Path(file_path).stat().st_size if Path(file_path).exists() else 0
+
         conn = self._get_conn()
         conn.execute(
-            """INSERT INTO task_results (task_id, file_name, file_path, status)
-               VALUES (?, ?, ?, 'pending')""",
-            (task_id, file_name, file_path),
+            """INSERT INTO task_results (task_id, file_name, file_path, file_size, status)
+               VALUES (?, ?, ?, ?, 'pending')""",
+            (task_id, file_name, file_path, file_size),
         )
         conn.commit()
 
@@ -398,19 +458,22 @@ class TaskManager:
         calls_used = row["cnt"] if row else 0
         calls_limit = 6000  # 默认每小时 6000 次（100次/分钟）
 
-        # 统计异步任务
+        # 统计该租户的异步任务数
         row = conn.execute(
-            "SELECT COUNT(*) as cnt FROM tasks WHERE status IN ('pending', 'processing')",
+            "SELECT COUNT(*) as cnt FROM tasks WHERE api_key = ? AND status IN ('pending', 'processing')",
+            (api_key,),
         ).fetchone()
         pending_tasks = row["cnt"] if row else 0
 
-        # 统计存储使用
-        upload_dir = Path("/tmp/ocr_uploads")
-        storage_used = 0
-        if upload_dir.exists():
-            for f in upload_dir.rglob("*"):
-                if f.is_file():
-                    storage_used += f.stat().st_size
+        # 统计该租户的存储使用（从数据库查询，不扫描文件系统）
+        row = conn.execute(
+            """SELECT COALESCE(SUM(tr.file_size), 0) as total_size
+               FROM task_results tr
+               JOIN tasks t ON tr.task_id = t.id
+               WHERE t.api_key = ?""",
+            (api_key,),
+        ).fetchone()
+        storage_used = row["total_size"] if row else 0
 
         return {
             "api_calls": {
@@ -449,11 +512,11 @@ class TaskWorker:
         import json
 
         total = len(files)
-        logger.info(f"[Worker] 开始处理任务 | id={task_id} | files={total}")
+        logger.info("[Worker] 开始处理任务 | id=%s | files=%s", task_id, total)
 
         # 标记处理中（如果任务已被取消，则 status 不是 pending，返回 False）
         if not self._tm.mark_processing(task_id):
-            logger.info(f"[Worker] 任务状态非 pending，跳过处理 | id={task_id}")
+            logger.info("[Worker] 任务状态非 pending，跳过处理 | id=%s", task_id)
             return
         start_time = time.time()
 
@@ -461,7 +524,7 @@ class TaskWorker:
             for idx, file_info in enumerate(files):
                 # 检查取消标志
                 if self._tm.is_cancelled(task_id):
-                    logger.info(f"[Worker] 任务已取消 | id={task_id} | 进度={idx}/{total}")
+                    logger.info("[Worker] 任务已取消 | id=%s | 进度=%s/%s", task_id, idx, total)
                     return
 
                 file_name = file_info["file_name"]
@@ -519,4 +582,4 @@ class TaskWorker:
         except Exception as e:
             total_time_ms = int((time.time() - start_time) * 1000)
             self._tm.mark_failed(task_id, str(e))
-            logger.error(f"[Worker] 任务异常 | id={task_id} | error={e}")
+            logger.error("[Worker] 任务异常 | id=%s | error=%s", task_id, e)

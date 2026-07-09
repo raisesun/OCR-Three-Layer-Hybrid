@@ -16,7 +16,7 @@ ROUTE_NAMES = {
     "standard_document": "阶段2: 标准单证强信号",
     "standard_document_weak": "阶段2: 弱信号组合",
     "contract_field_combination": "阶段3: 合同字段组合",
-    "vlm_fallback_required": "阶段4: VLM兜底",
+    "vlm_fallback_required": "Rule层字段级VLM重试",
 }
 
 # Pipeline阶段列表（用于流程图显示）

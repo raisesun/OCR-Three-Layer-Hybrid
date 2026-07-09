@@ -58,14 +58,86 @@ def parse_json_from_response(response: str) -> Optional[Dict[str, Any]]:
         except (json.JSONDecodeError, ValueError):
             pass
 
-    # 第 3 层：正则提取 JSON 块
-    json_match = re.search(r"\{[^{}]*\}", clean_response, re.DOTALL)
-    if json_match:
+    # 第 3 层：正则提取 JSON 块（支持嵌套）
+    json_str = _extract_json_block(clean_response)
+    if json_str:
         try:
-            parsed = json.loads(json_match.group())
+            parsed = json.loads(json_str)
             if isinstance(parsed, dict):
                 return parsed
         except (json.JSONDecodeError, ValueError):
             pass
 
     return None
+
+
+def _extract_json_block(text: str) -> Optional[str]:
+    """从文本中提取 JSON 对象块（支持嵌套）
+
+    使用括号匹配算法，而非正则表达式，以支持嵌套的 JSON 对象。
+
+    Args:
+        text: 可能包含 JSON 的文本
+
+    Returns:
+        提取的 JSON 字符串，如果未找到则返回 None
+    """
+    # 找到第一个 {
+    start = text.find('{')
+    if start == -1:
+        return None
+
+    # 使用栈匹配括号
+    depth = 0
+    in_string = False
+    escape_next = False
+
+    for i in range(start, len(text)):
+        char = text[i]
+
+        if escape_next:
+            escape_next = False
+            continue
+
+        if char == '\\':
+            escape_next = True
+            continue
+
+        if char == '"' and not escape_next:
+            in_string = not in_string
+            continue
+
+        if in_string:
+            continue
+
+        if char == '{':
+            depth += 1
+        elif char == '}':
+            depth -= 1
+            if depth == 0:
+                return text[start:i+1]
+
+    return None
+
+
+def merge_fields_first_nonempty(
+    merged_fields: Dict[str, str],
+    new_fields: Dict[str, str],
+) -> int:
+    """合并字段：取第一个非空值
+
+    用于多页文档提取时合并各页的字段结果。
+
+    Args:
+        merged_fields: 已合并的字段字典（会被修改）
+        new_fields: 新页面的字段字典
+
+    Returns:
+        从 new_fields 中合并的字段数量
+    """
+    merged_count = 0
+    for key, value in new_fields.items():
+        if value and value.strip() and not merged_fields.get(key):
+            merged_fields[key] = value
+            merged_count += 1
+    return merged_count

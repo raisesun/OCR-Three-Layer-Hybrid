@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-OCR三层混合架构 v2.0 — 正式服务层
+OCR 两层混合架构 v2.1 — 正式服务层
 
 提供对外统一的服务接口，封装 Pipeline 的分类+提取完整流程。
+架构：分类器 + 规则层(2A) + VLM层(2B)，规则层失败时触发字段级VLM重试。
 
 Usage:
     from ocr_three_layer_hybrid.service import OCRService
@@ -17,6 +18,7 @@ Usage:
 
 import time
 import logging
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -67,16 +69,15 @@ def setup_logging(level: str = "INFO", log_file: Optional[str] = None):
 
 
 class OCRService:
-    """OCR三层混合架构 v2.0 — 统一服务接口
+    """OCR 两层混合架构 v2.1 — 统一服务接口
 
     整合分类器、Pipeline、VLM客户端，提供完整的文档处理服务。
     分类器只创建一次，同时注入到Pipeline中避免重复分类。
 
-    v2.0 简化：
-    - 移除 VLM 分类兜底
-    - 移除 LLM 层（PP-ChatOCRv4）
-    - 移除 PaddleOCR-VL 备用引擎
-    - VLM 层增强：支持类型识别+提取、多页文档处理
+    架构（v2.1 简化）：
+    - Layer 1: 关键词分类器
+    - Layer 2A: 规则层（正则/位置标注）+ 字段级VLM重试
+    - Layer 2B: VLM层（未知文档直接提取）
     """
 
     def __init__(self, config: Optional[OCRConfig] = None):
@@ -87,6 +88,8 @@ class OCRService:
             config: 服务配置，不传则使用默认配置
         """
         self.config = config or OCRConfig()
+        self._paddleocr_lock = threading.Lock()  # PaddleOCR 初始化锁
+        self._paddleocr_wrapper = None  # 延迟初始化，首次调用时创建
 
         # VLM客户端：根据vlm_ocr_engine配置选择模型
         vlm_ocr_config = self.config.get_vlm_config(self.config.vlm_ocr_engine)
@@ -106,27 +109,27 @@ class OCRService:
                 self._position_extractor = HouseholdPositionExtractor()
                 logger.info("位置标注提取器已启用")
             except ImportError as e:
-                logger.warning(f"位置标注提取器未启用（导入失败）: {e}")
+                logger.warning("位置标注提取器未启用（导入失败）: %s", e)
 
-        # VLM字段级兜底处理器：根据vlm_fallback_engine配置选择模型
+        # Rule层字段级VLM重试处理器：根据vlm_fallback_engine配置选择模型
         self._vlm_fallback_handler = None
         if self.config.enable_vlm_field_fallback:
             try:
-                from ocr_three_layer_hybrid.vlm_fallback import VLMFallbackHandler
+                from ocr_three_layer_hybrid.vlm_fallback import VLMFieldRetryHandler
 
-                # 创建独立的VLM客户端用于兜底
+                # 创建独立的VLM客户端用于字段级重试
                 vlm_fallback_config = self.config.get_vlm_config(
                     self.config.vlm_fallback_engine
                 )
                 vlm_fallback_client = VLMClient(vlm_fallback_config)
-                self._vlm_fallback_handler = VLMFallbackHandler(
+                self._vlm_fallback_handler = VLMFieldRetryHandler(
                     vlm_client=vlm_fallback_client
                 )
                 logger.info(
-                    f"VLM字段级兜底已启用 (引擎: {self.config.vlm_fallback_engine})"
+                    f"Rule层字段级VLM重试已启用 (引擎: {self.config.vlm_fallback_engine})"
                 )
             except ImportError as e:
-                logger.warning(f"VLM字段级兜底未启用（导入失败）: {e}")
+                logger.warning("Rule层字段级VLM重试未启用（导入失败）: %s", e)
 
         # 规则层：注入位置标注提取器
         from ocr_three_layer_hybrid.rule_layer import RuleExtractionLayer
@@ -141,7 +144,7 @@ class OCRService:
             f"VLM 提取层使用: {self.config.vlm_extraction_engine} ({vlm_extraction_config.base_url})"
         )
 
-        # Pipeline：注入规则层和VLM层（无LLM层）
+        # Pipeline：注入规则层和VLM层
         self._pipeline = PlanEPlusPipeline(
             classifier=self._classifier,
             rule_layer=rule_layer,
@@ -150,10 +153,10 @@ class OCRService:
                 model_name=vlm_extraction_config.model_name,
                 timeout=vlm_extraction_config.timeout,
             ),
-            vlm_fallback_handler=self._vlm_fallback_handler,
+            vlm_fallback_handler=self._vlm_fallback_handler,  # Rule层字段级VLM重试
         )
         logger.info(
-            "OCRService v2.0 初始化 | VLM提取=%s | VLM兜底=%s | 位置标注=%s",
+            "OCRService v2.1 初始化 | VLM提取=%s | Rule层VLM重试=%s | 位置标注=%s",
             self.config.vlm_extraction_engine,
             self.config.vlm_fallback_engine,
             "启用" if self._position_extractor else "禁用",
@@ -184,13 +187,15 @@ class OCRService:
         try:
             from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCRWrapper
 
-            # 延迟初始化 PaddleOCRWrapper
-            if not hasattr(self, "_paddleocr_wrapper"):
-                self._paddleocr_wrapper = PaddleOCRWrapper(
-                    device="cpu",
-                    default_engine="ppocr",
-                )
-                logger.info("PaddleOCR 引擎已初始化: PP-OCRv6")
+            # 延迟初始化 PaddleOCRWrapper（双重检查锁定模式）
+            if self._paddleocr_wrapper is None:
+                with self._paddleocr_lock:
+                    if self._paddleocr_wrapper is None:
+                        self._paddleocr_wrapper = PaddleOCRWrapper(
+                            device="cpu",
+                            default_engine="ppocr",
+                        )
+                        logger.info("PaddleOCR 引擎已初始化: PP-OCRv6")
 
             # 图像预处理（如果启用）
             preprocess_path = None
@@ -215,7 +220,7 @@ class OCRService:
                     # 使用预处理后的图片进行 OCR
                     ocr_image_path = preprocess_path
                 except Exception as e:
-                    logger.warning(f"[预处理] 失败，使用原图: {e}")
+                    logger.warning("[预处理] 失败，使用原图: %s", e)
                     ocr_image_path = image_path
             else:
                 ocr_image_path = image_path
@@ -468,22 +473,30 @@ class OCRService:
         4. 必填字段未满足 → 该页 VLM 兜底
         5. 合并所有页的提取结果（取第一个非空值）
         6. 返回基础文档类型（非首页细分类型）
+
+        使用 multi_page_utils.iterate_extract_merge() 公共函数处理
+        逐页迭代+合并逻辑，避免与 vlm_layer.py 重复实现。
         """
         from ocr_three_layer_hybrid.interfaces import ExtractionResult, FieldConflict
+        from ocr_three_layer_hybrid.multi_page_utils import (
+            iterate_extract_merge,
+            determine_extraction_success,
+        )
 
         # 获取字段配置（用于判断 skip 和 required）
         field_configs = get_default_document_field_configs()
 
-        merged_fields: Dict[str, str] = {}
-        total_time = 0.0
+        # 收集每页的提取结果（用于冲突检测）和其他状态
+        page_results: List[tuple] = []  # (page_type, result)
         last_layer = ProcessingLayer.RULE
         last_error = ""
         any_vlm_fallback = False
+        total_time = 0.0
 
-        # 收集每页的提取结果（用于冲突检测）
-        page_results: List[tuple] = []  # (page_type, result)
+        # 定义单页提取函数（闭包，捕获 self、field_configs 等上下文）
+        def extract_page(img_path: str, page_idx: int) -> Optional[Dict[str, str]]:
+            nonlocal last_layer, last_error, any_vlm_fallback, total_time
 
-        for page_idx, img_path in enumerate(image_paths):
             page_type = f"page_{page_idx}"
 
             # === 1. 分类：首页复用，后续页独立分类 ===
@@ -499,12 +512,11 @@ class OCRService:
             # === 2. 获取该细分类型的字段配置 ===
             config = field_configs.get(current_doc_type)
             if config is None:
-                # 没有配置的类型，跳过
                 logger.info(
                     "[多页] 页 %d | %s | 无字段配置，跳过",
                     page_idx, current_doc_type.value,
                 )
-                continue
+                return None
 
             # === 3. 检查是否跳过 ===
             if config.skip:
@@ -512,12 +524,11 @@ class OCRService:
                     "[多页] 页 %d | %s | 跳过（明确定义不提取）",
                     page_idx, current_doc_type.value,
                 )
-                continue
+                return None
 
             all_field_names = config.get_all_field_names()
             if not all_field_names:
-                # 配置存在但没有字段定义，跳过
-                continue
+                return None
 
             # === 4. RULE 层提取 ===
             ocr_text = self.run_ocr(img_path)
@@ -535,17 +546,17 @@ class OCRService:
                     page_idx, current_doc_type.value, result.error_message,
                 )
 
-            # === 5. 检查必填字段，决定是否需要 VLM 兜底 ===
+            # === 5. 检查必填字段，决定是否需要 Rule层VLM重试 ===
             missing_required = config.get_missing_required_fields(result.fields)
 
             if missing_required:
                 logger.info(
-                    "[多页] 页 %d | %s | RULE层缺失必填字段: %s → VLM兜底",
+                    "[多页] 页 %d | %s | RULE层缺失必填字段: %s → Rule层VLM重试",
                     page_idx, current_doc_type.value, missing_required,
                 )
                 any_vlm_fallback = True
 
-                # VLM 兜底：用所有字段名构建 prompt
+                # Rule层VLM重试：用所有字段名构建 prompt
                 vlm_result = self._vlm_fallback_for_page(page_doc_info, all_field_names)
 
                 if vlm_result and vlm_result.success:
@@ -556,24 +567,29 @@ class OCRService:
                         if vlm_value and vlm_value.strip():
                             if rule_value and rule_value.strip() and rule_value != vlm_value:
                                 logger.info(
-                                    "[VLM兜底] 页 %d | 字段'%s': RULE='%s', VLM='%s' → 保留RULE值",
+                                    "[Rule层VLM重试] 页 %d | 字段'%s': RULE='%s', VLM='%s' → 保留RULE值",
                                     page_idx, field_name, rule_value, vlm_value,
                                 )
                             else:
                                 result.fields[field_name] = vlm_value
                                 logger.info(
-                                    "[VLM兜底] 页 %d | 字段'%s' 由VLM填充: '%s'",
+                                    "[Rule层VLM重试] 页 %d | 字段'%s' 由VLM填充: '%s'",
                                     page_idx, field_name, vlm_value,
                                 )
                     result.vlm_fallback_triggered = True
                     result.vlm_fallback_fields = missing_required
 
-            # === 6. 合并字段到最终结果（取第一个非空值） ===
-            for key, value in result.fields.items():
-                if value and value.strip() and not merged_fields.get(key):
-                    merged_fields[key] = value
+            return result.fields
 
-        # === 7. 检测字段冲突 ===
+        # === 使用公共函数执行逐页迭代+合并 ===
+        merged_fields, _ = iterate_extract_merge(
+            image_paths,
+            extract_page,
+            max_pages=len(image_paths),  # 已在 process_multi_page 中截断
+            log_context="多页",
+        )
+
+        # === 6. 检测字段冲突 ===
         conflicts: List[FieldConflict] = []
         for page_idx, (page_type, result) in enumerate(page_results):
             if not result.success:
@@ -597,21 +613,20 @@ class OCRService:
                             resolved_value=merged_fields.get(key, value),
                         ))
 
-        # === 8. 成功判断：基于基础类型的 field_configs ===
+        # === 7. 成功判断：基于基础类型的 field_configs ===
         base_doc_type = self._get_base_doc_type(first_page_doc_info.doc_type)
         base_config = field_configs.get(base_doc_type)
 
         if base_config and base_config.required_fields:
-            # 检查合并后的必填字段是否都填充
-            missing = base_config.get_missing_required_fields(merged_fields)
-            success = len(missing) == 0
+            required_names = [f.name for f in base_config.required_fields]
+            success = determine_extraction_success(merged_fields, required_names)
             if not success:
+                missing = base_config.get_missing_required_fields(merged_fields)
                 logger.info("[多页] 合并后仍缺失必填字段: %s", missing)
         else:
-            # 没有配置或没有必填字段，只要有非空字段就算成功
-            success = len([v for v in merged_fields.values() if v and v.strip()]) > 0
+            success = determine_extraction_success(merged_fields)
 
-        # === 9. 构建返回结果 ===
+        # === 8. 构建返回结果 ===
         extraction_result = ExtractionResult(
             doc_type=base_doc_type,  # 返回基础类型
             layer=last_layer,
@@ -632,7 +647,7 @@ class OCRService:
         doc_info: DocumentInfo,
         field_names: List[str],
     ) -> Optional[ExtractionResult]:
-        """对单页进行 VLM 兜底提取
+        """对单页进行 Rule层VLM重试提取
 
         Args:
             doc_info: 页面分类信息
@@ -649,7 +664,7 @@ class OCRService:
             # 使用 VLM 层提取（传入完整的字段列表）
             return vlm_layer.extract(doc_info, field_names)
         except Exception as e:
-            logger.warning("[VLM兜底] 页提取失败: %s", e)
+            logger.warning("[Rule层VLM重试] 页提取失败: %s", e)
             return None
 
     # ========== 批量处理 ==========

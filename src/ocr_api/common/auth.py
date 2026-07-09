@@ -36,7 +36,7 @@ class APIKeyAuthenticator:
             self._api_keys = {k.strip() for k in keys_str.split(",") if k.strip()}
         else:
             self._api_keys = set()
-        logger.info(f"[Auth] 已加载 {len(self._api_keys)} 个 API Key")
+        logger.info("[Auth] 已加载 %s 个 API Key", len(self._api_keys))
 
     def verify(self, request: Request) -> str:
         """验证 API Key，返回有效的 Key
@@ -150,15 +150,3 @@ class RequestSigner:
         return True
 
 
-# ========== 认证依赖（FastAPI Depends） ==========
-
-async def verify_api_key(request: Request) -> str:
-    """FastAPI 依赖注入：验证 API Key
-
-    用法：
-        @router.get("/api/v1/example")
-        async def example(api_key: str = Depends(verify_api_key)):
-            ...
-    """
-    auth = APIKeyAuthenticator()
-    return auth.verify(request)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 字段校验器
-检查提取字段的合理性，判断是否需要VLM兜底重新提取
+检查提取字段的合理性，判断是否需要Rule层VLM重试重新提取
 
 校验维度：
 - 格式校验（正则匹配）
@@ -55,7 +55,7 @@ class FieldValidator:
     """字段校验器
 
     根据预定义规则检查字段值的合理性。
-    校验失败的字段将触发VLM兜底重新提取。
+    校验失败的字段将触发Rule层VLM重试。
 
     Usage:
         validator = FieldValidator()
@@ -294,7 +294,7 @@ class FieldValidator:
 
     def get_failed_fields(self, fields: Dict[str, str]) -> List[str]:
         """
-        获取需要VLM兜底的字段列表
+        获取需要Rule层VLM重试的字段列表
 
         Args:
             fields: 字段字典
@@ -305,7 +305,7 @@ class FieldValidator:
         results = self.validate_fields(fields)
         failed = [name for name, result in results.items() if result.needs_fallback]
         if failed:
-            logger.info(f"校验失败字段: {failed}")
+            logger.info("校验失败字段: %s", failed)
             for name in failed:
-                logger.info(f"  {name}: '{fields[name]}' - {results[name].reason}")
+                logger.info("  %s: '%s' - %s", name, fields[name], results[name].reason)
         return failed

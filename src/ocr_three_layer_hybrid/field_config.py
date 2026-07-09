@@ -101,6 +101,22 @@ class DocumentFieldConfig:
         return missing
 
 
+def get_default_key_lists() -> Dict:
+    """获取所有文档类型的默认字段列表（字段名列表）
+
+    返回 Dict[DocumentType, List[str]]，避免循环导入。
+    从 get_default_document_field_configs() 动态生成，
+    将 required_fields 和 optional_fields 合并为完整的字段名列表。
+
+    这样避免了在 pipeline.py 中硬编码 ~250 行的 DEFAULT_KEY_LISTS。
+    """
+    field_configs = get_default_document_field_configs()
+    key_lists = {}
+    for doc_type, config in field_configs.items():
+        key_lists[doc_type] = config.get_all_field_names()
+    return key_lists
+
+
 def _r(name: str) -> FieldConfig:
     """快捷方法：创建必须字段配置"""
     return FieldConfig(name=name, priority=FieldPriority.REQUIRED)

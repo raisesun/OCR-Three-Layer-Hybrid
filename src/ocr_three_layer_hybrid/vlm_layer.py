@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-第2B层：VLM层
-使用GLM-OCR多模态模型处理半固定文档（户口本等）
+Layer 2B：VLM提取层
+
+使用视觉语言模型（默认 Qwen2.5-VL-7B）处理未知文档类型或纯文本提取。
 """
 
 import json
@@ -26,51 +27,15 @@ from ocr_three_layer_hybrid.json_utils import parse_json_from_response
 
 
 class VLMExtractionLayer(IExtractionLayer):
-    """基于GLM-OCR的VLM提取层"""
+    """VLM 视觉模型提取层（默认使用 Qwen2.5-VL-7B）"""
 
     # 默认支持的文档类型（所有类型均可处理，有专用Prompt的用专用，无的用通用模板）
-    DEFAULT_SUPPORTED_TYPES = [
-        DocumentType.ID_CARD,
-        DocumentType.ID_CARD_FRONT,
-        DocumentType.ID_CARD_BACK,
-        DocumentType.MARRIAGE_CERTIFICATE,
-        DocumentType.MARRIAGE_CERTIFICATE_COVER,
-        DocumentType.MARRIAGE_CERTIFICATE_CONTENT,
-        DocumentType.MARRIAGE_CERTIFICATE_STAMP,
-        DocumentType.DIVORCE_CERTIFICATE,
-        DocumentType.DIVORCE_CERTIFICATE_COVER,
-        DocumentType.DIVORCE_CERTIFICATE_CONTENT,
-        DocumentType.DIVORCE_CERTIFICATE_STAMP,
-        DocumentType.HOUSEHOLD_REGISTER,
-        DocumentType.HOUSEHOLD_REGISTER_COVER,
-        DocumentType.HOUSEHOLD_REGISTER_CONTENT,
-        DocumentType.PROPERTY_CERTIFICATE,
-        DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE,
-        DocumentType.PROPERTY_CERTIFICATE_CONTENT,
-        DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
-        DocumentType.INVOICE,
-        DocumentType.PURCHASE_CONTRACT,
-        DocumentType.PURCHASE_CONTRACT_FIRST_PAGE,
-        DocumentType.PURCHASE_CONTRACT_CONTENT,
-        DocumentType.PURCHASE_CONTRACT_STAMP,
-        DocumentType.STOCK_CONTRACT,
-        DocumentType.STOCK_CONTRACT_FIRST_PAGE,
-        DocumentType.STOCK_CONTRACT_CONTENT,
-        DocumentType.STOCK_CONTRACT_STAMP,
-        DocumentType.FUND_SUPERVISION,
-        DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE,
-        DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE,
-        DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP,
-        DocumentType.FUND_SUPERVISION_CERTIFICATE,
-        DocumentType.DIVORCE_AGREEMENT,
-        DocumentType.NOTARY_CERTIFICATE,
-        DocumentType.POWER_OF_ATTORNEY,
-        DocumentType.UNKNOWN,
-    ]
+    # 直接使用 DocumentType 枚举的所有值，避免重复维护
+    DEFAULT_SUPPORTED_TYPES = list(DocumentType)
 
-    # 默认配置
-    DEFAULT_MODEL_NAME = "GLM-OCR-Q8_0.gguf"
-    DEFAULT_BASE_URL = "http://localhost:8080/v1"  # 使用llama-server
+    # 默认配置（Qwen2.5-VL-7B，端口 8082）
+    DEFAULT_MODEL_NAME = "qwen2.5-vl-7b"
+    DEFAULT_BASE_URL = "http://localhost:8082/v1"  # 使用llama-server
     DEFAULT_TIMEOUT = 120.0
     DEFAULT_API_KEY = "not-needed"
 
@@ -85,11 +50,11 @@ class VLMExtractionLayer(IExtractionLayer):
         vlm_client: Optional[VLMClient] = None,
     ):
         """
-        初始化VLM层
+        初始化VLM提取层
 
         Args:
-            model_name: GLM-OCR模型名称
-            base_url: GLM-OCR API地址
+            model_name: VLM模型名称
+            base_url: VLM API地址
             api_key: API密钥
             timeout: 请求超时时间（秒）
             supported_doc_types: 支持的文档类型
@@ -188,9 +153,6 @@ class VLMExtractionLayer(IExtractionLayer):
         logger = logging.getLogger(__name__)
 
         start_time = time.time()
-        merged_fields = {k: "" for k in key_list}
-        total_time = 0.0
-        pages_processed = 0
 
         # 获取文档类型的 Prompt（创建一个临时DocumentInfo用于prompt构建）
         temp_doc_info = DocumentInfo(
@@ -200,50 +162,45 @@ class VLMExtractionLayer(IExtractionLayer):
         )
         prompt = self._build_prompt(temp_doc_info, key_list)
 
-        for img_path in image_paths[:max_pages]:
-            # 检查图片是否存在
-            if not Path(img_path).exists():
-                logger.warning(f"[VLM层] 多页提取 | 图片不存在: {img_path}")
-                continue
+        # 定义单页提取函数
+        def extract_page(img_path: str, page_idx: int) -> Optional[Dict[str, str]]:
+            page_start = time.time()
+            vlm_response = self._call_vlm(prompt, img_path)
+            page_time = time.time() - page_start
 
-            try:
-                # 单页提取
-                page_start = time.time()
-                vlm_response = self._call_vlm(prompt, img_path)
-                page_time = time.time() - page_start
-                total_time += page_time
-                pages_processed += 1
+            page_fields = self._parse_json_response(vlm_response, key_list)
 
-                # 解析响应
-                page_fields = self._parse_json_response(vlm_response, key_list)
+            non_empty_count = len(
+                [v for v in page_fields.values() if v and v.strip()]
+            )
+            logger.info(
+                f"[VLM层] 多页提取 | 页 {page_idx + 1}/{min(len(image_paths), max_pages)} | "
+                f"耗时 {page_time:.1f}s | 提取字段 {non_empty_count}"
+            )
+            return page_fields
 
-                # 合并字段（取第一个非空值）
-                for key, value in page_fields.items():
-                    if value and value.strip() and not merged_fields.get(key):
-                        merged_fields[key] = value
+        # 使用公共的多页迭代+合并工具函数
+        from ocr_three_layer_hybrid.multi_page_utils import (
+            iterate_extract_merge,
+            determine_extraction_success,
+        )
 
-                # 统计本页提取到的非空字段数
-                non_empty_count = len(
-                    [v for v in page_fields.values() if v and v.strip()]
-                )
-                logger.info(
-                    f"[VLM层] 多页提取 | 页 {pages_processed}/{min(len(image_paths), max_pages)} | "
-                    f"耗时 {page_time:.1f}s | 提取字段 {non_empty_count}"
-                )
-            except Exception as e:
-                logger.warning(f"[VLM层] 多页提取 | 页 {pages_processed + 1} 失败: {e}")
-                pages_processed += 1
-                continue
+        merged_fields, pages_processed = iterate_extract_merge(
+            image_paths,
+            extract_page,
+            max_pages=max_pages,
+            log_context="VLM层多页提取",
+        )
 
         # 判断是否成功
-        non_empty_fields = {k: v for k, v in merged_fields.items() if v and v.strip()}
-        success = len(non_empty_fields) > 0
+        success = determine_extraction_success(merged_fields)
 
         total_time_cost = time.time() - start_time
+        non_empty_fields = len([v for v in merged_fields.values() if v and v.strip()])
 
         logger.info(
             f"[VLM层] 多页提取完成 | 文档类型={doc_type.value} | "
-            f"处理页数={pages_processed} | 成功字段={len(non_empty_fields)} | "
+            f"处理页数={pages_processed} | 成功字段={non_empty_fields} | "
             f"总耗时={total_time_cost:.1f}s"
         )
 
