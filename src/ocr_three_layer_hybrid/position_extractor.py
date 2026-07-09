@@ -143,8 +143,8 @@ class HouseholdPositionExtractor:
 
         from PIL import Image
 
-        pil_img = Image.open(image_path)
-        img_w, img_h = pil_img.size
+        with Image.open(image_path) as pil_img:
+            img_w, img_h = pil_img.size
 
         # 文档范围：全部文本的边界框
         all_boxes = r["rec_boxes"]

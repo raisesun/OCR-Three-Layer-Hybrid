@@ -231,31 +231,6 @@ class OCRTextPreprocessor:
         return [self.preprocess(text) for text in texts]
 
 
-class FieldExtractorEnhancer:
-    """字段提取增强器（使用预处理后的文本）"""
-
-    def __init__(self, preprocessor: Optional[OCRTextPreprocessor] = None):
-        """
-        初始化增强器
-
-        Args:
-            preprocessor: OCR文本预处理器
-        """
-        self.preprocessor = preprocessor or OCRTextPreprocessor()
-
-    def enhance_text_for_extraction(self, text: str) -> str:
-        """
-        为字段提取增强文本
-
-        Args:
-            text: 原始OCR文本
-
-        Returns:
-            增强后的文本
-        """
-        return self.preprocessor.preprocess(text)
-
-
 # 全局预处理器实例（供pipeline使用）
 _global_preprocessor = OCRTextPreprocessor()
 

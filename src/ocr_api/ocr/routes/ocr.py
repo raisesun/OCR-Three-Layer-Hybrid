@@ -15,6 +15,7 @@ from fastapi import APIRouter, UploadFile, File, Form, Request, Depends
 from ocr_api.common.auth import APIKeyAuthenticator
 from ocr_api.common.schemas import APIResponse
 from ocr_api.common.task_manager import TaskManager, TaskWorker
+from ocr_three_layer_hybrid.config import SUPPORTED_FILE_EXTENSIONS
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,7 @@ logger = logging.getLogger(__name__)
 UPLOAD_DIR = Path("/tmp/ocr_uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-# 支持的图片格式
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".pdf", ".tiff"}
+# 文件大小限制
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
 
 
@@ -85,11 +85,11 @@ def create_ocr_router(
         for f in files:
             # 校验扩展名
             suffix = Path(f.filename or "").suffix.lower()
-            if suffix not in ALLOWED_EXTENSIONS:
+            if suffix not in SUPPORTED_FILE_EXTENSIONS:
                 return APIResponse(
                     code=400,
                     data=None,
-                    message=f"文件格式不支持: {f.filename}，仅支持 {', '.join(ALLOWED_EXTENSIONS)}",
+                    message=f"文件格式不支持: {f.filename}，仅支持 {', '.join(SUPPORTED_FILE_EXTENSIONS)}",
                 )
 
             # 读取文件内容并校验大小

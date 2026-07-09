@@ -988,17 +988,6 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             )
         return None
 
-    def _group_keywords(self, keywords: List[str]) -> List[List[str]]:
-        """
-        将关键词按语义分组（用于"或"逻辑）
-
-        例如: ["买受人", "买方", "出卖人", "卖方"]
-        → [["买受人", "买方"], ["出卖人", "卖方"]]
-        """
-        # 简单实现：每个关键词作为独立组
-        # 后续可以优化为语义分组
-        return [[kw] for kw in keywords]
-
     def classify_from_text(self, image_path: str, text: str) -> DocumentInfo:
         """
         直接从文本分类（便捷方法）

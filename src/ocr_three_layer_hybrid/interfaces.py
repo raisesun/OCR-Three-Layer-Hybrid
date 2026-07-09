@@ -86,7 +86,6 @@ class ProcessingLayer(str, Enum):
 
     RULE = "rule"
     VLM = "vlm"
-    LLM = "llm"
 
 
 @dataclass

@@ -23,6 +23,7 @@ from ocr_three_layer_hybrid.interfaces import DocumentType
 from ocr_three_layer_hybrid.field_validator import FieldValidator
 from ocr_three_layer_hybrid.external_services import VLMClient
 from ocr_three_layer_hybrid.config import VLMServiceConfig
+from ocr_three_layer_hybrid.json_utils import parse_json_from_response
 
 logger = logging.getLogger(__name__)
 
@@ -201,30 +202,16 @@ class VLMFallbackHandler:
         self, response: str, expected_fields: List[str]
     ) -> Dict[str, str]:
         """解析VLM响应JSON"""
-        # 清理markdown代码块标记
-        response = re.sub(r"```json\s*", "", response)
-        response = re.sub(r"```\s*$", "", response)
-        response = response.strip()
-
-        try:
-            data = json.loads(response)
-        except json.JSONDecodeError:
-            # 尝试从响应中提取JSON
-            json_match = re.search(r"\{[^{}]*\}", response, re.DOTALL)
-            if json_match:
-                try:
-                    data = json.loads(json_match.group())
-                except json.JSONDecodeError:
-                    logger.warning(f"[VLM兜底] JSON解析失败: {response[:200]}")
-                    return {}
-            else:
-                logger.warning(f"[VLM兜底] 未找到JSON: {response[:200]}")
-                return {}
+        # 使用公共工具函数解析 JSON
+        parsed = parse_json_from_response(response)
+        if parsed is None:
+            logger.warning(f"[VLM兜底] JSON解析失败: {response[:200]}")
+            return {}
 
         # 只保留期望字段
         result = {}
         for field in expected_fields:
-            value = data.get(field, "")
+            value = parsed.get(field, "")
             if isinstance(value, str):
                 result[field] = value.strip()
             else:

@@ -22,6 +22,7 @@ from ocr_three_layer_hybrid.interfaces import (
 from ocr_three_layer_hybrid.config import VLMServiceConfig
 from ocr_three_layer_hybrid.external_services import VLMClient
 from ocr_three_layer_hybrid.prompt_templates import build_prompt, COMMON_SUFFIX, PROMPT_TEMPLATES
+from ocr_three_layer_hybrid.json_utils import parse_json_from_response
 
 
 class VLMExtractionLayer(IExtractionLayer):
@@ -351,35 +352,10 @@ class VLMExtractionLayer(IExtractionLayer):
         if isinstance(response, dict):
             parsed = response
         elif isinstance(response, str):
-            clean_response = response.strip()
-
-            # 去除markdown代码块标记
-            if clean_response.startswith("```"):
-                lines = clean_response.split("\n")
-                # 去除第一行和最后一行（如果是```）
-                if lines and lines[0].startswith("```"):
-                    lines = lines[1:]
-                if lines and lines[-1].startswith("```"):
-                    lines = lines[:-1]
-                clean_response = "\n".join(lines).strip()
-
-            # 尝试直接解析
-            try:
-                parsed = json.loads(clean_response)
-                if not isinstance(parsed, dict):
-                    return fields
-            except json.JSONDecodeError:
-                # 尝试用正则提取JSON块
-                json_match = re.search(r"\{[^{}]*\}", clean_response, re.DOTALL)
-                if json_match:
-                    try:
-                        parsed = json.loads(json_match.group())
-                        if not isinstance(parsed, dict):
-                            return fields
-                    except json.JSONDecodeError:
-                        return fields
-                else:
-                    return fields
+            # 使用公共工具函数解析 JSON
+            parsed = parse_json_from_response(response)
+            if parsed is None:
+                return fields
         else:
             return fields
 

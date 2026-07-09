@@ -10,6 +10,9 @@
 import os
 from dataclasses import dataclass, field
 
+# 支持的文件扩展名（统一常量，避免多处定义不一致）
+SUPPORTED_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".pdf"}
+
 
 @dataclass
 class VLMServiceConfig:
@@ -31,7 +34,7 @@ class VLMServiceConfig:
 
     base_url: str = "http://localhost:8080/v1"
     model_name: str = "GLM-OCR-Q8_0.gguf"
-    model_path: str = "/Users/dongsun/Github/models-OCR/GLM-OCR-GGUF"
+    model_path: str = field(default_factory=lambda: os.getenv("GLM_OCR_MODEL_PATH", "./models/GLM-OCR-GGUF"))
     timeout: float = 120.0
     api_key: str = "not-needed"
 
@@ -56,34 +59,9 @@ class QwenVLServiceConfig:
 
     base_url: str = "http://localhost:8082/v1"
     model_name: str = "qwen2.5-vl-7b"
-    model_path: str = "/Users/dongsun/Github/models-OCR/Qwen2.5-VL-7B"
+    model_path: str = field(default_factory=lambda: os.getenv("QWEN_VLM_MODEL_PATH", "./models/Qwen2.5-VL-7B"))
     timeout: float = 120.0
     api_key: str = "not-needed"
-
-
-@dataclass
-class ThresholdsConfig:
-    """阈值配置（集中管理魔法数字）"""
-
-    # 分类器置信度阈值
-    confidence_partial_match: float = 0.6  # 部分匹配置信度
-    confidence_strong_signal: float = 0.9  # 强信号置信度
-    confidence_combination: float = 0.85  # 组合信号置信度
-    confidence_backup: float = 0.85  # 备选信号置信度
-
-    # 图像处理参数
-    image_max_side: int = 2000  # 图片最大边长（像素）
-    image_quality: int = 75  # JPEG压缩质量（1-100）
-
-    # VLM参数
-    vlm_timeout: float = 120.0  # VLM服务超时时间（秒）
-    vlm_max_tokens: int = 1024  # VLM最大输出token数
-    vlm_max_pages: int = 15  # 多页文档最大处理页数
-
-    # 位置提取容差
-    position_row_tolerance: float = 0.030  # 同行Y容差
-    position_merge_gap: float = 0.08  # 小间隙阈值（合并相邻文本）
-    position_big_gap: float = 0.25  # 大间隙阈值（跨页边界）
 
 
 @dataclass
@@ -104,7 +82,6 @@ class OCRConfig:
 
     vlm_service: VLMServiceConfig = field(default_factory=VLMServiceConfig)
     qwen_vl_service: QwenVLServiceConfig = field(default_factory=QwenVLServiceConfig)
-    thresholds: ThresholdsConfig = field(default_factory=ThresholdsConfig)
     enable_position_extraction: bool = True  # 启用位置标注提取（户口本首页）
     enable_vlm_field_fallback: bool = True  # 启用字段级VLM兜底（校验失败时触发）
 
