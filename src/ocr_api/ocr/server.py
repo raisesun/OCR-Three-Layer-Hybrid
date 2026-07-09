@@ -175,7 +175,8 @@ def create_app(
     if debug:
         server_logger.info("[Debug] 调试模式已启用，加载 Demo 路由...")
         debug_router, static_mounts = create_debug_routes(
-            ocr_service, baseline_service, _OCR_DIR, UPLOAD_DIR
+            ocr_service, baseline_service, _OCR_DIR, UPLOAD_DIR,
+            task_manager=task_manager,
         )
         app.include_router(debug_router)
         for mount_path, mount_dir, mount_name in static_mounts:

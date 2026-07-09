@@ -9,6 +9,7 @@ function app() {
         tabs: [
             { id: 'single', label: '📷 单图处理' },
             { id: 'batch', label: '📦 批量处理' },
+            { id: 'async', label: '📤 异步任务' },
             { id: 'compare', label: '📊 基线对比' },
             { id: 'stats', label: '📈 统计面板' },
         ],
@@ -47,6 +48,19 @@ function app() {
         // 统计面板
         dashboardData: null,
         dashboardLoading: false,
+
+        // 异步任务管理
+        asyncTasks: [],
+        asyncTasksTotal: 0,
+        asyncTasksPage: 1,
+        asyncTasksPages: 0,
+        asyncTasksLoading: false,
+        asyncTaskFilter: '',  // 状态过滤
+        asyncTaskSubmitting: false,
+        asyncTaskSelectedFiles: [],
+        asyncTaskPollTimer: null,
+        asyncTaskDetail: null,  // 当前查看详情的任务
+        asyncTaskDetailLoading: false,
 
         // 初始化
         async init() {
@@ -306,6 +320,144 @@ function app() {
         },
 
         // ========== 工具方法 ==========
+
+        // ========== 异步任务管理 ==========
+
+        async loadAsyncTasks(page = 1) {
+            this.asyncTasksLoading = true;
+            try {
+                const params = new URLSearchParams({ page: page, size: 10 });
+                if (this.asyncTaskFilter) params.append('status', this.asyncTaskFilter);
+                const res = await fetch(`/api/v1/tasks?${params}`);
+                const json = await res.json();
+                if (json.code === 200) {
+                    this.asyncTasks = json.data.tasks;
+                    this.asyncTasksTotal = json.data.total;
+                    this.asyncTasksPage = json.data.page;
+                    this.asyncTasksPages = json.data.pages;
+                }
+            } catch (e) {
+                console.error('加载任务列表失败:', e);
+            } finally {
+                this.asyncTasksLoading = false;
+            }
+        },
+
+        handleAsyncFileSelect(event) {
+            this.asyncTaskSelectedFiles = Array.from(event.target.files);
+        },
+
+        async submitAsyncTask() {
+            if (this.asyncTaskSelectedFiles.length === 0) return;
+            this.asyncTaskSubmitting = true;
+            try {
+                const formData = new FormData();
+                this.asyncTaskSelectedFiles.forEach(f => formData.append('files', f));
+                const res = await fetch('/api/v1/ocr/async', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const json = await res.json();
+                if (json.code === 202) {
+                    alert(`任务已提交！task_id: ${json.data.task_id}`);
+                    this.asyncTaskSelectedFiles = [];
+                    // 重置文件输入
+                    const fileInput = document.getElementById('asyncFileInput');
+                    if (fileInput) fileInput.value = '';
+                    // 刷新任务列表
+                    await this.loadAsyncTasks();
+                    // 启动轮询
+                    this.startTaskPolling();
+                } else {
+                    alert('提交失败: ' + (json.message || '未知错误'));
+                }
+            } catch (e) {
+                console.error('提交失败:', e);
+                alert('提交失败: ' + e.message);
+            } finally {
+                this.asyncTaskSubmitting = false;
+            }
+        },
+
+        async viewTaskDetail(taskId) {
+            this.asyncTaskDetailLoading = true;
+            try {
+                const res = await fetch(`/api/v1/task/${taskId}`);
+                const json = await res.json();
+                if (json.code === 200) {
+                    this.asyncTaskDetail = json.data;
+                }
+            } catch (e) {
+                console.error('加载任务详情失败:', e);
+            } finally {
+                this.asyncTaskDetailLoading = false;
+            }
+        },
+
+        async cancelTask(taskId) {
+            if (!confirm('确定要取消此任务吗？')) return;
+            try {
+                const res = await fetch(`/api/v1/task/${taskId}/cancel`, { method: 'POST' });
+                const json = await res.json();
+                if (json.code === 200) {
+                    await this.loadAsyncTasks(this.asyncTasksPage);
+                } else {
+                    alert('取消失败: ' + (json.message || json.detail || '未知错误'));
+                }
+            } catch (e) {
+                console.error('取消失败:', e);
+            }
+        },
+
+        startTaskPolling() {
+            if (this.asyncTaskPollTimer) return;
+            this.asyncTaskPollTimer = setInterval(async () => {
+                // 检查是否有进行中的任务
+                const hasActive = this.asyncTasks.some(
+                    t => t.status === 'pending' || t.status === 'processing'
+                );
+                if (hasActive) {
+                    await this.loadAsyncTasks(this.asyncTasksPage);
+                } else {
+                    this.stopTaskPolling();
+                }
+            }, 3000);
+        },
+
+        stopTaskPolling() {
+            if (this.asyncTaskPollTimer) {
+                clearInterval(this.asyncTaskPollTimer);
+                this.asyncTaskPollTimer = null;
+            }
+        },
+
+        getStatusColor(status) {
+            const colors = {
+                pending: 'bg-yellow-100 text-yellow-700',
+                processing: 'bg-blue-100 text-blue-700',
+                completed: 'bg-green-100 text-green-700',
+                failed: 'bg-red-100 text-red-700',
+                cancelled: 'bg-gray-100 text-gray-500',
+            };
+            return colors[status] || 'bg-gray-100 text-gray-700';
+        },
+
+        getStatusLabel(status) {
+            const labels = {
+                pending: '等待中',
+                processing: '处理中',
+                completed: '已完成',
+                failed: '失败',
+                cancelled: '已取消',
+            };
+            return labels[status] || status;
+        },
+
+        formatTime(isoStr) {
+            if (!isoStr) return '-';
+            const d = new Date(isoStr);
+            return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        },
 
         getImageUrl(filePath) {
             if (!filePath) return '';
