@@ -341,6 +341,42 @@ class TestAdditionalBackupSignals:
         assert info.doc_type == DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT
         assert info.confidence == 0.95
 
+    def test_property_certificate_content_with_garbled_title(self, classifier):
+        """房产证内容页：OCR把标题识别成乱码时，靠字段组合识别"""
+        ocr_texts = [
+            "明念老念费",
+            "使用期限 不动产单元号 共有情况 权利人 权利性质 权利类型",
+            "国有建设用地使用权 城镇住宅用地 出让/市场化商品房",
+        ]
+        info = classifier.classify("/tmp/property_garbled.jpg", ocr_texts)
+        assert info.doc_type == DocumentType.PROPERTY_CERTIFICATE_CONTENT
+        assert info.confidence == 0.85
+        assert info.metadata["route"] == "property_content_field_combination"
+
+    def test_household_register_personal_page_with_garbled_title(self, classifier):
+        """户口本个人页：OCR把常住人口登记卡识别成乱码时，靠个人页字段组合识别"""
+        ocr_texts = [
+            "居民家党庄人口登记卡",
+            "户主或与 户主关系 籍贯 婚姻状况 兵役状况 文化程度",
+            "承办人签章 登记日期",
+        ]
+        info = classifier.classify("/tmp/hukou_garbled.jpg", ocr_texts)
+        assert info.doc_type == DocumentType.HOUSEHOLD_REGISTER
+        assert info.confidence == 0.85
+        assert info.metadata["route"] == "household_personal_page_combination"
+
+    def test_marriage_application_with_garbled_title(self, classifier):
+        """结婚登记申请表：OCR把标题识别成乱码时，靠双人+国籍组合识别"""
+        ocr_texts = [
+            "员民2记机品一",
+            "姓名 刘印俊 男 国籍中国 身份证件号340304198908080618",
+            "性别女 姓名 潘晨晨 出生日1992年12月21日",
+        ]
+        info = classifier.classify("/tmp/marriage_garbled.jpg", ocr_texts)
+        assert info.doc_type == DocumentType.MARRIAGE_CERTIFICATE
+        assert info.confidence == 0.85
+        assert info.metadata["route"] == "marriage_application_combination"
+
 
 class TestPageTypeDetection:
     """页面类型识别（_detect_page_type）"""

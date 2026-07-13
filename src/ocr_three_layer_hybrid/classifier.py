@@ -817,11 +817,31 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 "tertiary": ["住址", "户口专用章", "家庭住址"], "min_tertiary": 1,
                 "route": "additional_backup", "confidence": 0.85,
             }),
+            # 户口本个人页字段组合兜底：
+            # OCR 把"常住人口登记卡"识别成乱码（如"居民家党庄人口登记卡"）导致标题信号失效时，
+            # 靠个人页独有字段组合识别（承办人签章/籍贯 + 多个登记项字段，min_secondary=3 保严格）。
+            (DocumentType.HOUSEHOLD_REGISTER, {
+                "primary": ["承办人签章", "籍贯"],
+                "secondary": ["婚姻状况", "兵役状况", "服务处所", "户主或与",
+                              "户主关系", "迁来本", "其他住址", "何时由何地",
+                              "宗教信仰", "文化程度"],
+                "min_secondary": 3,
+                "route": "household_personal_page_combination", "confidence": 0.85,
+            }),
             (DocumentType.MARRIAGE_CERTIFICATE, {
                 "primary": ["结婚证", "结婚申请", "结婚登记"],
                 "secondary": ["登记机关", "婚姻登记专用章", "予以登记", "民政部监制"],
                 "min_secondary": 1,
                 "route": "additional_backup", "confidence": 0.85,
+            }),
+            # 结婚登记申请表字段组合兜底：
+            # OCR 把结婚证标题识别成乱码（如"员民2记机品一"）导致标题信号失效时，
+            # 靠申请表"双人+国籍"特征识别（国籍 + 多个申请人信息字段，min_secondary=4 保严格）。
+            (DocumentType.MARRIAGE_CERTIFICATE, {
+                "primary": ["国籍"],
+                "secondary": ["身份证件号", "出生日", "姓名", "性别", "男", "女"],
+                "min_secondary": 4,
+                "route": "marriage_application_combination", "confidence": 0.85,
             }),
             (DocumentType.DIVORCE_CERTIFICATE, {
                 "primary": ["离婚证", "离婚申请", "离婚登记"],
@@ -834,6 +854,18 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 "secondary": ["权利人"],
                 "tertiary": ["不动产单元号"], "min_tertiary": 1,
                 "route": "additional_backup", "confidence": 0.85,
+            }),
+            # 不动产权证书内容页字段组合兜底：
+            # 当 OCR 把标题"不动产权证书"识别成乱码（如"明念老念费"）导致
+            # "不动产权"关键词完全缺失时，靠内容页特有字段组合识别。
+            # primary="权利人"（房产证独有，购房合同用"买方/卖方"），
+            # secondary 命中≥4 即判定为不动产权证书，后续走页面识别细化为内容页。
+            (DocumentType.PROPERTY_CERTIFICATE, {
+                "primary": ["权利人"],
+                "secondary": ["共有情况", "不动产单元号", "权利类型",
+                              "权利性质", "使用期限", "坐落"],
+                "min_secondary": 4,
+                "route": "property_content_field_combination", "confidence": 0.85,
             }),
         ]
 
