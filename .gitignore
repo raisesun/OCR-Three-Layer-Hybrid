@@ -54,3 +54,10 @@ manual_*.py
 # Models (too large for GitHub)
 *.gguf
 models/
+
+# Playwright MCP debug snapshots
+.playwright-mcp/
+
+# Misc temp files
+未命名.rtf
+

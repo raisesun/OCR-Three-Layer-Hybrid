@@ -8,7 +8,6 @@ function app() {
         activeTab: 'single',
         tabs: [
             { id: 'single', label: '📷 单图处理' },
-            { id: 'batch', label: '📦 批量处理' },
             { id: 'async', label: '📤 异步任务' },
             { id: 'compare', label: '📊 基线对比' },
             { id: 'stats', label: '📈 统计面板' },
@@ -328,7 +327,7 @@ function app() {
             try {
                 const params = new URLSearchParams({ page: page, size: 10 });
                 if (this.asyncTaskFilter) params.append('status', this.asyncTaskFilter);
-                const res = await fetch(`/api/v1/tasks?${params}`);
+                const res = await fetch(`/api/debug/tasks?${params}`);
                 const json = await res.json();
                 if (json.code === 200) {
                     this.asyncTasks = json.data.tasks;
@@ -353,7 +352,7 @@ function app() {
             try {
                 const formData = new FormData();
                 this.asyncTaskSelectedFiles.forEach(f => formData.append('files', f));
-                const res = await fetch('/api/v1/ocr/async', {
+                const res = await fetch('/api/debug/ocr/async', {
                     method: 'POST',
                     body: formData,
                 });
@@ -382,7 +381,7 @@ function app() {
         async viewTaskDetail(taskId) {
             this.asyncTaskDetailLoading = true;
             try {
-                const res = await fetch(`/api/v1/task/${taskId}`);
+                const res = await fetch(`/api/debug/task/${taskId}`);
                 const json = await res.json();
                 if (json.code === 200) {
                     this.asyncTaskDetail = json.data;
@@ -397,7 +396,7 @@ function app() {
         async cancelTask(taskId) {
             if (!confirm('确定要取消此任务吗？')) return;
             try {
-                const res = await fetch(`/api/v1/task/${taskId}/cancel`, { method: 'POST' });
+                const res = await fetch(`/api/debug/task/${taskId}/cancel`, { method: 'POST' });
                 const json = await res.json();
                 if (json.code === 200) {
                     await this.loadAsyncTasks(this.asyncTasksPage);

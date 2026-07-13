@@ -365,9 +365,9 @@ def create_debug_routes(
 
     # ========== 异步任务管理（Debug 模式无需认证） ==========
 
-    @router.post("/api/v1/ocr/async")
+    @router.post("/api/debug/ocr/async")
     async def debug_submit_async_task(
-        files: list = File(..., description="图片/PDF 文件列表"),
+        files: list[UploadFile] = File(..., description="图片/PDF 文件列表"),
         callback_url: Optional[str] = None,
         priority: str = "normal",
         enable_vlm: bool = True,
@@ -423,7 +423,7 @@ def create_debug_routes(
             "message": "任务已提交",
         }
 
-    @router.get("/api/v1/tasks")
+    @router.get("/api/debug/tasks")
     async def debug_list_tasks(
         status: Optional[str] = Query(None),
         page: int = Query(1, ge=1),
@@ -441,7 +441,7 @@ def create_debug_routes(
         )
         return {"code": 200, "data": result, "message": "success"}
 
-    @router.get("/api/v1/task/{task_id}")
+    @router.get("/api/debug/task/{task_id}")
     async def debug_get_task(task_id: str):
         """查询任务状态（Debug 模式，无需认证）"""
         if not task_manager:
@@ -451,7 +451,7 @@ def create_debug_routes(
             raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
         return {"code": 200, "data": status, "message": "success"}
 
-    @router.post("/api/v1/task/{task_id}/cancel")
+    @router.post("/api/debug/task/{task_id}/cancel")
     async def debug_cancel_task(task_id: str):
         """取消任务（Debug 模式，无需认证）"""
         if not task_manager:
