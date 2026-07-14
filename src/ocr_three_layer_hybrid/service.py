@@ -312,6 +312,8 @@ class OCRService:
                     result, "vlm_fallback_triggered", False
                 ),
                 "vlm_fallback_fields": getattr(result, "vlm_fallback_fields", []),
+                "vlm_classified_type": getattr(result, "vlm_classified_type", None).value
+                if getattr(result, "vlm_classified_type", None) else None,
             },
             "pipeline_flow": self._build_pipeline_flow(doc_info, result),
             "timing": {

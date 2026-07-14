@@ -110,12 +110,57 @@ class VLMExtractionLayer(IExtractionLayer):
             # 轻量修复：让UNKNOWN文档的VLM分类结果反馈回系统
             # 当前UNKNOWN prompt让VLM同时做分类+提取，但VLM返回的doc_type被丢弃。
             # 这里提取VLM识别的doc_type，记录到结果中（用于日志/监控/后续优化）。
+            # 支持两种格式：枚举名（"PROPERTY_CERTIFICATE"）和中文value（"不动产权证书"）
+            # 支持两种响应格式：dict 或 markdown 代码块字符串（```json ... ```）
             vlm_classified_type = None
-            if isinstance(vlm_response, dict) and "doc_type" in vlm_response:
-                try:
-                    vlm_classified_type = DocumentType[vlm_response["doc_type"]]
-                except (KeyError, AttributeError, TypeError):
-                    pass
+            # 解析 VLM 响应（支持 dict 或 markdown 代码块字符串）
+            parsed_response = None
+            if isinstance(vlm_response, dict):
+                parsed_response = vlm_response
+            elif isinstance(vlm_response, str):
+                from ocr_three_layer_hybrid.json_utils import parse_json_from_response
+                parsed_response = parse_json_from_response(vlm_response)
+            if isinstance(parsed_response, dict) and "doc_type" in parsed_response:
+                vlm_doc_type_str = parsed_response["doc_type"]
+                # 尝试用枚举名匹配（如 "PROPERTY_CERTIFICATE"）
+                if vlm_doc_type_str in DocumentType.__members__:
+                    vlm_classified_type = DocumentType[vlm_doc_type_str]
+                else:
+                    # VLM 常用名称别名（日常语言 → DocumentType 正式名）
+                    VLM_ALIASES = {
+                        "房产证": DocumentType.PROPERTY_CERTIFICATE,
+                        "不动产权证": DocumentType.PROPERTY_CERTIFICATE,
+                        "身份证正面": DocumentType.ID_CARD_FRONT,
+                        "身份证背面": DocumentType.ID_CARD_BACK,
+                        "身份证反面": DocumentType.ID_CARD_BACK,
+                        "户口本": DocumentType.HOUSEHOLD_REGISTER,
+                        "户口簿": DocumentType.HOUSEHOLD_REGISTER,
+                        "结婚证": DocumentType.MARRIAGE_CERTIFICATE,
+                        "离婚证": DocumentType.DIVORCE_CERTIFICATE,
+                        "购房合同": DocumentType.PURCHASE_CONTRACT,
+                        "商品房合同": DocumentType.PURCHASE_CONTRACT,
+                        "存量房合同": DocumentType.STOCK_CONTRACT,
+                        "二手房合同": DocumentType.STOCK_CONTRACT,
+                        "发票": DocumentType.INVOICE,
+                        "增值税发票": DocumentType.INVOICE,
+                        "资金监管协议": DocumentType.FUND_SUPERVISION,
+                        "监管协议": DocumentType.FUND_SUPERVISION,
+                        "离婚协议": DocumentType.DIVORCE_AGREEMENT,
+                    }
+                    if vlm_doc_type_str in VLM_ALIASES:
+                        vlm_classified_type = VLM_ALIASES[vlm_doc_type_str]
+                    else:
+                        # 精确匹配 DocumentType 的中文 value
+                        for dt in DocumentType:
+                            if dt.value == vlm_doc_type_str:
+                                vlm_classified_type = dt
+                                break
+                        # 模糊匹配：VLM 返回的字串与 DocumentType value 相互包含
+                        if vlm_classified_type is None:
+                            for dt in DocumentType:
+                                if vlm_doc_type_str in dt.value or dt.value in vlm_doc_type_str:
+                                    vlm_classified_type = dt
+                                    break
 
             return ExtractionResult(
                 doc_type=doc_info.doc_type,
