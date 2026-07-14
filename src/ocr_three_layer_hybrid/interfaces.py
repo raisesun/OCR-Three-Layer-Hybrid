@@ -166,6 +166,7 @@ class ExtractionResult:
     vlm_fallback_fields: List[str] = field(default_factory=list)  # 触发兜底的字段名
     field_conflicts: List[FieldConflict] = field(default_factory=list)  # 字段冲突列表
     field_details: List[FieldDetail] = field(default_factory=list)  # 字段提取明细
+    vlm_classified_type: Optional[DocumentType] = None  # VLM识别的文档类型（仅UNKNOWN文档，用于反馈分类结果）
 
     def get(self, key: str, default: str = "") -> str:
         """安全获取字段值"""

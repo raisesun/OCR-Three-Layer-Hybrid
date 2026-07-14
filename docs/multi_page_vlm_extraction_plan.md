@@ -1,5 +1,7 @@
 # 多页文档 VLM 提取优化方案
 
+> **⚠️ 注意（2026-07-09）**：本文档中涉及的 `ProcessingLayer.LLM` 已彻底移除。当前架构（v2.1.0）仅保留 `ProcessingLayer.RULE` + `ProcessingLayer.VLM` 两种处理层。LLM 层（PP-ChatOCRv4）在处理购房合同、存量房合同、房产证时完全失败，已于 v2.0 移除。本文档作为历史参考保留，其中关于 LLM 层失败的分析和 VLM 替代方案的方向仍然有效。
+
 ## 背景
 
 **当前问题**：

@@ -35,17 +35,19 @@ class HouseholdPropertyExtractor(BaseExtractor):
         fields: Dict[str, str] = {}
 
         # 空白模板页检测："常住人口登记卡" 页面若无身份证号，则只有字段标签无数据
-        if "常住人口登记卡" in full_text and not re.search(r"\d{17}[\dXx]", full_text):
-            return fields
+        # 但不直接返回，仍允许提取首页字段（户别、户主姓名等）
+        is_blank_personal_page = (
+            "常住人口登记卡" in full_text and not re.search(r"\d{17}[\dXx]", full_text)
+        )
 
         # 第1层：位置标注提取（首页字段）
         pos_fields = {}
         if image_path and self._position_extractor:
             try:
                 pos_fields = self._position_extractor.extract(image_path)
-                logger.debug(f"位置标注结果: {pos_fields}")
+                logger.debug("位置标注结果: %s", pos_fields)
             except Exception as e:
-                logger.warning(f"位置标注提取失败，回退到正则: {e}")
+                logger.warning("位置标注提取失败，回退到正则: %s", e)
 
         # 合并位置标注结果（优先）
         pos_field_names = ["户别", "户主姓名", "户号", "住址"]
@@ -56,11 +58,11 @@ class HouseholdPropertyExtractor(BaseExtractor):
                 if key == "户主姓名" and re.search(
                     r"(省|市|区|县|镇|乡|村|路|号|室)", value
                 ):
-                    logger.warning(f"位置标注户主姓名含地址关键词，跳过: {value}")
+                    logger.warning("位置标注户主姓名含地址关键词，跳过: %s", value)
                     continue
                 # 验证：住址不应该以"户号"开头
                 if key == "住址" and value.startswith("户号"):
-                    logger.warning(f"位置标注住址以户号开头，跳过: {value}")
+                    logger.warning("位置标注住址以户号开头，跳过: %s", value)
                     continue
                 fields[key] = value
                 if key == "户主姓名" and "户主" in key_list:
@@ -205,6 +207,11 @@ class HouseholdPropertyExtractor(BaseExtractor):
                 if "地址" in key_list:
                     fields["地址"] = ""
 
+        # 如果是空白模板页（有标签无数据），跳过个人页字段提取
+        if is_blank_personal_page:
+            return fields
+
+        # 第3层：个人页字段提取（姓名、与户主关系、性别、出生日期、公民身份号码）
         if "姓名" in key_list:
             # 格式1：姓名 张玉德
             # 格式2：姓 名 张玉德（带空格）
@@ -335,7 +342,7 @@ class HouseholdPropertyExtractor(BaseExtractor):
             # 标准格式：皖（2017）蚌埠市不动产权第0025588号
             # OCR 可能输出: "皖（ 2025 ） 蚌埠市 不动产权第 0058326 号"（括号内/数字后有空格）
             match = re.search(
-                r"[一-龥]*\s*[（(]\s*\d{4}\s*[）)]\s*[一-龥]+\s*市?\s*不动产权第\s*[A-Z0-9]+\s*号",
+                r"[一-鿿]*\s*[（(]\s*\d{4}\s*[）)]\s*[一-鿿]+\s*市?\s*不动产权第\s*[A-Z0-9]+\s*号",
                 full_text,
             )
             if match:
@@ -491,19 +498,19 @@ class HouseholdPropertyExtractor(BaseExtractor):
                     ):
                         continue
                     # 查找2-4个汉字的姓名
-                    match = re.match(r"^([一-龥]{2,4})$", line_stripped)
+                    match = re.match(r"^([一-鿿]{2,4})$", line_stripped)
                     if match:
                         fields["权利人"] = match.group(1)
                         break
                     # 如果这一行包含姓名（可能和其他文字混在一起）
-                    match = re.search(r"([一-龥]{2,4})", line_stripped)
+                    match = re.search(r"([一-鿿]{2,4})", line_stripped)
                     if match and len(line_stripped) < 10:
                         fields["权利人"] = match.group(1)
                         break
 
             # 备选策略：直接查找常见的姓名模式
             if "权利人" not in fields:
-                all_names = re.findall(r"\n([一-龥]{2,4})\n", full_text)
+                all_names = re.findall(r"\n([一-鿿]{2,4})\n", full_text)
                 if all_names:
                     for name in all_names:
                         if name not in [
@@ -529,14 +536,14 @@ class HouseholdPropertyExtractor(BaseExtractor):
         if "坐落" in key_list:
             # 优先匹配完整地址（如"绿地世纪城·柏仕公馆6号楼2单元8层2号"）
             match = re.search(
-                r"([一-龥]+[·・]?[一-龥]+[0-9]*号楼[0-9]*单元[0-9]+层[0-9]+号)",
+                r"([一-鿿]+[·・]?[一-鿿]+[0-9]*号楼[0-9]*单元[0-9]+层[0-9]+号)",
                 full_text,
             )
             if match:
                 fields["坐落"] = match.group(1)
             else:
                 # 备选：匹配包含"号楼"或"单元"的地址
-                match = re.search(r"([一-龥]+(?:号楼|单元)[^\n]{0,30})", full_text)
+                match = re.search(r"([一-鿿]+(?:号楼|单元)[^\n]{0,30})", full_text)
                 if match:
                     address = match.group(1).strip()
                     if "号楼" in address or "单元" in address:
@@ -612,7 +619,7 @@ class HouseholdPropertyExtractor(BaseExtractor):
             if not match:
                 # 格式3：皖(2025)蚌埠市不动产权第XXXXX号
                 match = re.search(
-                    r"[一-龥]*\s*[（(]\s*\d{4}\s*[）)]\s*[一-龥]+\s*市?\s*不动产权第\s*([A-Z0-9]+)\s*号",
+                    r"[一-鿿]*\s*[（(]\s*\d{4}\s*[）)]\s*[一-鿿]+\s*市?\s*不动产权第\s*([A-Z0-9]+)\s*号",
                     full_text,
                 )
             fields["编号"] = match.group(1).strip() if match else ""

@@ -46,7 +46,8 @@ def create_health_router(ocr_service=None) -> APIRouter:
 
         # 检查 VLM 服务
         try:
-            if ocr_service and hasattr(ocr_service, "_vlm_client"):
+            # service 始终在 __init__ 创建 _vlm_client；用 getattr 防御性访问
+            if ocr_service and getattr(ocr_service, "_vlm_client", None):
                 # VLM 客户端存在即认为可用
                 checks["vlm_service"] = "ok"
             else:

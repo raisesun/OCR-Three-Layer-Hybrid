@@ -21,27 +21,27 @@
 
 ### 2.1 第一版（MVP）
 
-- [ ] **基础架构**
-  - [ ] FastAPI应用框架搭建
-  - [ ] 异步任务队列（数据库任务表）
-  - [ ] 临时文件管理（自动清理）
-  - [ ] 健康检查端点
+- [x] **基础架构**
+  - [x] FastAPI应用框架搭建
+  - [x] 异步任务队列（数据库任务表）
+  - [x] 临时文件管理（自动清理）
+  - [x] 健康检查端点
 
-- [ ] **核心接口**
-  - [ ] POST /api/v1/ocr/submit - 提交任务
-  - [ ] GET /api/v1/task/{id} - 查询任务
-  - [ ] POST /api/v1/task/{id}/cancel - 取消任务
+- [x] **核心接口**
+  - [x] POST /api/v1/ocr/submit - 提交任务
+  - [x] GET /api/v1/task/{id} - 查询任务
+  - [x] POST /api/v1/task/{id}/cancel - 取消任务
   - [ ] GET /api/v1/tasks - 列出任务
 
-- [ ] **PDF处理**
-  - [ ] 文字PDF文本提取（PyMuPDF）
-  - [ ] 扫描件PDF转图片（300 DPI）
-  - [ ] PDF类型自动判断
+- [x] **PDF处理**
+  - [x] 文字PDF文本提取（PyMuPDF）
+  - [x] 扫描件PDF转图片（300 DPI）
+  - [x] PDF类型自动判断
 
-- [ ] **鉴权**
-  - [ ] API Key生成和管理
-  - [ ] Bearer Token验证
-  - [ ] 基础限流（按API Key）
+- [x] **鉴权**
+  - [x] API Key生成和管理
+  - [x] Bearer Token验证
+  - [x] 基础限流（按API Key）
 
 - [ ] **监控**
   - [ ] 邮件告警配置

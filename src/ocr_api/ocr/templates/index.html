@@ -9,7 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.x.x/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="/static/css/demo.css">
 </head>
-<body class="bg-gray-50 min-h-screen" x-data="app()" x-init="init()">
+<body class="bg-gray-50 min-h-screen" x-data="app()" x-init="init()"
+      x-effect="if (activeTab === 'async') { loadAsyncTasks(); startTaskPolling(); } else { stopTaskPolling(); }">
 
 <!-- 顶部导航 -->
 <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
@@ -360,7 +361,237 @@
         </div>
     </div>
 
-    <!-- Tab 3: 基线对比 -->
+    <!-- Tab 3: 异步任务 -->
+    <div x-show="activeTab === 'async'" x-cloak>
+        <div class="space-y-6">
+            <!-- 提交任务 -->
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+                <h3 class="text-lg font-semibold mb-3">📤 提交异步任务</h3>
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">选择文件（支持多文件，最多500个）：</label>
+                        <input type="file" id="asyncFileInput" multiple accept="image/*,.pdf"
+                               @change="handleAsyncFileSelect($event)"
+                               class="w-full border rounded-lg px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <button @click="submitAsyncTask()"
+                            :disabled="asyncTaskSelectedFiles.length === 0 || asyncTaskSubmitting"
+                            class="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed mt-5">
+                        <span x-show="!asyncTaskSubmitting">提交任务</span>
+                        <span x-show="asyncTaskSubmitting">提交中...</span>
+                    </button>
+                </div>
+                <div x-show="asyncTaskSelectedFiles.length > 0" class="mt-2 text-sm text-gray-500">
+                    已选择 <span class="font-bold text-blue-600" x-text="asyncTaskSelectedFiles.length"></span> 个文件
+                </div>
+            </div>
+
+            <!-- 任务列表 -->
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">📋 任务列表</h3>
+                    <div class="flex items-center space-x-2">
+                        <!-- 状态过滤 -->
+                        <select x-model="asyncTaskFilter" @change="loadAsyncTasks(1)"
+                                class="border rounded-lg px-3 py-1.5 text-sm">
+                            <option value="">全部状态</option>
+                            <option value="pending">等待中</option>
+                            <option value="processing">处理中</option>
+                            <option value="completed">已完成</option>
+                            <option value="failed">失败</option>
+                            <option value="cancelled">已取消</option>
+                        </select>
+                        <button @click="loadAsyncTasks(asyncTasksPage)"
+                                class="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-200">
+                            🔄 刷新
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 加载中 -->
+                <div x-show="asyncTasksLoading" class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-4 border-blue-600 border-t-transparent"></div>
+                    <p class="text-sm text-gray-500 mt-2">加载中...</p>
+                </div>
+
+                <!-- 空状态 -->
+                <div x-show="!asyncTasksLoading && asyncTasks.length === 0" class="text-center py-8 text-gray-400">
+                    <span class="text-4xl">📭</span>
+                    <p class="mt-2">暂无任务</p>
+                </div>
+
+                <!-- 任务表格 -->
+                <div x-show="!asyncTasksLoading && asyncTasks.length > 0" class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-3 py-2 text-left">任务ID</th>
+                                <th class="px-3 py-2 text-left">状态</th>
+                                <th class="px-3 py-2 text-left">进度</th>
+                                <th class="px-3 py-2 text-left">文件数</th>
+                                <th class="px-3 py-2 text-left">提交时间</th>
+                                <th class="px-3 py-2 text-left">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="task in asyncTasks" :key="task.task_id">
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="px-3 py-2">
+                                        <span class="font-mono text-xs text-blue-600" x-text="task.task_id.substring(0, 12) + '...'"></span>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <span class="px-2 py-0.5 rounded text-xs font-medium"
+                                              :class="getStatusColor(task.status)"
+                                              x-text="getStatusLabel(task.status)"></span>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-gray-200 rounded-full h-1.5">
+                                                <div class="bg-blue-600 h-1.5 rounded-full transition-all"
+                                                     :style="'width: ' + (task.progress || 0) + '%'"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-500" x-text="(task.progress || 0) + '%'"></span>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-2 text-gray-600">
+                                        <span x-text="(task.processed || 0) + ' / ' + (task.total || 0)"></span>
+                                    </td>
+                                    <td class="px-3 py-2 text-xs text-gray-500" x-text="formatTime(task.submitted_at)"></td>
+                                    <td class="px-3 py-2">
+                                        <div class="flex space-x-1">
+                                            <button @click="viewTaskDetail(task.task_id)"
+                                                    class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-50">
+                                                详情
+                                            </button>
+                                            <button x-show="task.status === 'pending' || task.status === 'processing'"
+                                                    @click="cancelTask(task.task_id)"
+                                                    class="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded hover:bg-red-50">
+                                                取消
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <div x-show="asyncTasksPages > 1" class="flex items-center justify-between mt-4 pt-4 border-t">
+                    <span class="text-sm text-gray-500">
+                        共 <span x-text="asyncTasksTotal"></span> 个任务，第 <span x-text="asyncTasksPage"></span>/<span x-text="asyncTasksPages"></span> 页
+                    </span>
+                    <div class="flex space-x-1">
+                        <button @click="loadAsyncTasks(asyncTasksPage - 1)"
+                                :disabled="asyncTasksPage <= 1"
+                                class="px-3 py-1 rounded text-sm border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                            上一页
+                        </button>
+                        <button @click="loadAsyncTasks(asyncTasksPage + 1)"
+                                :disabled="asyncTasksPage >= asyncTasksPages"
+                                class="px-3 py-1 rounded text-sm border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                            下一页
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务详情弹窗 -->
+            <div x-show="asyncTaskDetail" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="asyncTaskDetail = null">
+                <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">📄 任务详情</h3>
+                        <button @click="asyncTaskDetail = null" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+                    </div>
+
+                    <div x-show="asyncTaskDetailLoading" class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-6 w-6 border-4 border-blue-600 border-t-transparent"></div>
+                    </div>
+
+                    <div x-show="!asyncTaskDetailLoading && asyncTaskDetail">
+                        <!-- 基本信息 -->
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-blue-50 rounded-lg p-3">
+                                <div class="text-xs text-blue-600">任务ID</div>
+                                <div class="text-sm font-mono font-bold text-blue-800 break-all" x-text="asyncTaskDetail?.task_id"></div>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-3">
+                                <div class="text-xs text-green-600">状态</div>
+                                <div class="text-sm font-bold" x-text="getStatusLabel(asyncTaskDetail?.status)"></div>
+                            </div>
+                            <div class="bg-purple-50 rounded-lg p-3">
+                                <div class="text-xs text-purple-600">进度</div>
+                                <div class="text-sm font-bold text-purple-800"
+                                     x-text="(asyncTaskDetail?.processed || 0) + ' / ' + (asyncTaskDetail?.total || 0) + ' (' + (asyncTaskDetail?.progress || 0) + '%)'"></div>
+                            </div>
+                            <div class="bg-orange-50 rounded-lg p-3">
+                                <div class="text-xs text-orange-600">提交时间</div>
+                                <div class="text-sm font-bold text-orange-800" x-text="formatTime(asyncTaskDetail?.submitted_at)"></div>
+                            </div>
+                        </div>
+
+                        <!-- 错误信息 -->
+                        <div x-show="asyncTaskDetail?.error" class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                            <div class="text-sm font-medium text-red-700">错误: </div>
+                            <div class="text-sm text-red-600 mt-1" x-text="asyncTaskDetail?.error"></div>
+                        </div>
+
+                        <!-- 处理结果 -->
+                        <div x-show="asyncTaskDetail?.result">
+                            <h4 class="font-semibold mb-2">处理结果</h4>
+                            <div x-show="asyncTaskDetail?.result?.summary" class="grid grid-cols-4 gap-2 mb-3">
+                                <div class="bg-gray-50 rounded p-2 text-center">
+                                    <div class="text-lg font-bold text-gray-800" x-text="asyncTaskDetail?.result?.summary?.total"></div>
+                                    <div class="text-xs text-gray-500">总数</div>
+                                </div>
+                                <div class="bg-green-50 rounded p-2 text-center">
+                                    <div class="text-lg font-bold text-green-700" x-text="asyncTaskDetail?.result?.summary?.success"></div>
+                                    <div class="text-xs text-green-500">成功</div>
+                                </div>
+                                <div class="bg-red-50 rounded p-2 text-center">
+                                    <div class="text-lg font-bold text-red-700" x-text="asyncTaskDetail?.result?.summary?.failed"></div>
+                                    <div class="text-xs text-red-500">失败</div>
+                                </div>
+                                <div class="bg-blue-50 rounded p-2 text-center">
+                                    <div class="text-lg font-bold text-blue-700" x-text="(asyncTaskDetail?.result?.summary?.avg_time_ms || 0) + 'ms'"></div>
+                                    <div class="text-xs text-blue-500">平均耗时</div>
+                                </div>
+                            </div>
+
+                            <!-- 结果列表 -->
+                            <div x-show="asyncTaskDetail?.result?.results?.length" class="max-h-60 overflow-y-auto">
+                                <table class="w-full text-xs">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th class="px-2 py-1 text-left">文件名</th>
+                                            <th class="px-2 py-1 text-left">状态</th>
+                                            <th class="px-2 py-1 text-left">文档类型</th>
+                                            <th class="px-2 py-1 text-left">错误</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="r in asyncTaskDetail?.result?.results" :key="r.file_name">
+                                            <tr class="border-b">
+                                                <td class="px-2 py-1 truncate max-w-[200px]" x-text="r.file_name"></td>
+                                                <td class="px-2 py-1">
+                                                    <span :class="r.status === 'success' ? 'text-green-600' : 'text-red-600'"
+                                                          x-text="r.status"></span>
+                                                </td>
+                                                <td class="px-2 py-1 text-gray-600" x-text="r.doc_type || '-'"></td>
+                                                <td class="px-2 py-1 text-red-500" x-text="r.error || '-'"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 4: 基线对比 -->
     <div x-show="activeTab === 'compare'" x-cloak>
         <div class="bg-white rounded-xl shadow-sm border p-6">
             <div class="flex items-center justify-between mb-6">

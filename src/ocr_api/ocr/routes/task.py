@@ -3,16 +3,19 @@
 """
 任务管理路由
 
+GET  /api/v1/tasks                   — 列出任务（分页）
 GET  /api/v1/task/{task_id}          — 查询任务状态
 POST /api/v1/task/{task_id}/cancel   — 取消任务
 """
 
 import logging
-from fastapi import APIRouter, Request
+from typing import Optional
+from fastapi import APIRouter, Request, HTTPException, Query
 
 from ocr_api.common.auth import APIKeyAuthenticator
 from ocr_api.common.schemas import APIResponse
 from ocr_api.common.task_manager import TaskManager
+from ocr_api.common.logger import set_log_context, clear_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +30,53 @@ def create_task_router(
         task_manager: 任务管理器实例
         authenticator: 认证器实例
     """
-    router = APIRouter(prefix="/api/v1/task", tags=["Task"])
+    router = APIRouter(prefix="/api/v1", tags=["Task"])
 
-    @router.get("/{task_id}")
+    @router.get("/tasks")
+    async def list_tasks(
+        request: Request,
+        status: Optional[str] = Query(None, description="状态过滤: pending, processing, completed, failed, cancelled"),
+        page: int = Query(1, ge=1, description="页码（从 1 开始）"),
+        size: int = Query(20, ge=1, le=100, description="每页大小（1-100）"),
+    ):
+        """列出当前租户的异步任务
+
+        支持按状态过滤和分页查询。
+
+        **状态说明**:
+        - pending: 等待处理
+        - processing: 处理中
+        - completed: 已完成
+        - failed: 失败
+        - cancelled: 已取消
+
+        **分页**:
+        - page: 页码，从 1 开始
+        - size: 每页大小，1-100，默认 20
+        """
+        # 认证
+        api_key = authenticator.verify(request)
+        set_log_context(api_key=f"{api_key[:8]}...")
+        task_manager.record_api_call(api_key, "GET /api/v1/tasks")
+
+        # 查询任务列表
+        result = task_manager.list_tasks(
+            api_key=api_key,
+            status_filter=status,
+            page=page,
+            size=size,
+        )
+
+        logger.info("列出任务 | status=%s | page=%d | size=%d | total=%d",
+                     status, page, size, result["total"])
+
+        return APIResponse(
+            code=200,
+            data=result,
+            message="success",
+        )
+
+    @router.get("/task/{task_id}")
     async def get_task_status(task_id: str, request: Request):
         """查询异步任务状态
 
@@ -44,15 +91,15 @@ def create_task_router(
         """
         # 认证
         api_key = authenticator.verify(request)
+        set_log_context(api_key=f"{api_key[:8]}...", task_id=task_id)
         task_manager.record_api_call(api_key, f"GET /api/v1/task/{task_id}")
 
         # 查询任务
         status = task_manager.get_task_status(task_id)
         if not status:
-            return APIResponse(
-                code=404,
-                data=None,
-                message=f"任务不存在: {task_id}",
+            raise HTTPException(
+                status_code=404,
+                detail=f"任务不存在: {task_id}",
             )
 
         return APIResponse(
@@ -61,7 +108,7 @@ def create_task_router(
             message="success",
         )
 
-    @router.post("/{task_id}/cancel")
+    @router.post("/task/{task_id}/cancel")
     async def cancel_task(task_id: str, request: Request):
         """取消异步任务
 
@@ -74,32 +121,29 @@ def create_task_router(
         """
         # 认证
         api_key = authenticator.verify(request)
+        set_log_context(api_key=f"{api_key[:8]}...", task_id=task_id)
         task_manager.record_api_call(api_key, f"POST /api/v1/task/{task_id}/cancel")
 
-        # 获取任务当前状态
+        # 检查任务是否存在
         task = task_manager.get_task(task_id)
         if not task:
-            return APIResponse(
-                code=404,
-                data=None,
-                message=f"任务不存在: {task_id}",
+            raise HTTPException(
+                status_code=404,
+                detail=f"任务不存在: {task_id}",
             )
 
-        if task["status"] not in ("pending", "processing"):
-            return APIResponse(
-                code=400,
-                data=None,
-                message=f"任务状态为 {task['status']}，无法取消（仅 pending/processing 可取消）",
-            )
-
-        # 执行取消
+        # 原子取消：SQL WHERE 守卫保证不会覆盖已完成/已取消的任务
         success = task_manager.mark_cancelled(task_id)
         if not success:
-            return APIResponse(
-                code=500,
-                data=None,
-                message="取消失败，请稍后重试",
+            # 取消失败，重新读取最新状态以返回准确的错误信息
+            current_task = task_manager.get_task(task_id)
+            current_status = current_task["status"] if current_task else "不存在"
+            raise HTTPException(
+                status_code=400,
+                detail=f"任务状态为 {current_status}，无法取消（仅 pending/processing 可取消）",
             )
+
+        logger.info("任务已取消 | processed=%d/%d", task["processed_count"], task["file_count"])
 
         return APIResponse(
             code=200,

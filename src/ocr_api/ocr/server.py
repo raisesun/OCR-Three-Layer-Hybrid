@@ -31,8 +31,8 @@ OCR API 服务 — 主入口
 import os
 import sys
 import time
-import tempfile
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 # ========== 路径设置 ==========
@@ -50,7 +50,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-from ocr_three_layer_hybrid.service import setup_logging, OCRService
+# 结构化日志模块
+from ocr_api.common.logger import setup_logging as setup_structured_logging, get_logger
+from ocr_three_layer_hybrid.service import OCRService
+from ocr_three_layer_hybrid.config import UPLOAD_DIR
 
 # 通用组件（可复用）
 from ocr_api.common.auth import APIKeyAuthenticator
@@ -74,83 +77,119 @@ DB_PATH = os.getenv("OCR_DB_PATH", "/tmp/ocr_tasks.db")
 
 # ========== 初始化日志 ==========
 
-setup_logging(level="DEBUG" if DEBUG else "INFO")
-server_logger = logging.getLogger("ocr_three_layer_hybrid.server")
+# 使用结构化日志（支持 JSON 格式，通过 OCR_LOG_FORMAT 环境变量控制）
+setup_structured_logging(level="DEBUG" if DEBUG else "INFO")
+server_logger = get_logger("ocr_three_layer_hybrid.server")
 
 
-# ========== 初始化服务 ==========
+# ========== 工厂函数（支持依赖注入，方便测试） ==========
 
-ocr_service = OCRService()
-baseline_service = BaselineService()
-authenticator = APIKeyAuthenticator()
-task_manager = TaskManager(db_path=DB_PATH)
-
-# 临时上传目录
-UPLOAD_DIR = Path(tempfile.mkdtemp(prefix="ocr_demo_"))
-
-
-# ========== FastAPI 应用 ==========
-
-app = FastAPI(
-    title="OCR API 服务",
-    version="1.0.0",
-    description="文档识别和字段提取 API — 支持异步批量处理",
-)
-
-# CORS（允许前端跨域调用）
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def _create_lifespan(task_manager: TaskManager):
+    """创建 FastAPI lifespan 处理器（管理资源生命周期）"""
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        yield
+        # 关闭时的清理工作（SQLite 连接等）
+        try:
+            task_manager.close()
+            server_logger.info("[Shutdown] TaskManager 连接已关闭")
+        except Exception as e:
+            server_logger.warning("[Shutdown] 清理失败: %s", e)
+    return lifespan
 
 
-# ========== 请求日志中间件 ==========
+def create_app(
+    ocr_service: OCRService = None,
+    task_manager: TaskManager = None,
+    authenticator: APIKeyAuthenticator = None,
+    baseline_service: BaselineService = None,
+    debug: bool = None,
+) -> FastAPI:
+    """创建 FastAPI 应用
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start = time.time()
-    response = await call_next(request)
-    elapsed_ms = round((time.time() - start) * 1000, 1)
-    path = request.url.path
-    if path.startswith("/api/") or path == "/health":
-        server_logger.info(
-            "[API] %s %s | %d | %.1fms",
-            request.method, path, response.status_code, elapsed_ms,
-        )
-    return response
+    所有参数均可注入，方便测试时传入 mock 实例。
+    未传入时自动创建默认实例（生产模式）。
 
+    Args:
+        ocr_service: OCRService 实例
+        task_manager: TaskManager 实例
+        authenticator: APIKeyAuthenticator 实例
+        baseline_service: BaselineService 实例（仅 DEBUG 模式使用）
+        debug: 是否启用调试路由（默认从环境变量 DEBUG 读取）
 
-# ========== 加载正式 API 路由（始终启用） ==========
+    Returns:
+        配置好的 FastAPI 应用实例
+    """
+    if debug is None:
+        debug = DEBUG
 
-# 1. 健康检查
-app.include_router(create_health_router(ocr_service))
+    # 默认实例（生产模式）
+    if ocr_service is None:
+        ocr_service = OCRService()
+    if task_manager is None:
+        task_manager = TaskManager(db_path=DB_PATH)
+    if authenticator is None:
+        authenticator = APIKeyAuthenticator()
+    if baseline_service is None:
+        baseline_service = BaselineService()
 
-# 2. 异步 OCR 提交
-app.include_router(create_ocr_router(task_manager, ocr_service, authenticator))
-
-# 3. 任务管理（查询 + 取消）
-app.include_router(create_task_router(task_manager, authenticator))
-
-# 4. 配额查询
-app.include_router(create_quota_router(task_manager, authenticator))
-
-
-# ========== 加载调试路由（仅 DEBUG=true） ==========
-
-if DEBUG:
-    server_logger.info("[Debug] 调试模式已启用，加载 Demo 路由...")
-    debug_router, static_mounts = create_debug_routes(
-        ocr_service, baseline_service, _OCR_DIR, UPLOAD_DIR
+    app = FastAPI(
+        title="OCR API 服务",
+        version="1.0.0",
+        description="文档识别和字段提取 API — 支持异步批量处理",
+        lifespan=_create_lifespan(task_manager),
     )
-    app.include_router(debug_router)
 
-    # 挂载静态文件
-    for mount_path, mount_dir, mount_name in static_mounts:
-        app.mount(mount_path, StaticFiles(directory=mount_dir), name=mount_name)
-else:
-    server_logger.info("[Debug] 调试模式未启用，仅开放正式 API 接口")
+    # CORS（允许前端跨域调用）
+    _cors_origins = os.getenv(
+        "CORS_ORIGINS", "http://localhost:3000,http://localhost:8080"
+    ).split(",")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+
+    # 请求日志中间件
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        start = time.time()
+        response = await call_next(request)
+        elapsed_ms = round((time.time() - start) * 1000, 1)
+        path = request.url.path
+        if path.startswith("/api/") or path == "/health":
+            server_logger.info(
+                "[API] %s %s | %d | %.1fms",
+                request.method, path, response.status_code, elapsed_ms,
+            )
+        return response
+
+    # ========== 加载正式 API 路由（始终启用） ==========
+    app.include_router(create_health_router(ocr_service))
+    app.include_router(create_ocr_router(task_manager, ocr_service, authenticator))
+    app.include_router(create_task_router(task_manager, authenticator))
+    app.include_router(create_quota_router(task_manager, authenticator))
+
+    # ========== 加载调试路由（仅 debug=True） ==========
+    if debug:
+        server_logger.info("[Debug] 调试模式已启用，加载 Demo 路由...")
+        debug_router, static_mounts = create_debug_routes(
+            ocr_service, baseline_service, _OCR_DIR, UPLOAD_DIR,
+            task_manager=task_manager,
+        )
+        app.include_router(debug_router)
+        for mount_path, mount_dir, mount_name in static_mounts:
+            app.mount(mount_path, StaticFiles(directory=mount_dir), name=mount_name)
+    else:
+        server_logger.info("[Debug] 调试模式未启用，仅开放正式 API 接口")
+
+    return app
+
+
+# ========== 生产环境默认实例（仅在直接运行时使用） ==========
+
+app = create_app()
 
 
 # ========== 启动 ==========
@@ -164,7 +203,7 @@ if __name__ == "__main__":
     print(f"  访问地址:  http://localhost:{PORT}")
     print(f"  API 文档:  http://localhost:{PORT}/docs")
     print(f"  调试模式:  {'✅ 已启用' if DEBUG else '❌ 未启用 (设置 DEBUG=true 启用)'}")
-    print(f"  认证状态:  {'✅ 已启用' if authenticator.is_enabled() else '⚠️  未配置 (设置 OCR_API_KEYS)'}")
+    print(f"  认证状态:  {'✅ 已启用' if app.dependency_overrides else '⚠️  未配置 (设置 OCR_API_KEYS)'}")
     print(f"  数据库:    {DB_PATH}")
     print("=" * 60)
 

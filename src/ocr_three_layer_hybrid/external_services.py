@@ -5,9 +5,9 @@
 
 封装所有对外部模型的 HTTP 调用，消除各模块中重复的请求代码。
 
-- VLMClient: GLM-OCR / Qwen2.5-VL-7B 视觉模型，用于字段提取和纯OCR
+- VLMClient: 视觉模型客户端（支持 GLM-OCR / Qwen2.5-VL-7B），用于字段提取和纯OCR
 
-v2.0 简化：
+v2.1 简化：
 - 移除 ClassificationClient（VLM分类兜底已移除）
 - 移除 LLMClient（LLM层已移除）
 """
@@ -33,12 +33,13 @@ def encode_image_base64(image_path: str) -> str:
 
 
 class VLMClient:
-    """GLM-OCR 视觉模型客户端
+    """视觉模型客户端（支持 GLM-OCR / Qwen2.5-VL-7B）
 
-    封装对 llama-server (GLM-OCR) 的 OpenAI 兼容 API 调用。
+    封装对 llama-server 的 OpenAI 兼容 API 调用。
     用于：
     - VLMExtractionLayer: 字段提取
     - OCRService.run_ocr: 纯文本提取
+    - VLMFieldRetryHandler: Rule层字段级VLM重试
     """
 
     def __init__(self, config: Optional[VLMServiceConfig] = None):
@@ -63,6 +64,30 @@ class VLMClient:
         session.mount("https://", adapter)
 
         return session
+
+    def close(self):
+        """关闭 HTTP 会话，释放连接池资源"""
+        # __init__ 中创建 _session；getattr 默认值防御 __init__ 未完成即析构的场景
+        session = getattr(self, "_session", None)
+        if session is not None:
+            session.close()
+            logger.debug("VLMClient HTTP 会话已关闭")
+
+    def __del__(self):
+        """析构时确保关闭 HTTP 会话（安全网）"""
+        try:
+            self.close()
+        except Exception:
+            pass
+
+    def __enter__(self):
+        """支持上下文管理器"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """退出上下文时关闭会话"""
+        self.close()
+        return False
 
     def call(self, prompt: str, image_path: str, max_tokens: int = 1024) -> str:
         """

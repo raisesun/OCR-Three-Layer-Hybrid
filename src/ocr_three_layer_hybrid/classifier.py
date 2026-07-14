@@ -10,6 +10,7 @@
 4. 无法判定 → VLM兜底（返回UNKNOWN）
 """
 
+import re
 from typing import Any, Dict, List, Optional, Tuple
 from ocr_three_layer_hybrid.interfaces import (
     DocumentType,
@@ -592,13 +593,8 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         if result:
             return result
 
-        # 阶段1.5: 标准证件备选强信号
-        result = self._check_backup_certificates(image_path, full_text, ocr_texts)
-        if result:
-            return result
-
-        # 阶段1.6: 更多备选信号（针对特殊页面）
-        result = self._check_additional_backup(image_path, full_text, ocr_texts)
+        # 阶段1.5+1.6: 备选信号（数据驱动方式）
+        result = self._check_backup_signals(image_path, full_text, ocr_texts)
         if result:
             return result
 
@@ -621,28 +617,100 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             metadata={"route": "vlm_fallback_required"},
         )
 
+    # === 通用辅助方法（数据驱动分类基础设施） ===
+
+    def _keywords_match(self, text: str, keywords: List[str], match_type: str = "any") -> Tuple[bool, int]:
+        """
+        通用关键词匹配辅助方法
+
+        Args:
+            text: 待匹配文本
+            keywords: 关键词列表
+            match_type: 匹配类型
+                - "any": 任一关键词匹配即返回True
+                - "all": 所有关键词都匹配才返回True
+                - "count": 返回匹配的数量
+
+        Returns:
+            (是否匹配, 匹配数量)
+        """
+        if not keywords:
+            if match_type == "all":
+                return True, 0
+            return False, 0
+
+        count = sum(1 for kw in keywords if kw in text)
+        if match_type == "any":
+            return count > 0, count
+        elif match_type == "all":
+            return count == len(keywords), count
+        else:  # count
+            return True, count
+
+    def _run_stage(
+        self,
+        image_path: str,
+        full_text: str,
+        ocr_texts: List[str],
+        stage_config: List[Tuple],
+    ) -> Optional[DocumentInfo]:
+        """
+        通用阶段执行器（数据驱动）
+
+        将重复的"遍历配置→匹配关键词→构建DocumentInfo"模式提取为通用方法。
+
+        Args:
+            image_path: 图片路径
+            full_text: 完整文本
+            ocr_texts: OCR文本列表
+            stage_config: 阶段配置列表，每项为元组:
+                (doc_type, match_func, confidence, metadata)
+                - match_func(full_text) -> Optional[DocumentInfo] 或 bool
+                  如果返回 DocumentInfo，直接作为结果
+                  如果返回 True，使用提供的 confidence 和 metadata 构建结果
+                  如果返回 False/None，跳过该项
+
+        Returns:
+            匹配结果或 None
+        """
+        for entry in stage_config:
+            doc_type, match_func, confidence, metadata = entry
+            result = match_func(full_text)
+            if isinstance(result, DocumentInfo):
+                return result
+            if result:
+                return DocumentInfo(
+                    image_path=image_path,
+                    doc_type=doc_type,
+                    ocr_texts=ocr_texts,
+                    confidence=confidence,
+                    metadata=metadata,
+                )
+        return None
+
     def _check_multi_doc_conflict(
         self, image_path: str, full_text: str, ocr_texts: List[str]
     ) -> Optional[DocumentInfo]:
         """
-        阶段0: 多文档冲突检测
+        阶段0: 多文档冲突检测（数据驱动）
 
         当合同级强信号（买受人+出卖人+房屋类型）同时存在时，优先分类为合同
         防止多文档混合扫描时，合同页面中的身份证号码误触发身份证分类
         """
-        has_buyer = "买受人" in full_text
-        has_seller = "出卖人" in full_text
-        has_property_type = any(kw in full_text for kw in ["商品房", "存量房"])
-
-        if has_buyer and has_seller and has_property_type:
-            if "商品房" in full_text:
-                contract_type = DocumentType.PURCHASE_CONTRACT
-            else:
-                contract_type = DocumentType.STOCK_CONTRACT
+        def match(text):
+            has_buyer = "买受人" in text
+            has_seller = "出卖人" in text
+            has_property_type = any(kw in text for kw in ["商品房", "存量房"])
+            if not (has_buyer and has_seller and has_property_type):
+                return False
+            contract_type = (
+                DocumentType.PURCHASE_CONTRACT if "商品房" in text
+                else DocumentType.STOCK_CONTRACT
+            )
             return DocumentInfo(
                 image_path=image_path,
                 doc_type=contract_type,
-                page_type=PageType.CONTENT,  # 合同页默认为内容页
+                page_type=PageType.CONTENT,
                 ocr_texts=ocr_texts,
                 confidence=0.90,
                 metadata={
@@ -650,343 +718,344 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                     "signal": "buyer+seller+property_type",
                 },
             )
-        return None
+
+        return self._run_stage(image_path, full_text, ocr_texts, [
+            (None, match, 0, None),
+        ])
 
     def _check_standard_certificates(
         self, image_path: str, full_text: str, ocr_texts: List[str]
     ) -> Optional[DocumentInfo]:
         """
-        阶段1: 标准证件强信号
+        阶段1: 标准证件强信号（数据驱动）
         """
-        for doc_type, signals in self.STANDARD_CERTIFICATE_SIGNALS.items():
-            for signal in signals:
-                if signal in full_text:
-                    # 特殊处理：资金监管凭证需要额外检查
-                    if doc_type == DocumentType.FUND_SUPERVISION_CERTIFICATE:
-                        # 检查是否真的是凭证（有实际字段）
-                        has_cert_fields = any(
-                            kw in full_text
-                            for kw in [
-                                "协议编号",
-                                "买房人",
-                                "卖房人",
-                                "监管总额",
-                                "建筑面积",
-                                "房屋坐落",
-                            ]
-                        )
-                        # 检查是否是协议信息页（有甲乙丙方+银行账号）
-                        has_agreement_info = any(
-                            kw in full_text for kw in ["甲方", "乙方", "丙方"]
-                        ) and any(kw in full_text for kw in ["银行", "账号"])
+        stage_config = []
 
-                        # 如果有凭证字段且不是协议信息页，才是真正的凭证
+        for doc_type, signals in self.STANDARD_CERTIFICATE_SIGNALS.items():
+            if doc_type == DocumentType.FUND_SUPERVISION_CERTIFICATE:
+                # 资金监管凭证：特殊匹配逻辑（区分凭证 vs 协议信息页）
+                def make_fund_cert_matcher(dt, sig):
+                    def match(text):
+                        if sig not in text:
+                            return False
+                        cert_field_kws = [
+                            "协议编号", "买房人", "卖房人",
+                            "监管总额", "建筑面积", "房屋坐落",
+                        ]
+                        agreement_party_kws = ["甲方", "乙方", "丙方"]
+                        agreement_account_kws = ["银行", "账号"]
+                        has_cert_fields = any(kw in text for kw in cert_field_kws)
+                        has_agreement_info = (
+                            any(kw in text for kw in agreement_party_kws)
+                            and any(kw in text for kw in agreement_account_kws)
+                        )
                         if has_cert_fields and not has_agreement_info:
                             return DocumentInfo(
-                                image_path=image_path,
-                                doc_type=doc_type,
-                                ocr_texts=ocr_texts,
-                                confidence=0.95,
-                                metadata={
-                                    "route": "standard_certificate",
-                                    "signal": signal,
-                                },
+                                image_path=image_path, doc_type=dt,
+                                ocr_texts=ocr_texts, confidence=0.95,
+                                metadata={"route": "standard_certificate", "signal": sig},
                             )
                         else:
-                            # 否则分类为资金监管协议（信息页）
                             return DocumentInfo(
                                 image_path=image_path,
                                 doc_type=DocumentType.FUND_SUPERVISION,
-                                ocr_texts=ocr_texts,
-                                confidence=0.90,
+                                ocr_texts=ocr_texts, confidence=0.90,
                                 metadata={
                                     "route": "fund_supervision_info_page",
                                     "reason": "mentioned_cert_but_has_agreement_info",
                                 },
                             )
-                    else:
-                        # 其他证件类型直接返回
+                    return match
+                stage_config.append((doc_type, make_fund_cert_matcher(doc_type, signals[0]), 0, None))
+            else:
+                # 其他证件类型：任一信号匹配即可
+                def make_cert_matcher(dt, sigs):
+                    def match(text):
+                        matched, _ = self._keywords_match(text, sigs)
+                        if not matched:
+                            return False
+                        first_match = next(s for s in sigs if s in text)
                         return DocumentInfo(
-                            image_path=image_path,
-                            doc_type=doc_type,
-                            ocr_texts=ocr_texts,
-                            confidence=0.95,
-                            metadata={
-                                "route": "standard_certificate",
-                                "signal": signal,
-                            },
+                            image_path=image_path, doc_type=dt,
+                            ocr_texts=ocr_texts, confidence=0.95,
+                            metadata={"route": "standard_certificate", "signal": first_match},
                         )
-        return None
+                    return match
+                stage_config.append((doc_type, make_cert_matcher(doc_type, signals), 0, None))
 
-    def _check_backup_certificates(
+        return self._run_stage(image_path, full_text, ocr_texts, stage_config)
+
+    def _check_backup_signals(
         self, image_path: str, full_text: str, ocr_texts: List[str]
     ) -> Optional[DocumentInfo]:
         """
-        阶段1.5: 标准证件备选强信号
+        阶段1.5+1.6: 备选信号统一检查（数据驱动）
+
+        合并原 _check_backup_certificates（阶段1.5）和 _check_additional_backup（阶段1.6），
+        使用统一的配置表 + 通用匹配逻辑，消除重复代码。
         """
-        for doc_type, signal_config in self.BACKUP_CERTIFICATE_SIGNALS.items():
-            primary_signals = signal_config["primary"]
-            required_signals = signal_config.get("required", [])
-            secondary_signals = signal_config.get("secondary", [])
-            tertiary_signals = signal_config.get("tertiary", [])
-            min_secondary = signal_config.get("min_secondary", 0)
-            min_tertiary = signal_config.get("min_tertiary", 0)
-            id_pattern_required = signal_config.get("id_pattern", False)
+        # 统一备选信号配置表（顺序决定优先级）
+        BACKUP_SIGNALS_CONFIG = [
+            # 阶段1.5: 标准证件备选强信号
+            (DocumentType.MARRIAGE_CERTIFICATE, {
+                "primary": ["持证人"], "required": ["登记日期"],
+                "route": "backup_certificate", "confidence": 0.90,
+            }),
+            (DocumentType.HOUSEHOLD_REGISTER, {
+                "primary": ["户口簿", "户口本", "居民户口簿"], "required": ["户主"],
+                "route": "backup_certificate", "confidence": 0.90,
+            }),
+            (DocumentType.ID_CARD, {
+                "primary": ["公民身份"], "required": [],
+                "id_pattern": True,
+                "route": "backup_certificate", "confidence": 0.90,
+            }),
+            # 阶段1.6: 更多备选信号（针对特殊页面）
+            (DocumentType.HOUSEHOLD_REGISTER, {
+                "primary": ["户别", "户 别"],
+                "secondary": ["户主姓名"], "min_secondary": 1,
+                "tertiary": ["住址", "户口专用章", "家庭住址"], "min_tertiary": 1,
+                "route": "additional_backup", "confidence": 0.85,
+            }),
+            # 户口本个人页字段组合兜底：
+            # OCR 把"常住人口登记卡"识别成乱码（如"居民家党庄人口登记卡"）导致标题信号失效时，
+            # 靠个人页独有字段组合识别（承办人签章/籍贯 + 多个登记项字段，min_secondary=3 保严格）。
+            (DocumentType.HOUSEHOLD_REGISTER, {
+                "primary": ["承办人签章", "籍贯"],
+                "secondary": ["婚姻状况", "兵役状况", "服务处所", "户主或与",
+                              "户主关系", "迁来本", "其他住址", "何时由何地",
+                              "宗教信仰", "文化程度"],
+                "min_secondary": 3,
+                "route": "household_personal_page_combination", "confidence": 0.85,
+            }),
+            (DocumentType.MARRIAGE_CERTIFICATE, {
+                "primary": ["结婚证", "结婚申请", "结婚登记"],
+                "secondary": ["登记机关", "婚姻登记专用章", "予以登记", "民政部监制"],
+                "min_secondary": 1,
+                "route": "additional_backup", "confidence": 0.85,
+            }),
+            # 结婚登记申请表字段组合兜底：
+            # OCR 把结婚证标题识别成乱码（如"员民2记机品一"）导致标题信号失效时，
+            # 靠申请表"双人+国籍"特征识别（国籍 + 多个申请人信息字段，min_secondary=4 保严格）。
+            (DocumentType.MARRIAGE_CERTIFICATE, {
+                "primary": ["国籍"],
+                "secondary": ["身份证件号", "出生日", "姓名", "性别", "男", "女"],
+                "min_secondary": 4,
+                "route": "marriage_application_combination", "confidence": 0.85,
+            }),
+            (DocumentType.DIVORCE_CERTIFICATE, {
+                "primary": ["离婚证", "离婚申请", "离婚登记"],
+                "secondary": ["婚姻登记专用章", "予以登记", "民政部监制", "登记机关"],
+                "min_secondary": 1,
+                "route": "additional_backup", "confidence": 0.85,
+            }),
+            (DocumentType.PROPERTY_CERTIFICATE, {
+                "primary": ["不动产权"],
+                "secondary": ["权利人"],
+                "tertiary": ["不动产单元号"], "min_tertiary": 1,
+                "route": "additional_backup", "confidence": 0.85,
+            }),
+            # 不动产权证书内容页字段组合兜底：
+            # 当 OCR 把标题"不动产权证书"识别成乱码（如"明念老念费"）导致
+            # "不动产权"关键词完全缺失时，靠内容页特有字段组合识别。
+            # primary="权利人"（房产证独有，购房合同用"买方/卖方"），
+            # secondary 命中≥4 即判定为不动产权证书，后续走页面识别细化为内容页。
+            (DocumentType.PROPERTY_CERTIFICATE, {
+                "primary": ["权利人"],
+                "secondary": ["共有情况", "不动产单元号", "权利类型",
+                              "权利性质", "使用期限", "坐落"],
+                "min_secondary": 4,
+                "route": "property_content_field_combination", "confidence": 0.85,
+            }),
+        ]
 
-            # 检查主信号（任一匹配）
-            has_primary = any(kw in full_text for kw in primary_signals)
-            if not has_primary:
-                continue
+        def make_matcher(config):
+            primary = config["primary"]
+            required = config.get("required", [])
+            secondary = config.get("secondary", [])
+            tertiary = config.get("tertiary", [])
+            min_secondary = config.get("min_secondary", 0)
+            min_tertiary = config.get("min_tertiary", 0)
+            id_pattern = config.get("id_pattern", False)
 
-            # 检查必需信号（全部匹配）
-            has_required = all(kw in full_text for kw in required_signals)
-            if not has_required:
-                continue
+            def match(text):
+                # 1. 主信号（任一匹配）
+                has_primary, _ = self._keywords_match(text, primary)
+                if not has_primary:
+                    return False
+                # 2. 必需信号（全部匹配）
+                if required:
+                    has_req, _ = self._keywords_match(text, required, "all")
+                    if not has_req:
+                        return False
+                # 3. 身份证号模式（身份证专用）
+                if id_pattern and not re.search(r"\d{17}[\dXx]", text):
+                    return False
+                # 4. 次要信号计数
+                if secondary:
+                    _, sec_count = self._keywords_match(text, secondary, "count")
+                    if sec_count < min_secondary:
+                        return False
+                # 5. 三级信号计数
+                if tertiary:
+                    _, tert_count = self._keywords_match(text, tertiary, "count")
+                    if tert_count < min_tertiary:
+                        return False
+                return True
 
-            # 检查是否需要18位身份证号模式（身份证专用）
-            if id_pattern_required:
-                import re
+            return match
 
-                if not re.search(r"\d{17}[\dXx]", full_text):
-                    continue
+        stage_config = []
+        for doc_type, config in BACKUP_SIGNALS_CONFIG:
+            metadata = {
+                "route": config["route"],
+                "primary": [kw for kw in config["primary"] if kw in full_text],
+            }
+            if "required" in config:
+                metadata["required"] = [kw for kw in config["required"] if kw in full_text]
+            stage_config.append((
+                doc_type,
+                make_matcher(config),
+                config["confidence"],
+                metadata,
+            ))
 
-            # 检查次要信号（如果有定义）
-            if secondary_signals:
-                secondary_count = sum(1 for kw in secondary_signals if kw in full_text)
-                if secondary_count < min_secondary:
-                    continue
-
-            # 检查三级信号（如果有定义）
-            if tertiary_signals:
-                tertiary_count = sum(1 for kw in tertiary_signals if kw in full_text)
-                if tertiary_count < min_tertiary:
-                    continue
-
-            return DocumentInfo(
-                image_path=image_path,
-                doc_type=doc_type,
-                ocr_texts=ocr_texts,
-                confidence=0.90,  # 备选强信号，置信度略低
-                metadata={
-                    "route": "backup_certificate",
-                    "primary": [kw for kw in primary_signals if kw in full_text],
-                    "required": [kw for kw in required_signals if kw in full_text],
-                },
-            )
-        return None
-
-    def _check_additional_backup(
-        self, image_path: str, full_text: str, ocr_texts: List[str]
-    ) -> Optional[DocumentInfo]:
-        """
-        阶段1.6: 更多备选信号（针对特殊页面）
-        """
-        for doc_type, signal_config in self.ADDITIONAL_BACKUP_SIGNALS.items():
-            primary_signals = signal_config["primary"]
-            secondary_signals = signal_config.get("secondary", [])
-            tertiary_signals = signal_config.get("tertiary", [])
-            min_tertiary = signal_config.get("min_tertiary", 1)
-            min_secondary = signal_config.get("min_secondary", 1)
-
-            # 检查primary信号（任一匹配）
-            has_primary = any(kw in full_text for kw in primary_signals)
-            if not has_primary:
-                continue
-
-            # 检查secondary信号
-            secondary_count = sum(1 for kw in secondary_signals if kw in full_text)
-            if secondary_count < min_secondary:
-                continue
-
-            # 检查tertiary信号（如果有定义）
-            if tertiary_signals:
-                tertiary_count = sum(1 for kw in tertiary_signals if kw in full_text)
-                if tertiary_count < min_tertiary:
-                    continue
-
-            return DocumentInfo(
-                image_path=image_path,
-                doc_type=doc_type,
-                ocr_texts=ocr_texts,
-                confidence=0.85,  # 更多备选信号，置信度再略低
-                metadata={
-                    "route": "additional_backup",
-                    "primary": [kw for kw in primary_signals if kw in full_text],
-                },
-            )
-        return None
+        return self._run_stage(image_path, full_text, ocr_texts, stage_config)
 
     def _check_standard_documents(
         self, image_path: str, full_text: str, ocr_texts: List[str]
     ) -> Optional[DocumentInfo]:
         """
-        阶段2: 标准单证强信号
+        阶段2: 标准单证强信号（数据驱动）
         """
-        # 发票：发票代码 + 发票号码同时存在
         invoice_signals = self.STANDARD_DOCUMENT_SIGNALS[DocumentType.INVOICE]
-        if all(signal in full_text for signal in invoice_signals):
-            return DocumentInfo(
-                image_path=image_path,
-                doc_type=DocumentType.INVOICE,
-                ocr_texts=ocr_texts,
-                confidence=0.95,
-                metadata={
-                    "route": "standard_document",
-                    "signal": "invoice_code+number",
-                },
-            )
 
-        # 发票弱信号：税额 + 不含税金额
-        if any(signal in full_text for signal in self.INVOICE_WEAK_SIGNALS):
-            weak_signal_count = sum(
-                1 for s in self.INVOICE_WEAK_SIGNALS if s in full_text
-            )
-            if weak_signal_count >= 2:
+        def match_invoice(text):
+            if all(s in text for s in invoice_signals):
                 return DocumentInfo(
-                    image_path=image_path,
-                    doc_type=DocumentType.INVOICE,
-                    ocr_texts=ocr_texts,
-                    confidence=0.7,
-                    metadata={
-                        "route": "standard_document_weak",
-                        "weak_signals": weak_signal_count,
-                    },
+                    image_path=image_path, doc_type=DocumentType.INVOICE,
+                    ocr_texts=ocr_texts, confidence=0.95,
+                    metadata={"route": "standard_document", "signal": "invoice_code+number"},
                 )
-        return None
+            return False
+
+        def match_invoice_weak(text):
+            _, weak_count = self._keywords_match(text, self.INVOICE_WEAK_SIGNALS, "count")
+            if weak_count >= 2:
+                return DocumentInfo(
+                    image_path=image_path, doc_type=DocumentType.INVOICE,
+                    ocr_texts=ocr_texts, confidence=0.7,
+                    metadata={"route": "standard_document_weak", "weak_signals": weak_count},
+                )
+            return False
+
+        return self._run_stage(image_path, full_text, ocr_texts, [
+            (DocumentType.INVOICE, match_invoice, 0, None),
+            (DocumentType.INVOICE, match_invoice_weak, 0, None),
+        ])
 
     def _check_contracts(
         self, image_path: str, full_text: str, ocr_texts: List[str]
     ) -> Optional[DocumentInfo]:
         """
-        阶段3: 合同/协议字段组合
+        阶段3: 合同/协议字段组合（数据驱动）
         """
+        stage_config = []
+
         for doc_type, signal_config in self.CONTRACT_SIGNALS.items():
             property_type_keywords = signal_config.get("property_type", [])
 
-            # 根据文档类型检查不同的字段组合
-            if doc_type in (
-                DocumentType.PURCHASE_CONTRACT,
-                DocumentType.STOCK_CONTRACT,
-            ):
-                # 买卖合同：买受人 + 出卖人 + (价款 或 房屋类型关键词)
-                has_buyer = any(kw in full_text for kw in signal_config["buyer"])
-                has_seller = any(kw in full_text for kw in signal_config["seller"])
-                has_property_type = (
-                    any(kw in full_text for kw in property_type_keywords)
-                    if property_type_keywords
-                    else False
-                )
+            if doc_type in (DocumentType.PURCHASE_CONTRACT, DocumentType.STOCK_CONTRACT):
+                def make_contract_matcher(dt, cfg, ptk):
+                    def match(text):
+                        has_buyer, _ = self._keywords_match(text, cfg["buyer"])
+                        has_seller, _ = self._keywords_match(text, cfg["seller"])
+                        if not has_buyer or not has_seller:
+                            return False
+                        has_pt, _ = self._keywords_match(text, ptk) if ptk else (False, 0)
 
-                # 基本条件：必须有买受人+出卖人
-                if not has_buyer or not has_seller:
-                    continue
-
-                # 方案B：部分匹配回退（仅适用于购房合同）
-                # 当有买受人+出卖人但没有明确的房屋类型关键词时，分类为购房合同（默认）
-                # 场景：签名页有买方卖方但无"商品房"/"存量房"字样
-                if doc_type == DocumentType.PURCHASE_CONTRACT:
-                    if property_type_keywords and not has_property_type:
-                        # 有买受人+出卖人，但没有"商品房" → 部分匹配，分类为购房合同
-                        confidence = self.CONFIDENCE_PARTIAL_MATCH
-                        return DocumentInfo(
-                            image_path=image_path,
-                            doc_type=DocumentType.PURCHASE_CONTRACT,
-                            ocr_texts=ocr_texts,
-                            confidence=confidence,
-                            metadata={
-                                "route": "contract_partial_match",
-                                "has_property_type": False,
-                                "signal": "buyer+seller_fallback",
-                            },
-                        )
-                    else:
-                        # 完整匹配：有买受人+出卖人+商品房
-                        confidence = self.CONFIDENCE_STRONG_SIGNAL
-                        return DocumentInfo(
-                            image_path=image_path,
-                            doc_type=doc_type,
-                            ocr_texts=ocr_texts,
-                            confidence=confidence,
-                            metadata={
-                                "route": "contract_field_combination",
-                                "has_property_type": bool(property_type_keywords),
-                            },
-                        )
-                else:
-                    # 存量房合同：必须有"存量房"关键词（完整匹配）
-                    if property_type_keywords and not has_property_type:
-                        continue  # 没有"存量房"关键词，跳过
-                    confidence = self.CONFIDENCE_COMBINATION
-                    return DocumentInfo(
-                        image_path=image_path,
-                        doc_type=doc_type,
-                        ocr_texts=ocr_texts,
-                        confidence=confidence,
-                        metadata={
-                            "route": "contract_field_combination",
-                            "has_property_type": bool(property_type_keywords),
-                        },
-                    )
+                        if dt == DocumentType.PURCHASE_CONTRACT:
+                            if ptk and not has_pt:
+                                return DocumentInfo(
+                                    image_path=image_path,
+                                    doc_type=DocumentType.PURCHASE_CONTRACT,
+                                    ocr_texts=ocr_texts,
+                                    confidence=self.CONFIDENCE_PARTIAL_MATCH,
+                                    metadata={
+                                        "route": "contract_partial_match",
+                                        "has_property_type": False,
+                                        "signal": "buyer+seller_fallback",
+                                    },
+                                )
+                            return DocumentInfo(
+                                image_path=image_path, doc_type=dt,
+                                ocr_texts=ocr_texts,
+                                confidence=self.CONFIDENCE_STRONG_SIGNAL,
+                                metadata={
+                                    "route": "contract_field_combination",
+                                    "has_property_type": bool(ptk),
+                                },
+                            )
+                        else:  # STOCK_CONTRACT
+                            if ptk and not has_pt:
+                                return False
+                            return DocumentInfo(
+                                image_path=image_path, doc_type=dt,
+                                ocr_texts=ocr_texts,
+                                confidence=self.CONFIDENCE_COMBINATION,
+                                metadata={
+                                    "route": "contract_field_combination",
+                                    "has_property_type": bool(ptk),
+                                },
+                            )
+                    return match
+                stage_config.append((
+                    doc_type,
+                    make_contract_matcher(doc_type, signal_config, property_type_keywords),
+                    0, None,
+                ))
 
             elif doc_type == DocumentType.FUND_SUPERVISION:
-                # 资金监管协议：放宽条件
-                has_资金监管 = "资金监管" in full_text
-                has_监管协议 = "监管协议" in full_text
-                has_amount = any(kw in full_text for kw in signal_config["amount"])
-                has_alternative = any(
-                    kw in full_text for kw in self.SUPERVISION_ALTERNATIVE
-                )
-                has_clause_signal = any(
-                    kw in full_text for kw in self.SUPERVISION_CLAUSE_SIGNALS
-                )
-                # 签章页特殊处理：丙方 + 签章 + (签约日期 或 第X页)
-                has_丙方 = "丙方" in full_text
-                has_签章 = "签章" in full_text
-                has_签约日期 = "签约日期" in full_text
-                has_第x页 = any(f"第{i}页" in full_text for i in range(1, 10))
-                is_stamp_page = has_丙方 and has_签章 and (has_签约日期 or has_第x页)
-
-                # 条件1：资金监管 + 监管协议 → 直接识别
-                # 条件2：监管凭证/监管专用章 → 直接识别
-                # 条件3：资金监管 + 金额 → 识别
-                # 条件4：条款页信号 + 协议/监管 → 识别
-                # 条件5：签章页特殊信号（丙方+签章+签约日期/页码）→ 识别
-                if has_资金监管 and has_监管协议:
-                    pass  # 满足条件1
-                elif has_alternative:
-                    pass  # 满足条件2
-                elif has_资金监管 and has_amount:
-                    pass  # 满足条件3
-                elif has_clause_signal and (
-                    has_资金监管 or has_监管协议 or "协议" in full_text
-                ):
-                    pass  # 满足条件4：条款页
-                elif is_stamp_page:
-                    pass  # 满足条件5：签章页特殊处理
-                else:
-                    continue
+                def make_supervision_matcher(cfg):
+                    def match(text):
+                        has_监管, _ = self._keywords_match(text, ["资金监管"])
+                        has_协议, _ = self._keywords_match(text, ["监管协议"])
+                        has_amount, _ = self._keywords_match(text, cfg["amount"])
+                        has_alt, _ = self._keywords_match(text, self.SUPERVISION_ALTERNATIVE)
+                        has_clause, _ = self._keywords_match(text, self.SUPERVISION_CLAUSE_SIGNALS)
+                        has_丙方 = "丙方" in text
+                        has_签章 = "签章" in text
+                        has_签约日期 = "签约日期" in text
+                        has_第x页 = any(f"第{i}页" in text for i in range(1, 10))
+                        is_stamp = has_丙方 and has_签章 and (has_签约日期 or has_第x页)
+                        # 5个条件任一满足即可
+                        if (has_监管 and has_协议) or has_alt \
+                                or (has_监管 and has_amount) \
+                                or (has_clause and (has_监管 or has_协议 or "协议" in text)) \
+                                or is_stamp:
+                            return True
+                        return False
+                    return match
+                stage_config.append((
+                    doc_type, make_supervision_matcher(signal_config),
+                    self.CONFIDENCE_COMBINATION,
+                    {"route": "contract_field_combination", "has_property_type": False},
+                ))
 
             elif doc_type == DocumentType.DIVORCE_AGREEMENT:
-                # 离婚协议：离婚 + 财产分割/抚养
-                has_divorce = any(kw in full_text for kw in signal_config["divorce"])
-                has_property = any(kw in full_text for kw in signal_config["property"])
-                if not (has_divorce and has_property):
-                    continue
+                def make_divorce_matcher(cfg):
+                    def match(text):
+                        has_div, _ = self._keywords_match(text, cfg["divorce"])
+                        has_prop, _ = self._keywords_match(text, cfg["property"])
+                        return has_div and has_prop
+                    return match
+                stage_config.append((
+                    doc_type, make_divorce_matcher(signal_config),
+                    self.CONFIDENCE_COMBINATION,
+                    {"route": "contract_field_combination", "has_property_type": False},
+                ))
 
-            # 计算置信度（仅资金监管和离婚协议走这里，合同类已在上面提前返回）
-            confidence = self.CONFIDENCE_COMBINATION
-
-            return DocumentInfo(
-                image_path=image_path,
-                doc_type=doc_type,
-                ocr_texts=ocr_texts,
-                confidence=confidence,
-                metadata={
-                    "route": "contract_field_combination",
-                    "has_property_type": bool(property_type_keywords),
-                },
-            )
-        return None
+        return self._run_stage(image_path, full_text, ocr_texts, stage_config)
 
     def classify_from_text(self, image_path: str, text: str) -> DocumentInfo:
         """

@@ -178,34 +178,11 @@ class PersonalIdExtractor(BaseExtractor):
 
         # 背面字段：签发机关
         if "签发机关" in key_list:
-            # 格式1：标签+值
-            match = re.search(r"签发机关\s*([一-龥()（）]+(?:公安局|分局))", full_text)
-            if not match:
-                match = re.search(
-                    r"签发机关\s*([一-龥]+(?:公安局|分局)[一-龥]*)", full_text
-                )
-            # 格式2：值+标签
-            if not match:
-                match = re.search(
-                    r"([一-龥]+(?:公安局|分局)[一-龥]*)\s*\n\s*签发机关", full_text
-                )
-            fields["签发机关"] = match.group(1).strip() if match else ""
+            fields["签发机关"] = extract_issuing_authority(full_text) or ""
 
         # 背面字段：有效期限
         if "有效期限" in key_list:
-            # 格式1：标签+值
-            match = re.search(
-                r"有效期限\s*(\d{4}\.\d{2}\.\d{2}-\d{4}\.\d{2}\.\d{2})", full_text
-            )
-            if not match:
-                match = re.search(r"有效期限\s*(\d{4}\.\d{2}\.\d{2}-长期)", full_text)
-            # 格式2：值+标签
-            if not match:
-                match = re.search(
-                    r"(\d{4}\.\d{2}\.\d{2}-\d{4}\.\d{2}\.\d{2})\s*\n\s*有效期限",
-                    full_text,
-                )
-            fields["有效期限"] = match.group(1) if match else ""
+            fields["有效期限"] = extract_validity_period(full_text) or ""
 
     def extract_id_card_without_labels(
         self, full_text: str, key_list: List[str], fields: Dict[str, str]
@@ -342,36 +319,15 @@ class PersonalIdExtractor(BaseExtractor):
 
         # 背面字段：签发机关（即使正面标签缺失，背面标签也可能存在）
         if "签发机关" in key_list and "签发机关" not in fields:
-            # 格式1：标签+值（签发机关 蚌埠市公安局蚌山分局）
-            match = re.search(r"签发机关\s*([一-龥()（）]+(?:公安局|分局))", full_text)
-            if not match:
-                match = re.search(
-                    r"签发机关\s*([一-龥]+(?:公安局|分局)[一-龥]*)", full_text
-                )
-            # 格式2：值+标签（蚌埠市公安局蚌山分局\n签发机关）
-            if not match:
-                match = re.search(
-                    r"([一-龥]+(?:公安局|分局)[一-龥]*)\s*\n\s*签发机关", full_text
-                )
-            if match:
-                fields["签发机关"] = match.group(1).strip()
+            authority = extract_issuing_authority(full_text)
+            if authority:
+                fields["签发机关"] = authority
 
         # 背面字段：有效期限
         if "有效期限" in key_list and "有效期限" not in fields:
-            # 格式1：标签+值
-            match = re.search(
-                r"有效期限\s*(\d{4}\.\d{2}\.\d{2}-\d{4}\.\d{2}\.\d{2})", full_text
-            )
-            if not match:
-                match = re.search(r"有效期限\s*(\d{4}\.\d{2}\.\d{2}-长期)", full_text)
-            # 格式2：值+标签
-            if not match:
-                match = re.search(
-                    r"(\d{4}\.\d{2}\.\d{2}-\d{4}\.\d{2}\.\d{2})\s*\n\s*有效期限",
-                    full_text,
-                )
-            if match:
-                fields["有效期限"] = match.group(1)
+            period = extract_validity_period(full_text)
+            if period:
+                fields["有效期限"] = period
 
     def extract_marriage_certificate(
         self, full_text: str, key_list: List[str]
@@ -525,10 +481,9 @@ class PersonalIdExtractor(BaseExtractor):
 
         # 查找所有姓名+性别+民族的组合
         # 模式：姓名 XXX 性别 男/女 民族 汉 ...
+        # 使用 [^性]* 代替 .*? 防止跨越"性"字边界
         person_blocks = re.findall(
-            r"姓\s*名\s*([^\s]+)\s*(?:.*?)?性\s*别\s*(男|女)\s*(?:.*?)?民\s*族\s*([^\s]+)\s*(?:.*?)?"
-            r"(?:出\s*生\s*(\d{4}年\d{1,2}月\d{1,2}日))?\s*(?:.*?)?"
-            r"(\d{17}[\dXx])?",
+            r"姓\s*名\s*([^\s]+)\s*[^性]*?性\s*别\s*(男|女)\s*[^民]*?民\s*族\s*([^\s]+)\s*(?:[^出]*?(?:出\s*生\s*(\d{4}年\d{1,2}月\d{1,2}日)))?\s*[^0-9]*?(\d{17}[\dXx])?",
             full_text,
             re.DOTALL,
         )

@@ -12,6 +12,7 @@ from fastapi import APIRouter, Request
 from ocr_api.common.auth import APIKeyAuthenticator
 from ocr_api.common.schemas import APIResponse
 from ocr_api.common.task_manager import TaskManager
+from ocr_api.common.logger import set_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ def create_quota_router(
         """
         # 认证
         api_key = authenticator.verify(request)
+        set_log_context(api_key=f"{api_key[:8]}...")
         task_manager.record_api_call(api_key, "GET /api/v1/quota")
 
         # 获取配额数据

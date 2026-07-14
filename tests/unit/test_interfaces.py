@@ -28,7 +28,7 @@ class TestProcessingLayer:
     def test_processing_layer_values(self):
         assert ProcessingLayer.RULE == "rule"
         assert ProcessingLayer.VLM == "vlm"
-        assert ProcessingLayer.LLM == "llm"
+        # LLM 层已在 v2.0 中移除
 
 
 class TestDocumentInfo:

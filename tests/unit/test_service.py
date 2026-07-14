@@ -8,7 +8,9 @@
 - _extract_multi_page_merge(): 逐页独立分类 + field_config 驱动 + VLM 兜底
 """
 
+import os
 import pytest
+from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from ocr_three_layer_hybrid.interfaces import (
     DocumentType,
@@ -200,3 +202,337 @@ class TestProcessMultiPageEmpty:
         assert result["extraction"]["success"] is False
         assert result["extraction"]["error_message"] == "没有图片"
         assert result["timing"]["total_ms"] == 0
+
+
+class TestMultiPageTypeInheritance:
+    """方案C: 多页协同 - UNKNOWN页从首页继承基础类型"""
+
+    @pytest.fixture
+    def service(self):
+        mock_path_cls = Mock()
+        mock_path_inst = Mock()
+        mock_path_inst.exists.return_value = True
+        mock_path_cls.return_value = mock_path_inst
+        with patch("ocr_three_layer_hybrid.service.VLMClient"), \
+             patch("ocr_three_layer_hybrid.service.KeywordDocumentClassifier"), \
+             patch("ocr_three_layer_hybrid.service.VLMExtractionLayer"), \
+             patch("ocr_three_layer_hybrid.service.PlanEPlusPipeline"), \
+             patch("ocr_three_layer_hybrid.rule_layer.RuleExtractionLayer"), \
+             patch("ocr_three_layer_hybrid.multi_page_utils.Path", mock_path_cls):
+            from ocr_three_layer_hybrid.service import OCRService
+            svc = OCRService.__new__(OCRService)
+            svc._classifier = Mock()
+            svc._pipeline = Mock()
+            svc.run_ocr = Mock(return_value="mock ocr text")
+            yield svc
+
+    def test_unknown_page_inherits_first_page_type(self, service):
+        """后续页UNKNOWN + 首页高置信度 -> 继承首页基础类型"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.95,
+        )
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.0,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            layer=ProcessingLayer.RULE,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        calls = service._pipeline.process.call_args_list
+        assert len(calls) >= 2
+        second_doc = calls[1].kwargs["doc_info"]
+        # 继承后应为细分类型 HOUSEHOLD_REGISTER_CONTENT（与首页相同）
+        assert second_doc.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT
+        assert second_doc.metadata.get("inherited_from_first_page") is True
+        # 置信度应为首页 * 0.9
+        assert abs(second_doc.confidence - 0.95 * 0.9) < 0.01
+
+    def test_unknown_page_no_inherit_low_confidence(self, service):
+        """首页置信度 < 0.85 -> 不继承，保持UNKNOWN"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.7,
+        )
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.0,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.UNKNOWN,
+            layer=ProcessingLayer.VLM,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        calls = service._pipeline.process.call_args_list
+        assert len(calls) >= 2
+        second_doc = calls[1].kwargs["doc_info"]
+        # 不继承，仍是 UNKNOWN
+        assert second_doc.doc_type == DocumentType.UNKNOWN
+        assert not second_doc.metadata.get("inherited_from_first_page")
+
+    def test_unknown_page_no_inherit_first_page_unknown(self, service):
+        """首页本身是UNKNOWN -> 不继承（首页基础类型也是UNKNOWN）"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.95,
+        )
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.0,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.UNKNOWN,
+            layer=ProcessingLayer.VLM,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        calls = service._pipeline.process.call_args_list
+        assert len(calls) >= 2
+        second_doc = calls[1].kwargs["doc_info"]
+        # 首页UNKNOWN -> _get_base_doc_type返回UNKNOWN -> 不继承
+        assert second_doc.doc_type == DocumentType.UNKNOWN
+        assert not second_doc.metadata.get("inherited_from_first_page")
+
+    def test_non_unknown_page_no_inheritance(self, service):
+        """后续页不是UNKNOWN -> 不触发继承，保持原分类"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.95,
+        )
+        # 后续页正常分类为户口本内容页（不是UNKNOWN）
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.9,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            layer=ProcessingLayer.RULE,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        calls = service._pipeline.process.call_args_list
+        assert len(calls) >= 2
+        second_doc = calls[1].kwargs["doc_info"]
+        # 保持原分类 HOUSEHOLD_REGISTER_CONTENT，不继承
+        assert second_doc.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT
+        assert not second_doc.metadata.get("inherited_from_first_page")
+
+
+class TestBuildClassificationDict:
+    """测试 _build_classification_dict 静态方法"""
+
+    @pytest.fixture
+    def service(self):
+        with patch("ocr_three_layer_hybrid.service.VLMClient"), \
+             patch("ocr_three_layer_hybrid.service.KeywordDocumentClassifier"), \
+             patch("ocr_three_layer_hybrid.service.VLMExtractionLayer"), \
+             patch("ocr_three_layer_hybrid.service.PlanEPlusPipeline"), \
+             patch("ocr_three_layer_hybrid.rule_layer.RuleExtractionLayer"):
+            from ocr_three_layer_hybrid.service import OCRService
+            svc = OCRService.__new__(OCRService)
+            return svc
+
+    def test_basic_classification(self, service):
+        """基础分类信息构建"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            confidence=0.95,
+        )
+        doc_info.metadata["route"] = "standard_certificate"
+        doc_info.metadata["signal"] = "户口簿+户主"
+
+        result = service._build_classification_dict(doc_info)
+        assert result["doc_type"] == DocumentType.HOUSEHOLD_REGISTER.value
+        assert result["confidence"] == 0.95
+        assert result["route"] == "standard_certificate"
+        assert result["route_name"] == "阶段1: 标准证件强信号"
+        assert result["signal"] == "户口簿+户主"
+
+    def test_unknown_route(self, service):
+        """未知 route 返回自身"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.5,
+        )
+        doc_info.metadata["route"] = "unknown_route"
+
+        result = service._build_classification_dict(doc_info)
+        assert result["route"] == "unknown_route"
+        assert result["route_name"] == "unknown_route"  # 找不到映射则返回原值
+
+    def test_attachment_metadata(self, service):
+        """附件标记"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            doc_type=DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+            confidence=0.8,
+        )
+        doc_info.metadata["route"] = "standard_certificate"
+        doc_info.metadata["is_attachment"] = True
+
+        result = service._build_classification_dict(doc_info)
+        assert result["is_attachment"] is True
+
+
+class TestBuildPipelineFlow:
+    """测试 _build_pipeline_flow 静态方法"""
+
+    @pytest.fixture
+    def service(self):
+        with patch("ocr_three_layer_hybrid.service.VLMClient"), \
+             patch("ocr_three_layer_hybrid.service.KeywordDocumentClassifier"), \
+             patch("ocr_three_layer_hybrid.service.VLMExtractionLayer"), \
+             patch("ocr_three_layer_hybrid.service.PlanEPlusPipeline"), \
+             patch("ocr_three_layer_hybrid.rule_layer.RuleExtractionLayer"):
+            from ocr_three_layer_hybrid.service import OCRService
+            svc = OCRService.__new__(OCRService)
+            return svc
+
+    def test_standard_certificate_route(self, service):
+        """标准证件路由"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            doc_type=DocumentType.ID_CARD,
+        )
+        doc_info.metadata["route"] = "standard_certificate"
+        doc_info.metadata["signal"] = "公民身份号码"
+
+        result = ExtractionResult(
+            doc_type=DocumentType.ID_CARD,
+            layer=ProcessingLayer.RULE,
+            fields={"姓名": "张三"},
+            success=True,
+        )
+
+        flow = service._build_pipeline_flow(doc_info, result)
+        assert flow["active_stage"] == "stage1"
+        assert flow["stage_match_info"] == "公民身份号码"
+        assert flow["extraction_layer"] == ProcessingLayer.RULE.value
+        assert flow["doc_type"] == DocumentType.ID_CARD.value
+        assert "stages" in flow
+        assert "layer_color" in flow
+
+    def test_vlm_fallback_route(self, service):
+        """VLM兜底路由"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            doc_type=DocumentType.UNKNOWN,
+        )
+        doc_info.metadata["route"] = "vlm_fallback_required"
+        doc_info.metadata["vlm_result"] = "提取完成"
+
+        result = ExtractionResult(
+            doc_type=DocumentType.UNKNOWN,
+            layer=ProcessingLayer.VLM,
+            fields={},
+            success=True,
+        )
+
+        flow = service._build_pipeline_flow(doc_info, result)
+        assert flow["active_stage"] == "stage4"
+        assert flow["stage_match_info"] == "提取完成"
+        assert flow["extraction_layer"] == ProcessingLayer.VLM.value
+        assert flow["doc_type"] == DocumentType.UNKNOWN.value
+
+    def test_no_layer(self, service):
+        """无提取层"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            doc_type=DocumentType.UNKNOWN,
+        )
+        doc_info.metadata["route"] = ""
+
+        result = ExtractionResult(
+            doc_type=DocumentType.UNKNOWN,
+            layer=None,
+            fields={},
+            success=False,
+        )
+
+        flow = service._build_pipeline_flow(doc_info, result)
+        assert flow["extraction_layer"] == "none"
+        assert flow["active_stage"] is None
+
+    def test_contract_route(self, service):
+        """合同字段组合路由"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            doc_type=DocumentType.PURCHASE_CONTRACT,
+        )
+        doc_info.metadata["route"] = "contract_field_combination"
+
+        result = ExtractionResult(
+            doc_type=DocumentType.PURCHASE_CONTRACT,
+            layer=ProcessingLayer.RULE,
+            fields={},
+            success=True,
+        )
+
+        flow = service._build_pipeline_flow(doc_info, result)
+        assert flow["active_stage"] == "stage3"
+        assert flow["stage_match_info"] == "合同字段匹配"
+
+    def test_backup_certificate_route(self, service):
+        """备选强信号路由"""
+        doc_info = DocumentInfo(
+            image_path="/tmp/test.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+        )
+        doc_info.metadata["route"] = "backup_certificate"
+        doc_info.metadata["primary"] = ["户口簿"]
+        doc_info.metadata["required"] = ["户主"]
+
+        result = ExtractionResult(
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            layer=ProcessingLayer.RULE,
+            fields={},
+            success=True,
+        )
+
+        flow = service._build_pipeline_flow(doc_info, result)
+        assert flow["active_stage"] == "stage1_5"
+        assert "户口簿" in flow["stage_match_info"]
+        assert "户主" in flow["stage_match_info"]
+
+
+class TestSetupLogging:
+    """测试 setup_logging 函数"""
+
+    def test_setup_logging_basic(self):
+        """基础日志配置不报错"""
+        from ocr_three_layer_hybrid.service import setup_logging
+        setup_logging(level="DEBUG")
+
+    def test_setup_logging_with_file(self):
+        """文件日志配置"""
+        import tempfile
+        from ocr_three_layer_hybrid.service import setup_logging
+
+        with tempfile.NamedTemporaryFile(suffix=".log", delete=False) as f:
+            log_path = f.name
+
+        try:
+            setup_logging(level="INFO", log_file=log_path)
+            # 日志文件应该存在
+            assert os.path.exists(log_path)
+        finally:
+            if os.path.exists(log_path):
+                os.unlink(log_path)

@@ -1,0 +1,710 @@
+{
+  "label": "改后(方案A后)",
+  "results": [
+    {
+      "image": "6ef5f1c4453b4010897e0e6cb1b69552.jpeg",
+      "case_id": "202406240010",
+      "cert_code": "divorce_agreement",
+      "expected_prefix": [
+        "离婚协议"
+      ],
+      "actual_type": "离婚协议书",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "e25491d291254874bf854b12515f701f.jpeg",
+      "case_id": "202402270015",
+      "cert_code": "id_card_front",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-正面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "4d9fd39863044a649884db86a1b1ecbf.jpg",
+      "case_id": "BBJZ-2026-0107026",
+      "cert_code": "id_card_front",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-正面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "aa43339a989f596ebc70a08875ad8a7.jpg",
+      "case_id": "202411070032",
+      "cert_code": "id_card_front",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-正面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "d128307774a04c9fa147570438fb6824.jpg",
+      "case_id": "BBJZ-2026-0129034",
+      "cert_code": "id_card_front",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-正面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "84f68919b9da48cdb2ca95c2862313d2.jpeg",
+      "case_id": "202404250008",
+      "cert_code": "id_card_front",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-正面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "027aa4151f75424c8529755ada5e6064.jpg",
+      "case_id": "BBJZ-2026-0119050",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "correct": false,
+      "route": "vlm_fallback_required"
+    },
+    {
+      "image": "7c61d257538e41cab0e1fc7c52993f89.jpeg",
+      "case_id": "202402280061",
+      "cert_code": "id_card_front",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-正面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "2157b6e08c7143e3b03b14f77bfe30b8.jpg",
+      "case_id": "BBJZ-2026-0116023",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "5cfff66a056c4baa95e10b9901523f2d.jpg",
+      "case_id": "BBJZ-2026-0126003",
+      "cert_code": "id_card_front",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-正面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "60434e6aacfb41fabafcbfd140687321.jpeg",
+      "case_id": "202406200020",
+      "cert_code": "id_card_back",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-背面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "2fb6cd4b67014477a635700b9295cbd8.jpg",
+      "case_id": "BBJZ-2026-0112065",
+      "cert_code": "id_card_back",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-背面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "2ae3836f341a8943eadc83706340720.jpg",
+      "case_id": "202411070032",
+      "cert_code": "id_card_back",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-背面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "169c2ae3c7d1132eb6c153ef88c604c.jpg",
+      "case_id": "202404260010",
+      "cert_code": "id_card_back",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-正面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "8a04a10a10f44328b57a32e5b50ac98c.jpg",
+      "case_id": "BBJZ-2026-0119050",
+      "cert_code": "id_card_back",
+      "expected_prefix": [
+        "身份证"
+      ],
+      "actual_type": "身份证-背面",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "bc254b4fef8c41caaaf7cab0f42ec553.jpeg",
+      "case_id": "202410040008",
+      "cert_code": "marriage",
+      "expected_prefix": [
+        "结婚证"
+      ],
+      "actual_type": "结婚证-内容页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "fccde46a90d642e79466e101cab848e5.jpeg",
+      "case_id": "202411060009",
+      "cert_code": "marriage",
+      "expected_prefix": [
+        "结婚证"
+      ],
+      "actual_type": "结婚证-内容页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "4032f69b8c0d4c3e9d4bbdee64f2963b.jpg",
+      "case_id": "BBJZ-2026-0116024",
+      "cert_code": "marriage",
+      "expected_prefix": [
+        "结婚证"
+      ],
+      "actual_type": "结婚证-盖章页",
+      "confidence": 0.85,
+      "correct": true,
+      "route": "additional_backup"
+    },
+    {
+      "image": "17938b5ed94a4789a753211c272d3b3a.jpg",
+      "case_id": "BBJZ-2026-0113059",
+      "cert_code": "divorce_certificate",
+      "expected_prefix": [
+        "离婚证"
+      ],
+      "actual_type": "离婚证-盖章页",
+      "confidence": 0.85,
+      "correct": true,
+      "route": "additional_backup"
+    },
+    {
+      "image": "76f20eea31d045f396720cb5b13968e2.jpeg",
+      "case_id": "202404170016",
+      "cert_code": "marriage",
+      "expected_prefix": [
+        "结婚证"
+      ],
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "correct": false,
+      "route": "vlm_fallback_required"
+    },
+    {
+      "image": "147d9a19313a4594afb35bffd7e3f2e0.jpg",
+      "case_id": "BBJZ-2025-1013085",
+      "cert_code": "divorce_certificate",
+      "expected_prefix": [
+        "离婚证"
+      ],
+      "actual_type": "离婚证-盖章页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "115b0f26466a4b76b1cb1b11b031e757.jpg",
+      "case_id": "BBJZ-2026-0128061",
+      "cert_code": "marriage",
+      "expected_prefix": [
+        "结婚证"
+      ],
+      "actual_type": "结婚证-盖章页",
+      "confidence": 0.85,
+      "correct": true,
+      "route": "additional_backup"
+    },
+    {
+      "image": "3f101385b95f452882e655e39d36cb9b.jpg",
+      "case_id": "BBJZ-2026-0112065",
+      "cert_code": "marriage",
+      "expected_prefix": [
+        "结婚证"
+      ],
+      "actual_type": "结婚证-盖章页",
+      "confidence": 0.85,
+      "correct": true,
+      "route": "additional_backup"
+    },
+    {
+      "image": "590357bd74744208856cfe64d8d0726b.jpg",
+      "case_id": "BBJZ-2026-0128021",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "233407adbfd09977056fc72703fd423.jpg",
+      "case_id": "202404260010",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "c34f94843f4d4f29ba21448b075448cc.jpeg",
+      "case_id": "202410090006",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-首页",
+      "confidence": 0.85,
+      "correct": true,
+      "route": "additional_backup"
+    },
+    {
+      "image": "1dba4be9c720462f932733f4d4bdfa2d.jpg",
+      "case_id": "BBJZ-2026-0116023",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "fff184b8d65b45efb3bd0010f3aa9bdd.jpeg",
+      "case_id": "202406200020",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "f1513c2721954c0389f7ce0184e47baf.jpg",
+      "case_id": "BBJZ-2026-0127041",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "310f98d8c8654cea8b7f3ad4ef2b3d93.jpeg",
+      "case_id": "202402190050",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "d0acb8b0db4643828e2e984aec682346.jpg",
+      "case_id": "BBJZ-2026-0122038",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "d31de234db7e442c9afb918004759878.jpeg",
+      "case_id": "202404010024",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "49d3a5c10ca748f0a7197b62e478e947.jpg",
+      "case_id": "BBJZ-2026-0121071",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "35608642705846be88406d5b3db558bd.jpeg",
+      "case_id": "202410040008",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "户口本-个人页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "cc1b63ce8572495f880c50b3d3b217a3.jpeg",
+      "case_id": "202407040017",
+      "cert_code": "hukou",
+      "expected_prefix": [
+        "户口本"
+      ],
+      "actual_type": "未知",
+      "confidence": 0.0,
+      "correct": false,
+      "route": "vlm_fallback_required"
+    },
+    {
+      "image": "2b7aee7102a44d579ea92d011dc9995a.jpeg",
+      "case_id": "202406240010",
+      "cert_code": "purchase_contract",
+      "expected_prefix": [
+        "购房合同"
+      ],
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "correct": true,
+      "route": "multi_doc_conflict_resolution"
+    },
+    {
+      "image": "ac7d32cfbee24cae8ef2b85a774ba4e7.jpeg",
+      "case_id": "202404010024",
+      "cert_code": "purchase_contract",
+      "expected_prefix": [
+        "购房合同"
+      ],
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "correct": true,
+      "route": "multi_doc_conflict_resolution"
+    },
+    {
+      "image": "d871f7f0785045e5a150a6b91c9d52ab.jpeg",
+      "case_id": "202404250008",
+      "cert_code": "purchase_contract",
+      "expected_prefix": [
+        "购房合同"
+      ],
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "correct": true,
+      "route": "multi_doc_conflict_resolution"
+    },
+    {
+      "image": "2bf5dbfd12c64176a3fd4185aa1ff96e.jpeg",
+      "case_id": "202407200006",
+      "cert_code": "purchase_contract",
+      "expected_prefix": [
+        "购房合同"
+      ],
+      "actual_type": "购房合同-内容页",
+      "confidence": 0.9,
+      "correct": true,
+      "route": "multi_doc_conflict_resolution"
+    },
+    {
+      "image": "3418882883ff478095435aa96e25a272.jpeg",
+      "case_id": "202402270015",
+      "cert_code": "purchase_contract",
+      "expected_prefix": [
+        "购房合同"
+      ],
+      "actual_type": "购房合同-内容页",
+      "confidence": 0.9,
+      "correct": true,
+      "route": "multi_doc_conflict_resolution"
+    },
+    {
+      "image": "25fc387ef8df4a068b6b70967873302e.jpeg",
+      "case_id": "202410220008",
+      "cert_code": "purchase_contract",
+      "expected_prefix": [
+        "购房合同"
+      ],
+      "actual_type": "购房合同",
+      "confidence": 0.9,
+      "correct": true,
+      "route": "multi_doc_conflict_resolution"
+    },
+    {
+      "image": "21721add1dee4fc6a9c2ff37dc6c5d45.jpeg",
+      "case_id": "202502050035",
+      "cert_code": "purchase_contract",
+      "expected_prefix": [
+        "购房合同"
+      ],
+      "actual_type": "购房合同-签署页",
+      "confidence": 0.6,
+      "correct": true,
+      "route": "contract_partial_match"
+    },
+    {
+      "image": "942b7e1a18664ee2ab542c98410cfd79.jpeg",
+      "case_id": "202410090006",
+      "cert_code": "purchase_contract",
+      "expected_prefix": [
+        "购房合同"
+      ],
+      "actual_type": "购房合同-内容页",
+      "confidence": 0.9,
+      "correct": true,
+      "route": "multi_doc_conflict_resolution"
+    },
+    {
+      "image": "e9505e57b2d646b9a06c121fe96a8a4a.jpg",
+      "case_id": "BBJZ-2026-0126003",
+      "cert_code": "stock_contract",
+      "expected_prefix": [
+        "存量房合同"
+      ],
+      "actual_type": "存量房合同-签署页",
+      "confidence": 0.85,
+      "correct": true,
+      "route": "contract_field_combination"
+    },
+    {
+      "image": "061e171a8b6e41bbbf2b1b562ec5aa26.jpg",
+      "case_id": "BBJZ-2026-0129058",
+      "cert_code": "fund_supervision_certificate",
+      "expected_prefix": [
+        "资金监管凭证"
+      ],
+      "actual_type": "资金监管凭证",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "a81d1cfaf102418f848c0626ad1b5eb6.jpg",
+      "case_id": "BBJZ-2026-0121076",
+      "cert_code": "property",
+      "expected_prefix": [
+        "不动产权证书"
+      ],
+      "actual_type": "不动产权证书-附图页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "bd1015fe78b84ec6bfa743504ca4a63c.jpg",
+      "case_id": "BBJZ-2026-0127041",
+      "cert_code": "property",
+      "expected_prefix": [
+        "不动产权证书"
+      ],
+      "actual_type": "不动产权证书-首页",
+      "confidence": 0.95,
+      "correct": true,
+      "route": "standard_certificate"
+    },
+    {
+      "image": "2f04ef2a8b5244c9b2ff926aa1d0e92b.jpeg",
+      "case_id": "202402190050",
+      "cert_code": "invoice",
+      "expected_prefix": [
+        "发票"
+      ],
+      "actual_type": "发票",
+      "confidence": 0.7,
+      "correct": true,
+      "route": "standard_document_weak"
+    },
+    {
+      "image": "0d7b511c1e7144f4bad4f60335aa1226.jpg",
+      "case_id": "BBJZ-2026-0129058",
+      "cert_code": "property",
+      "expected_prefix": [
+        "不动产权证书"
+      ],
+      "actual_type": "不动产权证书-内容页",
+      "confidence": 0.85,
+      "correct": true,
+      "route": "property_content_field_combination"
+    },
+    {
+      "image": "34314ee9baa24b398305efa8e1cc7ee7.jpg",
+      "case_id": "BBJZ-2026-0114007",
+      "cert_code": "fund_supervision",
+      "expected_prefix": [
+        "资金监管协议"
+      ],
+      "actual_type": "资金监管协议-首页",
+      "confidence": 0.85,
+      "correct": true,
+      "route": "contract_field_combination"
+    }
+  ],
+  "summary": {
+    "total": 50,
+    "correct": 47,
+    "accuracy": 94.0,
+    "by_type": {
+      "hukou": {
+        "n": 14,
+        "ok": 12,
+        "accuracy": 86
+      },
+      "purchase_contract": {
+        "n": 8,
+        "ok": 8,
+        "accuracy": 100
+      },
+      "id_card_front": {
+        "n": 7,
+        "ok": 7,
+        "accuracy": 100
+      },
+      "marriage": {
+        "n": 6,
+        "ok": 5,
+        "accuracy": 83
+      },
+      "id_card_back": {
+        "n": 5,
+        "ok": 5,
+        "accuracy": 100
+      },
+      "property": {
+        "n": 3,
+        "ok": 3,
+        "accuracy": 100
+      },
+      "divorce_certificate": {
+        "n": 2,
+        "ok": 2,
+        "accuracy": 100
+      },
+      "divorce_agreement": {
+        "n": 1,
+        "ok": 1,
+        "accuracy": 100
+      },
+      "stock_contract": {
+        "n": 1,
+        "ok": 1,
+        "accuracy": 100
+      },
+      "fund_supervision_certificate": {
+        "n": 1,
+        "ok": 1,
+        "accuracy": 100
+      },
+      "invoice": {
+        "n": 1,
+        "ok": 1,
+        "accuracy": 100
+      },
+      "fund_supervision": {
+        "n": 1,
+        "ok": 1,
+        "accuracy": 100
+      }
+    },
+    "errors": [
+      {
+        "image": "027aa4151f75424c8529755ada5e6064.jpg",
+        "case_id": "BBJZ-2026-0119050",
+        "cert_code": "hukou",
+        "expected_prefix": [
+          "户口本"
+        ],
+        "actual_type": "未知",
+        "confidence": 0.0,
+        "correct": false,
+        "route": "vlm_fallback_required"
+      },
+      {
+        "image": "76f20eea31d045f396720cb5b13968e2.jpeg",
+        "case_id": "202404170016",
+        "cert_code": "marriage",
+        "expected_prefix": [
+          "结婚证"
+        ],
+        "actual_type": "未知",
+        "confidence": 0.0,
+        "correct": false,
+        "route": "vlm_fallback_required"
+      },
+      {
+        "image": "cc1b63ce8572495f880c50b3d3b217a3.jpeg",
+        "case_id": "202407040017",
+        "cert_code": "hukou",
+        "expected_prefix": [
+          "户口本"
+        ],
+        "actual_type": "未知",
+        "confidence": 0.0,
+        "correct": false,
+        "route": "vlm_fallback_required"
+      }
+    ]
+  }
+}

@@ -41,7 +41,7 @@ OCR API 服务提供文档识别和字段提取能力，支持图片和PDF文件
 export OCR_API_KEYS="your_api_key_here"
 
 # 2. 启动服务
-python demo/server.py
+python -m ocr_api.ocr.server
 
 # 3. 健康检查
 curl http://localhost:8888/health
@@ -655,7 +655,7 @@ curl http://localhost:8888/api/v1/quota \
 设置 `DEBUG=true` 可启用额外的调试路由，用于本地开发和测试：
 
 ```bash
-DEBUG=true python demo/server.py
+DEBUG=true python -m ocr_api.ocr.server
 ```
 
 调试路由包括：
