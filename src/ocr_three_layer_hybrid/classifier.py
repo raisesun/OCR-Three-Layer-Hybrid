@@ -867,6 +867,23 @@ class KeywordDocumentClassifier(IDocumentClassifier):
                 "min_secondary": 4,
                 "route": "property_content_field_combination", "confidence": 0.85,
             }),
+            # 身份证字段组合兜底：OCR 文本没有"公民身份"但含"身份"+18位身份证号+多个身份证字段
+            # 比备选信号1（primary=公民身份）更宽松，能命中部分 OCR 识别不完整的情况
+            (DocumentType.ID_CARD, {
+                "primary": ["身份"],
+                "secondary": ["姓名", "性别", "民族", "出生", "住址"],
+                "min_secondary": 3,
+                "id_pattern": True,
+                "route": "id_card_field_combination", "confidence": 0.85,
+            }),
+            # 户口本字段组合兜底：OCR 文本没有"户别/户口本/常住人口登记卡"但有"户主"+多个户口本字段
+            # 比备选信号2（primary=户别）更宽松，能命中部分 OCR 识别不完整的情况
+            (DocumentType.HOUSEHOLD_REGISTER, {
+                "primary": ["户主"],
+                "secondary": ["籍贯", "婚姻状况", "民族", "出生日期", "承办人签章"],
+                "min_secondary": 3,
+                "route": "household_register_field_combination", "confidence": 0.85,
+            }),
         ]
 
         def make_matcher(config):

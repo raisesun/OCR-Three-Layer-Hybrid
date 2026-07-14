@@ -262,6 +262,20 @@ class PlanEPlusPipeline:
                     fallback_time,
                 )
 
+        # VLM 分类结果反馈：如果 doc_type 是 UNKNOWN 且 VLM 识别出了类型，替换 doc_type
+        # 注意：字段保持原样（用 UNKNOWN 通用 key_list 提取的），只是类型反映真实类型
+        # 这让最终结果能体现 VLM 的分类能力，便于监控/后续优化
+        if (
+            doc_info.doc_type == DocumentType.UNKNOWN
+            and result.vlm_classified_type is not None
+        ):
+            logger.info(
+                "[VLM分类替换] %s | UNKNOWN → %s",
+                Path(image_path).name,
+                result.vlm_classified_type.value,
+            )
+            result.doc_type = result.vlm_classified_type
+
         result.time_cost = time.time() - start_time  # 包含分类时间
         return result
 

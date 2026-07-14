@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-07-14 22:27:37",
+  "run_at": "2026-07-15 00:29:14",
   "sample_dirs": [
     "202406240010",
     "202411070032",
@@ -9,21 +9,23 @@
   "total": 119,
   "errors": [],
   "type_counts": {
-    "未知": 15,
+    "户口本": 6,
     "户口本-个人页": 15,
+    "身份证": 4,
     "身份证-正面": 12,
     "户口本-首页": 6,
     "离婚证-内容页": 4,
-    "离婚协议书": 3,
+    "离婚协议书": 4,
     "购房合同-内容页": 7,
     "身份证-背面": 12,
     "购房合同": 10,
     "离婚证-封面": 1,
     "发票": 3,
     "结婚证-内容页": 4,
+    "未知": 2,
     "购房合同-签署页": 3,
+    "不动产权证书": 3,
     "资金监管协议-首页": 2,
-    "户口本": 1,
     "资金监管协议-签章页": 4,
     "结婚证-盖章页": 3,
     "存量房合同-签署页": 2,
@@ -36,17 +38,17 @@
     "存量房合同": 1,
     "不动产权证书-首页": 1
   },
-  "total_time_s": 2738.7,
+  "total_time_s": 3060.3,
   "per_image": [
     {
       "image": "00adb3f7d86344199e82e5517c2da7ce.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "户口本",
       "confidence": 0.0,
-      "fields_count": 0,
+      "fields_count": 7,
       "success": true,
-      "vlm_classified_type": null,
-      "elapsed_s": 60.31
+      "vlm_classified_type": "户口本",
+      "elapsed_s": 21.08
     },
     {
       "image": "01973f43f32d4b7bb65e5f75cd66f085.jpeg",
@@ -56,7 +58,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 35.75
+      "elapsed_s": 35.29
     },
     {
       "image": "0440a09b3da540ee8ac79898e7e2191d.jpeg",
@@ -66,17 +68,17 @@
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 34.99
+      "elapsed_s": 34.32
     },
     {
       "image": "08df95f793434ded8b1f04dc19dea465.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "身份证",
       "confidence": 0.0,
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": "身份证",
-      "elapsed_s": 12.59
+      "elapsed_s": 12.89
     },
     {
       "image": "0af83d2ecbd34920b49bbd52db0241dc.jpeg",
@@ -86,7 +88,7 @@
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 32.37
+      "elapsed_s": 32.33
     },
     {
       "image": "0cf33e7a0ec946b99f7837a86a1d6df2.jpeg",
@@ -96,7 +98,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 37.54
+      "elapsed_s": 37.07
     },
     {
       "image": "0d95e0104a154cd9a7ef38f394bd15c1.jpeg",
@@ -106,7 +108,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 33.27
+      "elapsed_s": 32.99
     },
     {
       "image": "1122097e84804344b0aa4090335b6313.jpeg",
@@ -121,12 +123,12 @@
     {
       "image": "15e1946f6d3c462996235aff0edc04f7.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "身份证",
       "confidence": 0.0,
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": "身份证",
-      "elapsed_s": 14.09
+      "elapsed_s": 14.28
     },
     {
       "image": "17c800e843c249d081e1f35553c59d20.jpeg",
@@ -136,7 +138,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 35.46
+      "elapsed_s": 35.47
     },
     {
       "image": "1ac4e0149c164e4f98a2b07c61136c1d.jpeg",
@@ -146,7 +148,7 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 39.0
+      "elapsed_s": 39.18
     },
     {
       "image": "1f30ddad01774c658b399060cbcd8370.jpeg",
@@ -156,17 +158,17 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 32.3
+      "elapsed_s": 32.36
     },
     {
       "image": "206b8331b1344407b6056dc7935d8f66.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "身份证",
       "confidence": 0.0,
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": "身份证",
-      "elapsed_s": 12.59
+      "elapsed_s": 12.54
     },
     {
       "image": "23c77ff942224f27ab853656b9daae88.jpeg",
@@ -176,7 +178,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 34.59
+      "elapsed_s": 32.47
     },
     {
       "image": "265673de201d461d894449698d3d3ddf.jpeg",
@@ -186,7 +188,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 33.47
+      "elapsed_s": 33.27
     },
     {
       "image": "28b07272f91b4c1fbde72f9913c92c8d.jpeg",
@@ -196,7 +198,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 4.68
+      "elapsed_s": 4.69
     },
     {
       "image": "2b36235224ec462dae5b77b2f2398f11.jpeg",
@@ -206,7 +208,7 @@
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 32.42
+      "elapsed_s": 32.49
     },
     {
       "image": "2b7aee7102a44d579ea92d011dc9995a.jpeg",
@@ -216,7 +218,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 6.03
+      "elapsed_s": 5.98
     },
     {
       "image": "32e66f8b3115424ab7addceb94bb3ea3.jpeg",
@@ -226,7 +228,7 @@
       "fields_count": 7,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 13.44
+      "elapsed_s": 13.45
     },
     {
       "image": "51ccf0873a944f55a0037b02f8b6b16e.jpeg",
@@ -236,7 +238,7 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 9.22
+      "elapsed_s": 9.18
     },
     {
       "image": "553ba49e35fd4186a1b7aaf8cd59ebae.jpeg",
@@ -246,7 +248,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 37.47
+      "elapsed_s": 37.74
     },
     {
       "image": "64cef0d178ec4725b2d82b190f1e323d.jpeg",
@@ -256,7 +258,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 38.06
+      "elapsed_s": 38.25
     },
     {
       "image": "698903845acf493e9b8f4ece9b8091e8.jpeg",
@@ -266,7 +268,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 11.28
+      "elapsed_s": 12.2
     },
     {
       "image": "6bcc83ec96ff4e989a26ed582f7d556f.jpeg",
@@ -276,7 +278,7 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 36.59
+      "elapsed_s": 39.55
     },
     {
       "image": "6ef5f1c4453b4010897e0e6cb1b69552.jpeg",
@@ -286,7 +288,7 @@
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 35.62
+      "elapsed_s": 38.18
     },
     {
       "image": "75bdbc3341e3449daba0e26a29f9a654.jpeg",
@@ -296,17 +298,17 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 39.01
+      "elapsed_s": 41.41
     },
     {
       "image": "79ebeddfc52a4cd28cd2be1953ebf807.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "户口本",
       "confidence": 0.0,
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": "户口本",
-      "elapsed_s": 12.67
+      "elapsed_s": 16.21
     },
     {
       "image": "7ad28f4e283e4a8f9bb7c5d7cf82e184.jpeg",
@@ -316,7 +318,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 9.35
+      "elapsed_s": 10.27
     },
     {
       "image": "7af271544a2848b1b8297f6b8f2d98be.jpeg",
@@ -326,7 +328,7 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 9.22
+      "elapsed_s": 9.91
     },
     {
       "image": "7bfb1760068f41aaa13c8701cc12123b.jpeg",
@@ -336,7 +338,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 35.54
+      "elapsed_s": 37.92
     },
     {
       "image": "7ec77fc26d6d4104a2e624a62b0e6d93.jpeg",
@@ -346,7 +348,7 @@
       "fields_count": 7,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 13.41
+      "elapsed_s": 14.41
     },
     {
       "image": "82a94c95763640fda6260fb6fa0c488f.jpeg",
@@ -356,7 +358,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 11.27
+      "elapsed_s": 12.06
     },
     {
       "image": "894f53de81c346f9b2a1a2ef3bf625b0.jpeg",
@@ -366,7 +368,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 32.65
+      "elapsed_s": 34.94
     },
     {
       "image": "8b2bd515c57b44efb3421718e2046c30.jpeg",
@@ -376,7 +378,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 34.83
+      "elapsed_s": 36.97
     },
     {
       "image": "8e346c830b714cbb9e4fbf82f4f6ad8f.jpeg",
@@ -386,7 +388,7 @@
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 33.83
+      "elapsed_s": 36.5
     },
     {
       "image": "92b8e09191b2471d9cef88c21083320f.jpeg",
@@ -396,7 +398,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 10.2
+      "elapsed_s": 11.0
     },
     {
       "image": "93d4aa2175a94ac082b79d1d876b05d5.jpeg",
@@ -406,17 +408,17 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 32.4
+      "elapsed_s": 35.26
     },
     {
       "image": "96bab0574a3d471184df851b086a65b0.jpeg",
       "directory": "202406240010",
       "doc_type": "未知",
       "confidence": 0.0,
-      "fields_count": 8,
+      "fields_count": 0,
       "success": true,
-      "vlm_classified_type": "户口本",
-      "elapsed_s": 18.06
+      "vlm_classified_type": null,
+      "elapsed_s": 103.99
     },
     {
       "image": "97bd7f4df3a84edf8b74a0c9deba40da.jpeg",
@@ -426,17 +428,17 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 4.91
+      "elapsed_s": 5.84
     },
     {
       "image": "9d20b45d8bb545fcb68dde523f91cea9.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "户口本",
       "confidence": 0.0,
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": "户口本",
-      "elapsed_s": 12.45
+      "elapsed_s": 17.67
     },
     {
       "image": "a21918f7ae684dd3b84d0bc34336e056.jpeg",
@@ -446,7 +448,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 33.74
+      "elapsed_s": 37.2
     },
     {
       "image": "a2cc021dc9b14fb3869943667ea4be6b.jpeg",
@@ -456,7 +458,7 @@
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 6.34
+      "elapsed_s": 6.91
     },
     {
       "image": "b0b898946ba84f5890d4b7796bead0b4.jpeg",
@@ -466,7 +468,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 34.22
+      "elapsed_s": 36.75
     },
     {
       "image": "b359c8e437674d5c99d0f81570c0c547.jpeg",
@@ -476,17 +478,17 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 9.34
+      "elapsed_s": 10.14
     },
     {
       "image": "b8e98684d97f4a1db9f23641d1d0b440.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "户口本",
       "confidence": 0.0,
-      "fields_count": 12,
+      "fields_count": 11,
       "success": true,
       "vlm_classified_type": "户口本",
-      "elapsed_s": 19.9
+      "elapsed_s": 29.07
     },
     {
       "image": "c038babb894d4b69953cab51cdeb7a7d.jpeg",
@@ -496,17 +498,17 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 5.38
+      "elapsed_s": 6.22
     },
     {
       "image": "c2cedc9cde6d474aae1d4258686061fc.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "身份证",
       "confidence": 0.0,
-      "fields_count": 10,
+      "fields_count": 6,
       "success": true,
       "vlm_classified_type": "身份证",
-      "elapsed_s": 22.87
+      "elapsed_s": 20.14
     },
     {
       "image": "c34aa43551ce46a18e0cf6bacf35f21b.jpeg",
@@ -516,17 +518,17 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 5.02
+      "elapsed_s": 5.63
     },
     {
       "image": "c7afe977f72849f9bdde4f89a9a8dcd8.jpeg",
       "directory": "202406240010",
-      "doc_type": "未知",
+      "doc_type": "户口本",
       "confidence": 0.0,
-      "fields_count": 10,
+      "fields_count": 11,
       "success": true,
       "vlm_classified_type": "户口本",
-      "elapsed_s": 17.76
+      "elapsed_s": 30.34
     },
     {
       "image": "ce00f75ecdcd499eb62adb9bc0641cbb.jpeg",
@@ -536,7 +538,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 6.15
+      "elapsed_s": 7.06
     },
     {
       "image": "d05a1fc2abd740c99feefc67b9a63f8a.jpeg",
@@ -546,7 +548,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 35.44
+      "elapsed_s": 38.73
     },
     {
       "image": "d670ea7ac0ea4a229b8ac9b637e79efa.jpeg",
@@ -556,7 +558,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 10.22
+      "elapsed_s": 11.67
     },
     {
       "image": "ec4a038f51f34d4c94dafa24debfd650.jpeg",
@@ -566,7 +568,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 35.43
+      "elapsed_s": 39.58
     },
     {
       "image": "ecff12d40da04afcba8d72de42d2f871.jpeg",
@@ -576,7 +578,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 7.0
+      "elapsed_s": 7.78
     },
     {
       "image": "eed315f6bdc943ac95c7c6270c4e579b.jpeg",
@@ -586,7 +588,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 6.99
+      "elapsed_s": 7.62
     },
     {
       "image": "fba84fcc04684df5aa61c897e7f8506e.jpeg",
@@ -596,7 +598,7 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 11.93
+      "elapsed_s": 13.25
     },
     {
       "image": "ff263d84fe5f4bfe981376a02e74c59c.jpeg",
@@ -606,17 +608,17 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 35.36
+      "elapsed_s": 38.67
     },
     {
       "image": "05b766d1b3be02e7a05272d243c9a80.jpg",
       "directory": "202411070032",
-      "doc_type": "未知",
+      "doc_type": "离婚协议书",
       "confidence": 0.0,
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": "离婚协议书",
-      "elapsed_s": 42.28
+      "elapsed_s": 50.55
     },
     {
       "image": "2ae3836f341a8943eadc83706340720.jpg",
@@ -626,7 +628,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 32.85
+      "elapsed_s": 36.49
     },
     {
       "image": "3d4cc9221e1f90a83718a2de38208d8.jpg",
@@ -636,7 +638,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 34.64
+      "elapsed_s": 39.1
     },
     {
       "image": "75d78e11081c1816a634b5e80140db9.jpg",
@@ -646,7 +648,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 34.14
+      "elapsed_s": 38.36
     },
     {
       "image": "aa43339a989f596ebc70a08875ad8a7.jpg",
@@ -656,17 +658,17 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 32.55
+      "elapsed_s": 35.94
     },
     {
       "image": "047e079fea4d42db8a6f62b7eb305e69.jpg",
       "directory": "BBJZ-2026-0121076",
-      "doc_type": "未知",
+      "doc_type": "不动产权证书",
       "confidence": 0.0,
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": "不动产权证书",
-      "elapsed_s": 24.22
+      "elapsed_s": 29.23
     },
     {
       "image": "074555573e5f48ba9cbe94226fd71725.jpg",
@@ -676,7 +678,7 @@
       "fields_count": 5,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 22.27
+      "elapsed_s": 25.38
     },
     {
       "image": "0c219527e2a14760bbf787c0d6630d1c.jpg",
@@ -686,7 +688,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.38
+      "elapsed_s": 26.18
     },
     {
       "image": "205a04b6840c47859a57eaaf3cd8a4eb.jpg",
@@ -696,7 +698,7 @@
       "fields_count": 13,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.43
+      "elapsed_s": 26.17
     },
     {
       "image": "21af77ff573947ed847daaa79fe86f12.jpg",
@@ -706,7 +708,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.36
+      "elapsed_s": 21.2
     },
     {
       "image": "307f1ef61cfd48949bab98fc3e804e77.jpg",
@@ -716,7 +718,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 21.88
+      "elapsed_s": 24.35
     },
     {
       "image": "36c1271ec0e54a37889a9366026381e6.jpg",
@@ -726,17 +728,17 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.72
+      "elapsed_s": 21.75
     },
     {
       "image": "3a7bf709c04a4fc6a6a7a7633bbf070d.jpg",
       "directory": "BBJZ-2026-0121076",
-      "doc_type": "未知",
+      "doc_type": "不动产权证书",
       "confidence": 0.0,
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": "不动产权证书",
-      "elapsed_s": 29.14
+      "elapsed_s": 34.9
     },
     {
       "image": "46826a8864d24b40996c632c4a2f96a6.jpg",
@@ -746,7 +748,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 20.59
+      "elapsed_s": 23.27
     },
     {
       "image": "4aa92e52575748228dd4924cf5e721d4.jpg",
@@ -756,7 +758,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.42
+      "elapsed_s": 21.69
     },
     {
       "image": "6712dacf6e21464c8b6e14dc43c52c18.jpg",
@@ -766,7 +768,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.37
+      "elapsed_s": 26.21
     },
     {
       "image": "859433e625fc4740a71bfd39c07b90ca.jpg",
@@ -776,17 +778,17 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.66
+      "elapsed_s": 21.59
     },
     {
       "image": "8b4ba7e2957a4a18845370ec06470841.jpg",
       "directory": "BBJZ-2026-0121076",
-      "doc_type": "未知",
+      "doc_type": "不动产权证书",
       "confidence": 0.0,
       "fields_count": 12,
       "success": true,
       "vlm_classified_type": "不动产权证书",
-      "elapsed_s": 33.88
+      "elapsed_s": 47.12
     },
     {
       "image": "9056489425ef4ce8965dae56f673d916.jpg",
@@ -796,7 +798,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 20.4
+      "elapsed_s": 23.33
     },
     {
       "image": "926bf2fc82754b379dca411a8e5f9b48.jpg",
@@ -806,7 +808,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.14
+      "elapsed_s": 26.2
     },
     {
       "image": "92e140e673ae4384a7ffe64ccd745831.jpg",
@@ -816,7 +818,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.33
+      "elapsed_s": 26.2
     },
     {
       "image": "9541a6d2a59c4fce8e6a473c3b72119a.jpg",
@@ -826,7 +828,7 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 20.15
+      "elapsed_s": 21.95
     },
     {
       "image": "a81d1cfaf102418f848c0626ad1b5eb6.jpg",
@@ -836,7 +838,7 @@
       "fields_count": 8,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 37.53
+      "elapsed_s": 47.7
     },
     {
       "image": "ab2e66ed5ddc42a0a8a5ac391a9c13ce.jpg",
@@ -846,7 +848,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.3
+      "elapsed_s": 26.2
     },
     {
       "image": "b0b09e57756c46f393e46e0a34043689.jpg",
@@ -856,7 +858,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 21.77
+      "elapsed_s": 24.33
     },
     {
       "image": "b2fd0182dd804896857c49964dd3388e.jpg",
@@ -866,7 +868,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 20.97
+      "elapsed_s": 24.2
     },
     {
       "image": "bc58542dc988400e85783c891e8b2359.jpg",
@@ -876,7 +878,7 @@
       "fields_count": 8,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 22.65
+      "elapsed_s": 25.33
     },
     {
       "image": "c94c4aea349b4f8cb9ddc61e1c553629.jpg",
@@ -886,7 +888,7 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.72
+      "elapsed_s": 21.77
     },
     {
       "image": "ca1bb41cea5046b6895b5997c13a54de.jpg",
@@ -896,7 +898,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.3
+      "elapsed_s": 21.54
     },
     {
       "image": "dd16b99d10e74201a25d8b206ed72745.jpg",
@@ -906,7 +908,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.54
+      "elapsed_s": 21.86
     },
     {
       "image": "e3ccee7b3ec6411e8314cf102580f95d.jpg",
@@ -916,7 +918,7 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 25.98
+      "elapsed_s": 29.36
     },
     {
       "image": "ead20173ac464b47afc7ad00d8278f46.jpg",
@@ -926,7 +928,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.01
+      "elapsed_s": 25.69
     },
     {
       "image": "eb083b95ae7d4bf5a0350d21213e7fb1.jpg",
@@ -936,7 +938,7 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.73
+      "elapsed_s": 21.94
     },
     {
       "image": "eb96d4aa64114a01985b8e1ae5945fa3.jpg",
@@ -946,7 +948,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.42
+      "elapsed_s": 21.92
     },
     {
       "image": "ecce76a1a5c04455bbb3536c85907340.jpg",
@@ -956,7 +958,7 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.55
+      "elapsed_s": 21.58
     },
     {
       "image": "efd106a88ec94eeca9e95cc38d50f483.jpg",
@@ -966,7 +968,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 22.83
+      "elapsed_s": 25.33
     },
     {
       "image": "0374150f639e4f5ea3f39316c3aa21ec.jpg",
@@ -976,7 +978,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.28
+      "elapsed_s": 26.19
     },
     {
       "image": "0453042b80904109a02c5f61313fc04b.jpg",
@@ -986,7 +988,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 22.96
+      "elapsed_s": 25.75
     },
     {
       "image": "061e171a8b6e41bbbf2b1b562ec5aa26.jpg",
@@ -996,7 +998,7 @@
       "fields_count": 8,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 22.21
+      "elapsed_s": 24.84
     },
     {
       "image": "0d7b511c1e7144f4bad4f60335aa1226.jpg",
@@ -1006,7 +1008,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 21.76
+      "elapsed_s": 25.08
     },
     {
       "image": "0fec7809169e44be8247a85479cc00d3.jpg",
@@ -1016,7 +1018,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.26
+      "elapsed_s": 21.6
     },
     {
       "image": "1ac45e60f4964ec7a083345a4b6d49c4.jpg",
@@ -1026,7 +1028,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 22.29
+      "elapsed_s": 25.17
     },
     {
       "image": "1affa4c76fb64b94ba874b049da98b3a.jpg",
@@ -1036,7 +1038,7 @@
       "fields_count": 13,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.41
+      "elapsed_s": 26.45
     },
     {
       "image": "395e11c3fdb841eb88fd229f0e4dc194.jpg",
@@ -1046,7 +1048,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 21.08
+      "elapsed_s": 23.71
     },
     {
       "image": "3b76b566a72648ef83aa717bcf83c7d3.jpg",
@@ -1056,7 +1058,7 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.66
+      "elapsed_s": 22.27
     },
     {
       "image": "3effc7f7993441c18832de51b9280a53.jpg",
@@ -1066,7 +1068,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.35
+      "elapsed_s": 21.58
     },
     {
       "image": "41076e0c3dca4ad7830578a990811920.jpg",
@@ -1076,7 +1078,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.64
+      "elapsed_s": 22.12
     },
     {
       "image": "416c46782af34a57bca7b00ffc999bd0.jpg",
@@ -1086,7 +1088,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.34
+      "elapsed_s": 21.7
     },
     {
       "image": "4671277ac67b47b3ba44502e93fdace0.jpg",
@@ -1096,7 +1098,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.23
+      "elapsed_s": 26.26
     },
     {
       "image": "4767136054144f5883d8128ab202dad5.jpg",
@@ -1106,7 +1108,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 26.38
+      "elapsed_s": 29.77
     },
     {
       "image": "4cab888428d048cdbb080fbeec68a5bf.jpg",
@@ -1116,7 +1118,7 @@
       "fields_count": 0,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 24.52
+      "elapsed_s": 27.54
     },
     {
       "image": "580863d905634c3b91817a95838a305d.jpg",
@@ -1126,7 +1128,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 21.11
+      "elapsed_s": 23.6
     },
     {
       "image": "66f13201fbb44b558fee217e38729e46.jpg",
@@ -1136,7 +1138,7 @@
       "fields_count": 2,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.68
+      "elapsed_s": 22.12
     },
     {
       "image": "732a8d05d2ac450fa6061a8821e0180c.jpg",
@@ -1146,7 +1148,7 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 24.53
+      "elapsed_s": 27.74
     },
     {
       "image": "74cce81c4c304ae097e0023ca2857e43.jpg",
@@ -1156,7 +1158,7 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.7
+      "elapsed_s": 22.11
     },
     {
       "image": "80a4224f1e3e45b286ce4b44ad80089b.jpg",
@@ -1166,7 +1168,7 @@
       "fields_count": 6,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 19.71
+      "elapsed_s": 22.21
     },
     {
       "image": "861349234c56426cb2700acaf4fa6f45.jpg",
@@ -1176,7 +1178,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 20.16
+      "elapsed_s": 22.81
     },
     {
       "image": "871c0af5e5db4ffebc96abb49b289699.jpg",
@@ -1186,7 +1188,7 @@
       "fields_count": 3,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 22.37
+      "elapsed_s": 25.46
     },
     {
       "image": "8d3c3bd962324e76b11a20fa0577b857.jpg",
@@ -1196,7 +1198,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 22.75
+      "elapsed_s": 25.87
     },
     {
       "image": "933315e39a234c66a2a370367d6e9c6d.jpg",
@@ -1206,7 +1208,7 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 25.43
+      "elapsed_s": 28.63
     },
     {
       "image": "a612b67bd1684c1cb34c9c362392ff31.jpg",
@@ -1216,7 +1218,7 @@
       "fields_count": 4,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 23.0
+      "elapsed_s": 26.0
     },
     {
       "image": "c9428e9f67394e98a9d2d0eff955613a.jpg",
@@ -1226,7 +1228,7 @@
       "fields_count": 1,
       "success": true,
       "vlm_classified_type": null,
-      "elapsed_s": 20.4
+      "elapsed_s": 23.05
     }
   ]
 }

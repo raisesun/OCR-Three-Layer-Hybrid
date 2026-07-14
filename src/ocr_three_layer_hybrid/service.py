@@ -280,6 +280,17 @@ class OCRService:
         result = self._pipeline.process(image_path, ocr_texts, doc_info=doc_info)
         extract_time = time.time() - extract_start
 
+        # 如果 pipeline 内部替换了 doc_type（如 VLM 分类结果反馈），同步到 doc_info
+        # 让 classification dict 反映最终类型（而不是原始分类结果）
+        if result.doc_type != doc_info.doc_type:
+            logger.info(
+                "[类型同步] %s | doc_info %s → result %s",
+                img_name,
+                doc_info.doc_type.value,
+                result.doc_type.value,
+            )
+            doc_info.doc_type = result.doc_type
+
         total_ms = round((classify_time + extract_time) * 1000, 1)
         logger.info(
             "[处理] %s | 类型=%s | 路由=%s | 层=%s | 分类=%.1fms | 提取=%.1fms | 总计=%.1fms",
