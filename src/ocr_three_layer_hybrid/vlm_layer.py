@@ -130,6 +130,9 @@ class VLMExtractionLayer(IExtractionLayer):
                     VLM_ALIASES = {
                         "房产证": DocumentType.PROPERTY_CERTIFICATE,
                         "不动产权证": DocumentType.PROPERTY_CERTIFICATE,
+                        "附图页": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+                        "房产分户图": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+                        "宗地图": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
                         "身份证正面": DocumentType.ID_CARD_FRONT,
                         "身份证背面": DocumentType.ID_CARD_BACK,
                         "身份证反面": DocumentType.ID_CARD_BACK,
@@ -150,6 +153,12 @@ class VLMExtractionLayer(IExtractionLayer):
                     if vlm_doc_type_str in VLM_ALIASES:
                         vlm_classified_type = VLM_ALIASES[vlm_doc_type_str]
                     else:
+                        # startswith 匹配（VLM 可能返回带括号说明的长字符串，如"附图页（房产证...）"）
+                        for alias, dt in VLM_ALIASES.items():
+                            if vlm_doc_type_str.startswith(alias):
+                                vlm_classified_type = dt
+                                break
+                    if vlm_classified_type is None:
                         # 精确匹配 DocumentType 的中文 value
                         for dt in DocumentType:
                             if dt.value == vlm_doc_type_str:
