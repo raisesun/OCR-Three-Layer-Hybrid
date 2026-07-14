@@ -141,7 +141,8 @@ class RuleExtractionLayer(IExtractionLayer):
             ):
                 fields = self._personal_id_extractor.extract_id_card(full_text, key_list)
             elif doc_info.doc_type == DocumentType.ID_CARD_BACK:
-                fields = self._personal_id_extractor.extract_id_card_back(full_text, key_list)
+                # 身份证背面字段（签发机关+有效期限）由 extract_id_card 统一处理
+                fields = self._personal_id_extractor.extract_id_card(full_text, key_list)
             elif doc_info.doc_type in [
                 DocumentType.MARRIAGE_CERTIFICATE,
                 DocumentType.MARRIAGE_CERTIFICATE_CONTENT,
