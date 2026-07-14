@@ -204,6 +204,34 @@ class TestVLMExtractionLayerUnit:
         assert result.success is False
         assert "不存在" in result.error_message or "not found" in result.error_message.lower()
 
+    @patch("ocr_three_layer_hybrid.vlm_layer.VLMExtractionLayer._call_vlm")
+    def test_extract_unknown_with_doc_type_feedback(self, mock_call_vlm, tmp_path):
+        """轻量修复: UNKNOWN文档VLM返回的doc_type应被反馈到结果中"""
+        layer = self._create_layer()
+        mock_call_vlm.return_value = {
+            "doc_type": "HOUSEHOLD_REGISTER",
+            "confidence": 0.95,
+            "fields": {"姓名": "张三", "户主姓名": "李四"},
+        }
+
+        test_image = tmp_path / "unknown.jpg"
+        test_image.write_bytes(b"fake image content")
+
+        info = DocumentInfo(
+            image_path=str(test_image),
+            doc_type=DocumentType.UNKNOWN,
+        )
+        result = layer.extract(info, ["文档类型", "编号", "日期"])
+
+        assert result.success is True
+        # 原始doc_type保持不变
+        assert result.doc_type == DocumentType.UNKNOWN
+        # VLM分类结果反馈到vlm_classified_type
+        assert result.vlm_classified_type == DocumentType.HOUSEHOLD_REGISTER
+        # 嵌套字段被正确提取
+        assert result.fields["姓名"] == "张三"
+        assert result.fields["户主姓名"] == "李四"
+
 
 @pytest.mark.slow
 @pytest.mark.vlm

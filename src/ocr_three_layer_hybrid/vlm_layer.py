@@ -107,6 +107,16 @@ class VLMExtractionLayer(IExtractionLayer):
             # 解析响应
             fields = self._parse_json_response(vlm_response, key_list)
 
+            # 轻量修复：让UNKNOWN文档的VLM分类结果反馈回系统
+            # 当前UNKNOWN prompt让VLM同时做分类+提取，但VLM返回的doc_type被丢弃。
+            # 这里提取VLM识别的doc_type，记录到结果中（用于日志/监控/后续优化）。
+            vlm_classified_type = None
+            if isinstance(vlm_response, dict) and "doc_type" in vlm_response:
+                try:
+                    vlm_classified_type = DocumentType[vlm_response["doc_type"]]
+                except (KeyError, AttributeError, TypeError):
+                    pass
+
             return ExtractionResult(
                 doc_type=doc_info.doc_type,
                 layer=ProcessingLayer.VLM,
@@ -114,6 +124,7 @@ class VLMExtractionLayer(IExtractionLayer):
                 success=True,
                 time_cost=time.time() - start_time,
                 raw_text=str(vlm_response)[:500],
+                vlm_classified_type=vlm_classified_type,
             )
         except Exception as e:
             return ExtractionResult(

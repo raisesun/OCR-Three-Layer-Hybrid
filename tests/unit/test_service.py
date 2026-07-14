@@ -10,6 +10,7 @@
 
 import os
 import pytest
+from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from ocr_three_layer_hybrid.interfaces import (
     DocumentType,
@@ -201,6 +202,136 @@ class TestProcessMultiPageEmpty:
         assert result["extraction"]["success"] is False
         assert result["extraction"]["error_message"] == "没有图片"
         assert result["timing"]["total_ms"] == 0
+
+
+class TestMultiPageTypeInheritance:
+    """方案C: 多页协同 - UNKNOWN页从首页继承基础类型"""
+
+    @pytest.fixture
+    def service(self):
+        mock_path_cls = Mock()
+        mock_path_inst = Mock()
+        mock_path_inst.exists.return_value = True
+        mock_path_cls.return_value = mock_path_inst
+        with patch("ocr_three_layer_hybrid.service.VLMClient"), \
+             patch("ocr_three_layer_hybrid.service.KeywordDocumentClassifier"), \
+             patch("ocr_three_layer_hybrid.service.VLMExtractionLayer"), \
+             patch("ocr_three_layer_hybrid.service.PlanEPlusPipeline"), \
+             patch("ocr_three_layer_hybrid.rule_layer.RuleExtractionLayer"), \
+             patch("ocr_three_layer_hybrid.multi_page_utils.Path", mock_path_cls):
+            from ocr_three_layer_hybrid.service import OCRService
+            svc = OCRService.__new__(OCRService)
+            svc._classifier = Mock()
+            svc._pipeline = Mock()
+            svc.run_ocr = Mock(return_value="mock ocr text")
+            yield svc
+
+    def test_unknown_page_inherits_first_page_type(self, service):
+        """后续页UNKNOWN + 首页高置信度 -> 继承首页基础类型"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.95,
+        )
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.0,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            layer=ProcessingLayer.RULE,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        calls = service._pipeline.process.call_args_list
+        assert len(calls) >= 2
+        second_doc = calls[1].kwargs["doc_info"]
+        # 继承后应为细分类型 HOUSEHOLD_REGISTER_CONTENT（与首页相同）
+        assert second_doc.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT
+        assert second_doc.metadata.get("inherited_from_first_page") is True
+        # 置信度应为首页 * 0.9
+        assert abs(second_doc.confidence - 0.95 * 0.9) < 0.01
+
+    def test_unknown_page_no_inherit_low_confidence(self, service):
+        """首页置信度 < 0.85 -> 不继承，保持UNKNOWN"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.7,
+        )
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.0,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.UNKNOWN,
+            layer=ProcessingLayer.VLM,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        calls = service._pipeline.process.call_args_list
+        assert len(calls) >= 2
+        second_doc = calls[1].kwargs["doc_info"]
+        # 不继承，仍是 UNKNOWN
+        assert second_doc.doc_type == DocumentType.UNKNOWN
+        assert not second_doc.metadata.get("inherited_from_first_page")
+
+    def test_unknown_page_no_inherit_first_page_unknown(self, service):
+        """首页本身是UNKNOWN -> 不继承（首页基础类型也是UNKNOWN）"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.95,
+        )
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.UNKNOWN,
+            confidence=0.0,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.UNKNOWN,
+            layer=ProcessingLayer.VLM,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        calls = service._pipeline.process.call_args_list
+        assert len(calls) >= 2
+        second_doc = calls[1].kwargs["doc_info"]
+        # 首页UNKNOWN -> _get_base_doc_type返回UNKNOWN -> 不继承
+        assert second_doc.doc_type == DocumentType.UNKNOWN
+        assert not second_doc.metadata.get("inherited_from_first_page")
+
+    def test_non_unknown_page_no_inheritance(self, service):
+        """后续页不是UNKNOWN -> 不触发继承，保持原分类"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.95,
+        )
+        # 后续页正常分类为户口本内容页（不是UNKNOWN）
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.9,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            layer=ProcessingLayer.RULE,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        calls = service._pipeline.process.call_args_list
+        assert len(calls) >= 2
+        second_doc = calls[1].kwargs["doc_info"]
+        # 保持原分类 HOUSEHOLD_REGISTER_CONTENT，不继承
+        assert second_doc.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT
+        assert not second_doc.metadata.get("inherited_from_first_page")
 
 
 class TestBuildClassificationDict:

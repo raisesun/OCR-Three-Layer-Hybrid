@@ -507,6 +507,46 @@ class OCRService:
                 ocr_texts_for_classify = [ocr_text_for_classify] if ocr_text_for_classify else []
                 page_doc_info = self._classifier.classify(img_path, ocr_texts_for_classify)
 
+                # ★ 方案C：多页协同 - UNKNOWN页从首页继承细分类型 ★
+                # 仅在以下条件同时满足时继承：
+                #   1. 当前页分类为 UNKNOWN
+                #   2. 首页置信度 >= 0.85（首页分类可信）
+                #   3. 首页细分类型非 UNKNOWN（首页有明确类型）
+                #   4. 继承的类型有 field_config 且不是 skip（确保能被处理）
+                # 注意：继承细分类型（非基础类型），因为 field_config 只配置了细分类型。
+                # 避免重蹈 commit 3925d64 "全页复用首页" 的 bug：仅 UNKNOWN 页继承。
+                if (
+                    page_doc_info.doc_type == DocumentType.UNKNOWN
+                    and first_page_doc_info.confidence >= 0.85
+                ):
+                    inherited_type = first_page_doc_info.doc_type
+                    inherited_config = field_configs.get(inherited_type)
+                    if (
+                        inherited_type != DocumentType.UNKNOWN
+                        and inherited_config is not None
+                        and not inherited_config.skip
+                    ):
+                        logger.info(
+                            "[多页] 页 %d | 分类为UNKNOWN | 首页类型=%s(conf=%.2f) → 继承为%s",
+                            page_idx,
+                            first_page_doc_info.doc_type.value,
+                            first_page_doc_info.confidence,
+                            inherited_type.value,
+                        )
+                        page_doc_info = DocumentInfo(
+                            image_path=page_doc_info.image_path,
+                            doc_type=inherited_type,
+                            page_type=page_doc_info.page_type,
+                            ocr_texts=page_doc_info.ocr_texts,
+                            confidence=first_page_doc_info.confidence * 0.9,
+                            metadata={
+                                **page_doc_info.metadata,
+                                "inherited_from_first_page": True,
+                                "original_doc_type": "UNKNOWN",
+                                "inherited_doc_type": inherited_type.value,
+                            },
+                        )
+
             current_doc_type = page_doc_info.doc_type
 
             # === 2. 获取该细分类型的字段配置 ===
