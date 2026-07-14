@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCR 文档类型分类预览</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 2rem;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #1d1d1f;
+  }
+  .subtitle {
+    color: #86868b;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+  }
+  .group {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .group h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: #1d1d1f;
+    border-left: 4px solid #0071e3;
+    padding-left: 0.75rem;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    border: 1px solid #e5e5ea;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .card.no-image {
+    opacity: 0.5;
+  }
+  .type-name {
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: #f5f5f7;
+    border-bottom: 1px solid #e5e5ea;
+  }
+  .card a {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+  .card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    background: #e5e5ea;
+  }
+  .fallback {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f7;
+    color: #86868b;
+    font-size: 0.9rem;
+  }
+  .no-sample {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #86868b;
+    font-size: 0.85rem;
+  }
+  .stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .stat-label {
+    font-size: 0.85rem;
+    color: #86868b;
+  }
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #0071e3;
+  }
+</style>
+</head>
+<body>
+<h1>📚 OCR 文档类型分类预览</h1>
+<p class="subtitle">基于回归测试结果（119 张业务样本）生成的分类/细分类型示例库</p>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">总类型数</div>
+    <div class="stat-value">28</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">有示例图片</div>
+    <div class="stat-value">28</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">基础分类</div>
+    <div class="stat-value">11</div>
+  </div>
+</div>
+
+
+    <section class="group">
+      <h2>身份证</h2>
+      <div class="cards">
+        
+        <div class="card">
+          <div class="type-name">身份证</div>
+          <a href="images/身份证.jpeg" target="_blank" rel="noopener">
+            <img src="images/身份证.jpeg" alt="身份证" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">身份证-正面</div>
+          <a href="images/身份证_正面.jpeg" target="_blank" rel="noopener">
+            <img src="images/身份证_正面.jpeg" alt="身份证-正面" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">身份证-背面</div>
+          <a href="images/身份证_背面.jpeg" target="_blank" rel="noopener">
+            <img src="images/身份证_背面.jpeg" alt="身份证-背面" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>户口本</h2>
+      <div class="cards">
+        
+        <div class="card">
+          <div class="type-name">户口本</div>
+          <a href="images/户口本.jpeg" target="_blank" rel="noopener">
+            <img src="images/户口本.jpeg" alt="户口本" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">户口本-首页</div>
+          <a href="images/户口本_首页.jpeg" target="_blank" rel="noopener">
+            <img src="images/户口本_首页.jpeg" alt="户口本-首页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">户口本-个人页</div>
+          <a href="images/户口本_个人页.jpeg" target="_blank" rel="noopener">
+            <img src="images/户口本_个人页.jpeg" alt="户口本-个人页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>结婚证</h2>
+      <div class="cards">
+        
+        <div class="card no-image">
+          <div class="type-name">结婚证</div>
+          <div class="no-sample">（无示例）</div>
+        </div>
+        <div class="card no-image">
+          <div class="type-name">结婚证-封面</div>
+          <div class="no-sample">（无示例）</div>
+        </div>
+        <div class="card">
+          <div class="type-name">结婚证-内容页</div>
+          <a href="images/结婚证_内容页.jpeg" target="_blank" rel="noopener">
+            <img src="images/结婚证_内容页.jpeg" alt="结婚证-内容页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">结婚证-盖章页</div>
+          <a href="images/结婚证_盖章页.jpg" target="_blank" rel="noopener">
+            <img src="images/结婚证_盖章页.jpg" alt="结婚证-盖章页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>离婚证</h2>
+      <div class="cards">
+        
+        <div class="card no-image">
+          <div class="type-name">离婚证</div>
+          <div class="no-sample">（无示例）</div>
+        </div>
+        <div class="card">
+          <div class="type-name">离婚证-封面</div>
+          <a href="images/离婚证_封面.jpeg" target="_blank" rel="noopener">
+            <img src="images/离婚证_封面.jpeg" alt="离婚证-封面" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">离婚证-内容页</div>
+          <a href="images/离婚证_内容页.jpeg" target="_blank" rel="noopener">
+            <img src="images/离婚证_内容页.jpeg" alt="离婚证-内容页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card no-image">
+          <div class="type-name">离婚证-盖章页</div>
+          <div class="no-sample">（无示例）</div>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>不动产权证书</h2>
+      <div class="cards">
+        
+        <div class="card">
+          <div class="type-name">不动产权证书</div>
+          <a href="images/不动产权证书.jpg" target="_blank" rel="noopener">
+            <img src="images/不动产权证书.jpg" alt="不动产权证书" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">不动产权证书-首页</div>
+          <a href="images/不动产权证书_首页.jpg" target="_blank" rel="noopener">
+            <img src="images/不动产权证书_首页.jpg" alt="不动产权证书-首页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">不动产权证书-内容页</div>
+          <a href="images/不动产权证书_内容页.jpg" target="_blank" rel="noopener">
+            <img src="images/不动产权证书_内容页.jpg" alt="不动产权证书-内容页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">不动产权证书-附图页</div>
+          <a href="images/不动产权证书_附图页.jpg" target="_blank" rel="noopener">
+            <img src="images/不动产权证书_附图页.jpg" alt="不动产权证书-附图页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>发票</h2>
+      <div class="cards">
+        
+        <div class="card">
+          <div class="type-name">发票</div>
+          <a href="images/发票.jpeg" target="_blank" rel="noopener">
+            <img src="images/发票.jpeg" alt="发票" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>购房合同</h2>
+      <div class="cards">
+        
+        <div class="card">
+          <div class="type-name">购房合同</div>
+          <a href="images/购房合同.jpeg" target="_blank" rel="noopener">
+            <img src="images/购房合同.jpeg" alt="购房合同" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card no-image">
+          <div class="type-name">购房合同-首页</div>
+          <div class="no-sample">（无示例）</div>
+        </div>
+        <div class="card">
+          <div class="type-name">购房合同-内容页</div>
+          <a href="images/购房合同_内容页.jpeg" target="_blank" rel="noopener">
+            <img src="images/购房合同_内容页.jpeg" alt="购房合同-内容页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">购房合同-签署页</div>
+          <a href="images/购房合同_签署页.jpeg" target="_blank" rel="noopener">
+            <img src="images/购房合同_签署页.jpeg" alt="购房合同-签署页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>存量房合同</h2>
+      <div class="cards">
+        
+        <div class="card">
+          <div class="type-name">存量房合同</div>
+          <a href="images/存量房合同.jpg" target="_blank" rel="noopener">
+            <img src="images/存量房合同.jpg" alt="存量房合同" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">存量房合同-首页</div>
+          <a href="images/存量房合同_首页.jpg" target="_blank" rel="noopener">
+            <img src="images/存量房合同_首页.jpg" alt="存量房合同-首页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">存量房合同-内容页</div>
+          <a href="images/存量房合同_内容页.jpg" target="_blank" rel="noopener">
+            <img src="images/存量房合同_内容页.jpg" alt="存量房合同-内容页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">存量房合同-签署页</div>
+          <a href="images/存量房合同_签署页.jpg" target="_blank" rel="noopener">
+            <img src="images/存量房合同_签署页.jpg" alt="存量房合同-签署页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>离婚协议书</h2>
+      <div class="cards">
+        
+        <div class="card">
+          <div class="type-name">离婚协议书</div>
+          <a href="images/离婚协议书.jpeg" target="_blank" rel="noopener">
+            <img src="images/离婚协议书.jpeg" alt="离婚协议书" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>资金监管协议</h2>
+      <div class="cards">
+        
+        <div class="card no-image">
+          <div class="type-name">资金监管协议</div>
+          <div class="no-sample">（无示例）</div>
+        </div>
+        <div class="card">
+          <div class="type-name">资金监管协议-首页</div>
+          <a href="images/资金监管协议_首页.jpg" target="_blank" rel="noopener">
+            <img src="images/资金监管协议_首页.jpg" alt="资金监管协议-首页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">资金监管协议-信息页</div>
+          <a href="images/资金监管协议_信息页.jpg" target="_blank" rel="noopener">
+            <img src="images/资金监管协议_信息页.jpg" alt="资金监管协议-信息页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">资金监管协议-签章页</div>
+          <a href="images/资金监管协议_签章页.jpg" target="_blank" rel="noopener">
+            <img src="images/资金监管协议_签章页.jpg" alt="资金监管协议-签章页" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+        <div class="card">
+          <div class="type-name">资金监管凭证</div>
+          <a href="images/资金监管凭证.jpg" target="_blank" rel="noopener">
+            <img src="images/资金监管凭证.jpg" alt="资金监管凭证" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section class="group">
+      <h2>其他</h2>
+      <div class="cards">
+        
+        <div class="card no-image">
+          <div class="type-name">公证书</div>
+          <div class="no-sample">（无示例）</div>
+        </div>
+        <div class="card no-image">
+          <div class="type-name">委托书</div>
+          <div class="no-sample">（无示例）</div>
+        </div>
+        <div class="card">
+          <div class="type-name">未知</div>
+          <a href="images/未知.jpeg" target="_blank" rel="noopener">
+            <img src="images/未知.jpeg" alt="未知" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="fallback" style="display:none;">📄 点击查看</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+<script>
+  // 点击图片在新标签页打开（默认行为，保留备用）
+  document.querySelectorAll('.card img').forEach(img => {
+    img.addEventListener('click', e => {
+      e.preventDefault();
+      window.open(img.closest('a').href, '_blank');
+    });
+  });
+</script>
+</body>
+</html>
