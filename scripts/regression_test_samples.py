@@ -72,6 +72,7 @@ def main():
                     "confidence": confidence,
                     "fields_count": fields_count,
                     "success": success,
+                    "vlm_classified_type": result["extraction"].get("vlm_classified_type"),
                     "elapsed_s": round(elapsed, 2),
                 })
 
