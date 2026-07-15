@@ -24,7 +24,7 @@ TYPE_GROUPS = {
         "不动产权证书-附图页",
     ],
     "发票": ["发票"],
-    "购房合同": ["购房合同-内容页", "购房合同-签署页"],
+    "购房合同": ["购房合同-首页", "购房合同-内容页", "购房合同-签署页"],
     "存量房合同": ["存量房合同-首页", "存量房合同-内容页", "存量房合同-签署页"],
     "离婚协议书": ["离婚协议书"],
     "资金监管": [
@@ -33,12 +33,32 @@ TYPE_GROUPS = {
         "资金监管协议-签章页",
         "资金监管凭证",
     ],
+    "公证书": ["公证书"],
+    "委托书": ["委托书"],
     "其他": ["未知"],
 }
 
+# 手动指定的示例图片路径（JSON 里没有的类型）
+MANUAL_IMAGES = {
+    "公证书": [
+        "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2025-1013085/1c5658fd87a14346a6be33bed3cadeb6.jpg",
+    ],
+    "委托书": [
+        "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2025-1013085/6f8d97d68e9743098a386f9a1736a8e0.jpg",
+        "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2025-1013085/3873ae23c0fe4d12a309374a3552cf25.jpg",
+    ],
+    "购房合同-首页": [
+        "/Users/dongsun/Github/sample-OCR/增量房图片资料/202402190050/4df3ae74747e4059a54eca0feed85e26.jpeg",
+        "/Users/dongsun/Github/sample-OCR/增量房图片资料/202402280061/0ae04faa364e4eefa5e834aa8433b0bf.jpeg",
+    ],
+}
+
 SAMPLE_DIRS = [
+    "/Users/dongsun/Github/sample-OCR/增量房图片资料/202402190050",
+    "/Users/dongsun/Github/sample-OCR/增量房图片资料/202402280061",
     "/Users/dongsun/Github/sample-OCR/增量房图片资料/202406240010",
     "/Users/dongsun/Github/sample-OCR/增量房图片资料/202411070032",
+    "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2025-1013085",
     "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2026-0121076",
     "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2026-0129058",
 ]
@@ -66,16 +86,31 @@ def main():
                     break
             type_to_image[doc_type] = img_path
 
+    # 补充手动指定的图片（JSON 里没有的类型，如公证书、委托书）
+    for doc_type, img_paths in MANUAL_IMAGES.items():
+        if doc_type not in type_to_image or not type_to_image[doc_type]:
+            for img_path in img_paths:
+                if Path(img_path).exists():
+                    type_to_image[doc_type] = img_path
+                    break
+
     # 复制图片到 docs/images/ 并用相对路径
     images_dir = Path("docs/images")
     images_dir.mkdir(parents=True, exist_ok=True)
+
+    # 中文类型名→英文文件名映射
+    TYPE_EN_NAMES = {
+        "公证书": "notary_certificate",
+        "委托书": "power_of_attorney",
+        "购房合同-首页": "purchase_contract_first_page",
+    }
 
     import shutil
     type_to_rel_path = {}
     for doc_type, abs_path in type_to_image.items():
         if abs_path:
-            # 文件名：类型名_原文件名（避免重复）
-            safe_name = doc_type.replace("-", "_").replace("/", "_")
+            # 文件名：英文类型名_原文件名（避免重复）
+            safe_name = TYPE_EN_NAMES.get(doc_type, doc_type.replace("-", "_").replace("/", "_"))
             src = Path(abs_path)
             dst = images_dir / f"{safe_name}{src.suffix}"
             if not dst.exists():
