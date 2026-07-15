@@ -34,7 +34,7 @@ TYPE_GROUPS = {
         "资金监管凭证",
     ],
     "公证书": ["公证书"],
-    "委托书": ["委托书"],
+    "委托书": ["委托书-内容页", "委托书-签署页"],
     "其他": ["未知"],
 }
 
@@ -43,8 +43,10 @@ MANUAL_IMAGES = {
     "公证书": [
         "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2025-1013085/1c5658fd87a14346a6be33bed3cadeb6.jpg",
     ],
-    "委托书": [
+    "委托书-内容页": [
         "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2025-1013085/6f8d97d68e9743098a386f9a1736a8e0.jpg",
+    ],
+    "委托书-签署页": [
         "/Users/dongsun/Github/sample-OCR/存量房图片资料/BBJZ-2025-1013085/3873ae23c0fe4d12a309374a3552cf25.jpg",
     ],
     "购房合同-首页": [
@@ -101,7 +103,8 @@ def main():
     # 中文类型名→英文文件名映射
     TYPE_EN_NAMES = {
         "公证书": "notary_certificate",
-        "委托书": "power_of_attorney",
+        "委托书-内容页": "power_of_attorney_content",
+        "委托书-签署页": "power_of_attorney_stamp",
         "购房合同-首页": "purchase_contract_first_page",
     }
 
