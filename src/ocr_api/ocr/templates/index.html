@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="/static/css/demo.css">
 </head>
 <body class="bg-gray-50 min-h-screen" x-data="app()" x-init="init()"
-      x-effect="if (activeTab === 'async') { loadAsyncTasks(); startTaskPolling(); } else { stopTaskPolling(); }">
+      x-effect="if (activeTab === 'async') { loadAsyncTasks(); startTaskPolling(); } else { stopTaskPolling(); }
+                if (activeTab === 'logs') { loadLogs(); startLogsRefresh(); } else { stopLogsRefresh(); }">
 
 <!-- 顶部导航 -->
 <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
@@ -22,10 +23,10 @@
             </div>
             <div class="flex items-center space-x-3">
                 <span class="px-3 py-1 bg-green-500/20 rounded-full text-green-200 text-xs">
-                    ● GLM-OCR :8080
+                    ● PP-OCRv6 :8080
                 </span>
                 <span class="px-3 py-1 bg-blue-500/20 rounded-full text-blue-200 text-xs">
-                    ● Qwen3.5-4B :8081
+                    ● Qwen2.5-VL-7B :8082
                 </span>
             </div>
         </div>
@@ -718,6 +719,65 @@
                 <p class="text-sm text-gray-500">基于回归测试结果生成的分类/细分类型示例库（32 种细分类型）</p>
             </div>
             <iframe src="/static/type_gallery.html" class="w-full" style="height: 800px; border: none;"></iframe>
+        </div>
+    </div>
+
+    <!-- Tab 6: 处理日志 -->
+    <div x-show="activeTab === 'logs'" x-cloak>
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold"> 处理日志</h3>
+                    <p class="text-sm text-gray-500">系统运行日志（最近 200 条）</p>
+                </div>
+                <div class="flex space-x-2">
+                    <select x-model="logsLevel" @change="loadLogs()" class="border rounded-lg px-3 py-2 text-sm">
+                        <option value="">全部级别</option>
+                        <option value="INFO">INFO</option>
+                        <option value="WARNING">WARNING</option>
+                        <option value="ERROR">ERROR</option>
+                    </select>
+                    <button @click="toggleLogsRaw()" class="px-3 py-2 rounded-lg text-sm border"
+                            :class="logsRaw ? 'bg-blue-50 text-blue-600' : 'bg-white'">
+                        <span x-text="logsRaw ? '关闭原始' : '原始日志'"></span>
+                    </button>
+                    <button @click="toggleLogsAutoRefresh()" class="px-3 py-2 rounded-lg text-sm border"
+                            :class="logsAutoRefresh ? 'bg-green-50 text-green-600' : 'bg-white'">
+                        <span x-text="logsAutoRefresh ? '自动刷新：开' : '自动刷新：关'"></span>
+                    </button>
+                    <button @click="loadLogs()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                        刷新
+                    </button>
+                    <button @click="clearLogs()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">
+                        清空
+                    </button>
+                </div>
+            </div>
+
+            <!-- 加载中 -->
+            <div x-show="logsLoading" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                <p class="text-sm text-gray-500 mt-3">正在加载日志...</p>
+            </div>
+
+            <!-- 日志列表 -->
+            <div x-show="!logsLoading" class="space-y-1 max-h-[700px] overflow-y-auto font-mono text-xs">
+                <template x-for="(log, index) in logs" :key="index">
+                    <div class="flex space-x-2 py-1 px-2 hover:bg-gray-50 rounded"
+                         :class="logsRaw ? '' : ''">
+                        <span class="text-gray-400 w-32 flex-shrink-0" x-text="log.timestamp"></span>
+                        <span class="w-16 flex-shrink-0 font-semibold"
+                              :class="getLogLevelClass(log.level)"
+                              x-text="log.level"></span>
+                        <span class="text-gray-500 w-40 flex-shrink-0 truncate" x-text="log.logger"></span>
+                        <span class="text-gray-700 flex-1 break-all" x-text="log.message"></span>
+                    </div>
+                </template>
+                <div x-show="logs.length === 0" class="text-center py-12 text-gray-400">
+                    <p>暂无日志</p>
+                    <p class="text-sm mt-2">点击"刷新"加载日志，或处理图片后查看</p>
+                </div>
+            </div>
         </div>
     </div>
 

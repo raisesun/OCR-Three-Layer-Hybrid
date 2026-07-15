@@ -473,6 +473,26 @@ def create_debug_routes(
             "message": "任务已取消",
         }
 
+    # ========== 日志 API ==========
+
+    @router.get("/api/debug/logs")
+    async def get_logs(
+        level: Optional[str] = Query(None, description="日志级别过滤 (INFO/WARNING/ERROR)"),
+        logger: Optional[str] = Query(None, description="Logger名称过滤"),
+        limit: int = Query(100, ge=1, le=500, description="返回条数"),
+    ):
+        """获取内存日志缓冲区（仅 DEBUG 模式）"""
+        from ocr_api.common.memory_log import log_buffer
+        logs = log_buffer.get_logs(level=level, logger=logger, limit=limit)
+        return {"code": 200, "data": {"logs": logs, "total": len(logs)}, "message": "success"}
+
+    @router.post("/api/debug/logs/clear")
+    async def clear_logs():
+        """清空日志缓冲区"""
+        from ocr_api.common.memory_log import log_buffer
+        log_buffer.clear()
+        return {"code": 200, "data": None, "message": "日志已清空"}
+
     # ========== 静态文件挂载信息 ==========
 
     static_mounts = [

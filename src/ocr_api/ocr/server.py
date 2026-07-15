@@ -79,6 +79,12 @@ DB_PATH = os.getenv("OCR_DB_PATH", "/tmp/ocr_tasks.db")
 
 # 使用结构化日志（支持 JSON 格式，通过 OCR_LOG_FORMAT 环境变量控制）
 setup_structured_logging(level="DEBUG" if DEBUG else "INFO")
+
+# 内存日志缓冲区（供 Demo 页面显示）
+if DEBUG:
+    from ocr_api.common.memory_log import setup_memory_logging
+    setup_memory_logging()
+
 server_logger = get_logger("ocr_three_layer_hybrid.server")
 
 

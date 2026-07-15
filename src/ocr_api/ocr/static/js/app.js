@@ -12,6 +12,7 @@ function app() {
             { id: 'compare', label: '📊 基线对比' },
             { id: 'stats', label: '📈 统计面板' },
             { id: 'gallery', label: '️ 分类预览' },
+            { id: 'logs', label: ' 处理日志' },
         ],
 
         // 单图处理
@@ -48,6 +49,14 @@ function app() {
         // 统计面板
         dashboardData: null,
         dashboardLoading: false,
+
+        // 处理日志
+        logs: [],
+        logsLoading: false,
+        logsLevel: '',
+        logsRaw: false,
+        logsAutoRefresh: true,
+        logsRefreshTimer: null,
 
         // 异步任务管理
         asyncTasks: [],
@@ -297,6 +306,65 @@ function app() {
             } finally {
                 this.compareRunning = false;
             }
+        },
+
+        // ========== 处理日志 ==========
+
+        async loadLogs() {
+            try {
+                this.logsLoading = true;
+                const params = new URLSearchParams({ limit: '200' });
+                if (this.logsLevel) params.append('level', this.logsLevel);
+                const res = await fetch(`/api/debug/logs?${params}`);
+                const json = await res.json();
+                if (json.code === 200) {
+                    this.logs = json.data.logs;
+                }
+            } catch (e) {
+                console.error('加载日志失败:', e);
+            } finally {
+                this.logsLoading = false;
+            }
+        },
+
+        async clearLogs() {
+            if (!confirm('确定清空日志吗？')) return;
+            try {
+                await fetch('/api/debug/logs/clear', { method: 'POST' });
+                this.logs = [];
+            } catch (e) {
+                console.error('清空日志失败:', e);
+            }
+        },
+
+        toggleLogsRaw() {
+            this.logsRaw = !this.logsRaw;
+        },
+
+        toggleLogsAutoRefresh() {
+            this.logsAutoRefresh = !this.logsAutoRefresh;
+            if (this.logsAutoRefresh) {
+                this.startLogsRefresh();
+            } else {
+                this.stopLogsRefresh();
+            }
+        },
+
+        startLogsRefresh() {
+            this.stopLogsRefresh();
+            this.logsRefreshTimer = setInterval(() => this.loadLogs(), 3000);
+        },
+
+        stopLogsRefresh() {
+            if (this.logsRefreshTimer) {
+                clearInterval(this.logsRefreshTimer);
+                this.logsRefreshTimer = null;
+            }
+        },
+
+        getLogLevelClass(level) {
+            const map = { 'INFO': 'text-gray-600', 'WARNING': 'text-yellow-600', 'ERROR': 'text-red-600', 'DEBUG': 'text-blue-400' };
+            return map[level] || 'text-gray-600';
         },
 
         // ========== 统计面板 ==========
