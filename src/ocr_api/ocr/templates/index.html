@@ -710,6 +710,17 @@
         </div>
     </div>
 
+    <!-- Tab 5: 分类预览 -->
+    <div x-show="activeTab === 'gallery'" x-cloak>
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">️ 文档类型分类预览</h3>
+                <p class="text-sm text-gray-500">基于回归测试结果生成的分类/细分类型示例库（32 种细分类型）</p>
+            </div>
+            <iframe src="/static/type_gallery.html" class="w-full" style="height: 800px; border: none;"></iframe>
+        </div>
+    </div>
+
 </main>
 
 <!-- 脚本 -->

@@ -11,6 +11,7 @@ function app() {
             { id: 'async', label: '📤 异步任务' },
             { id: 'compare', label: '📊 基线对比' },
             { id: 'stats', label: '📈 统计面板' },
+            { id: 'gallery', label: '️ 分类预览' },
         ],
 
         // 单图处理
