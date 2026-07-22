@@ -72,6 +72,7 @@ from ocr_api.ocr.debug_routes import create_debug_routes
 
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 PORT = int(os.getenv("OCR_PORT", "8888"))
+HOST = os.getenv("OCR_HOST", "127.0.0.1")  # 默认仅本机；生产需远程访问设 0.0.0.0
 DB_PATH = os.getenv("OCR_DB_PATH", "/tmp/ocr_tasks.db")
 
 
@@ -183,6 +184,7 @@ def create_app(
         debug_router, static_mounts = create_debug_routes(
             ocr_service, baseline_service, _OCR_DIR, UPLOAD_DIR,
             task_manager=task_manager,
+            authenticator=authenticator,
         )
         app.include_router(debug_router)
         for mount_path, mount_dir, mount_name in static_mounts:
@@ -195,7 +197,8 @@ def create_app(
 
 # ========== 生产环境默认实例（仅在直接运行时使用） ==========
 
-app = create_app()
+authenticator = APIKeyAuthenticator()
+app = create_app(authenticator=authenticator)
 
 
 # ========== 启动 ==========
@@ -209,7 +212,7 @@ if __name__ == "__main__":
     print(f"  访问地址:  http://localhost:{PORT}")
     print(f"  API 文档:  http://localhost:{PORT}/docs")
     print(f"  调试模式:  {'✅ 已启用' if DEBUG else '❌ 未启用 (设置 DEBUG=true 启用)'}")
-    print(f"  认证状态:  {'✅ 已启用' if app.dependency_overrides else '⚠️  未配置 (设置 OCR_API_KEYS)'}")
+    print(f"  认证状态:  {'✅ 已启用' if authenticator.is_enabled() else '⚠️  未配置 (设置 OCR_API_KEYS)'}")
     print(f"  数据库:    {DB_PATH}")
     print("=" * 60)
 
@@ -221,4 +224,4 @@ if __name__ == "__main__":
                 print(f"    {method:6s} {route.path}")
     print()
 
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
+    uvicorn.run(app, host=HOST, port=PORT)

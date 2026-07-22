@@ -148,8 +148,9 @@ def create_ocr_router(
             )
 
         # 7. 启动后台处理
+        # 启动后台处理（保存引用防止被 GC 回收）
         worker = TaskWorker(task_manager, ocr_service)
-        asyncio.create_task(worker.process(task_id, saved_files))
+        task_manager.submit_background(worker.process(task_id, saved_files))
 
         logger.info("任务已提交到后台处理 | task_id=%s", task_id)
 

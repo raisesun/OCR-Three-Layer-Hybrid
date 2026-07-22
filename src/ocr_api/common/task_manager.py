@@ -53,6 +53,7 @@ class TaskManager:
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._local = threading.local()
         self._cancel_flags: Dict[str, bool] = {}  # task_id -> cancelled
+        self._background_tasks: set = set()  # 后台任务引用，防止被 GC 回收
         self._init_db()
         # 注册 atexit 钩子，确保进程退出时关闭连接
         atexit.register(self.close)
@@ -92,6 +93,34 @@ class TaskManager:
         """退出上下文时关闭连接"""
         self.close()
         return False
+
+    def submit_background(self, coro):
+        """提交后台协程任务，保存引用防止被 GC 回收
+
+        解决 asyncio.create_task 引用未保存导致任务中途被 GC 回收的问题。
+        任务完成后自动从集合移除；异常会被记录日志而非静默丢失。
+
+        Args:
+            coro: 协程对象
+
+        Returns:
+            asyncio.Task
+        """
+        task = asyncio.create_task(coro)
+        self._background_tasks.add(task)
+
+        def _on_done(t: asyncio.Task):
+            self._background_tasks.discard(t)
+            if t.cancelled():
+                return
+            exc = t.exception()
+            if exc is not None:
+                logger.error(
+                    "[TaskManager] 后台任务异常退出 | error=%s", exc, exc_info=exc,
+                )
+
+        task.add_done_callback(_on_done)
+        return task
 
     def _init_db(self):
         """初始化数据库表结构"""
@@ -193,13 +222,24 @@ class TaskManager:
             (task_id, file_count, priority, callback_url, now, api_key),
         )
         conn.commit()
-        logger.info("[TaskManager] 创建任务 | id=%s | files=%s | api_key=%s", task_id, file_count, api_key)
+        _masked_key = f"{api_key[:8]}..." if api_key else "None"
+        logger.info("[TaskManager] 创建任务 | id=%s | files=%s | api_key=%s", task_id, file_count, _masked_key)
         return task_id
 
-    def get_task(self, task_id: str) -> Optional[Dict[str, Any]]:
-        """获取任务信息"""
+    def get_task(self, task_id: str, api_key: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """获取任务信息
+
+        Args:
+            api_key: 若提供则校验任务归属，归属不匹配返回 None（防止越权）
+        """
         conn = self._get_conn()
-        row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+        if api_key is not None:
+            row = conn.execute(
+                "SELECT * FROM tasks WHERE id = ? AND api_key = ?",
+                (task_id, api_key),
+            ).fetchone()
+        else:
+            row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
         if row:
             return dict(row)
         return None
@@ -243,7 +283,7 @@ class TaskManager:
             logger.info("[TaskManager] 任务完成跳过（状态已变更）| id=%s", task_id)
         return success
 
-    def mark_cancelled(self, task_id: str) -> bool:
+    def mark_cancelled(self, task_id: str, api_key: Optional[str] = None) -> bool:
         """标记任务为已取消
 
         Returns:
@@ -252,11 +292,18 @@ class TaskManager:
         now = datetime.now().isoformat()
         conn = self._get_conn()
         # 使用 WHERE 子句确保原子性，避免 TOCTOU 竞态
-        cursor = conn.execute(
-            "UPDATE tasks SET status = 'cancelled', completed_at = ? "
-            "WHERE id = ? AND status IN ('pending', 'processing')",
-            (now, task_id),
-        )
+        if api_key is not None:
+            cursor = conn.execute(
+                "UPDATE tasks SET status = 'cancelled', completed_at = ? "
+                "WHERE id = ? AND api_key = ? AND status IN ('pending', 'processing')",
+                (now, task_id, api_key),
+            )
+        else:
+            cursor = conn.execute(
+                "UPDATE tasks SET status = 'cancelled', completed_at = ? "
+                "WHERE id = ? AND status IN ('pending', 'processing')",
+                (now, task_id),
+            )
         conn.commit()
         if cursor.rowcount > 0:
             self._cancel_flags[task_id] = True
@@ -434,9 +481,9 @@ class TaskManager:
             "pages": pages,
         }
 
-    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_task_status(self, task_id: str, api_key: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """获取任务状态（含进度和结果）"""
-        task = self.get_task(task_id)
+        task = self.get_task(task_id, api_key=api_key)
         if not task:
             return None
 
@@ -606,8 +653,13 @@ class TaskWorker:
         logger.info("[Worker] 开始处理任务 | files=%d", total)
 
         # 标记处理中（如果任务已被取消，则 status 不是 pending，返回 False）
-        if not self._tm.mark_processing(task_id):
-            logger.info("[Worker] 任务状态非 pending，跳过处理")
+        try:
+            if not self._tm.mark_processing(task_id):
+                logger.info("[Worker] 任务状态非 pending，跳过处理")
+                return
+        except Exception as e:
+            # mark_processing 异常（如 SQLite 锁）不应让任务静默卡在 pending
+            logger.exception("[Worker] mark_processing 异常 | error=%s", e)
             return
         start_time = time.time()
 

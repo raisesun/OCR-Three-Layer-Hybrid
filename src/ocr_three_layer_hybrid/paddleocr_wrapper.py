@@ -432,7 +432,7 @@ class PaddleOCREngine:
         use_doc_orientation_classify: bool = False,
         use_doc_unwarping: bool = False,
         use_textline_orientation: bool = False,
-        text_det_limit_side_len: int = 64,
+        text_det_limit_side_len: int = 960,  # PaddleOCR 标准值(须为32倍数)；原值64会使检测图长边缩到64px致文本检测几乎失效
         text_det_thresh: float = 0.3,
         text_det_box_thresh: float = 0.6,
         text_det_unclip_ratio: float = 1.5,

@@ -251,3 +251,49 @@ class TestSchemaMigration:
             assert "error_message" in task
         finally:
             os.unlink(db_path)
+
+
+class TestOwnershipGuard:
+    """测试任务归属校验（S1 IDOR 越权修复）"""
+
+    def test_get_task_with_correct_api_key(self, tm):
+        """正确的 api_key 能查询到任务"""
+        task_id = tm.create_task(file_count=1, api_key="keyA")
+        task = tm.get_task(task_id, api_key="keyA")
+        assert task is not None
+        assert task["id"] == task_id
+
+    def test_get_task_with_wrong_api_key_returns_none(self, tm):
+        """错误的 api_key 查询返回 None（越权拒绝）"""
+        task_id = tm.create_task(file_count=1, api_key="keyA")
+        task = tm.get_task(task_id, api_key="keyB")
+        assert task is None
+
+    def test_get_task_without_api_key_no_filter(self, tm):
+        """不传 api_key 时不做归属过滤（向后兼容）"""
+        task_id = tm.create_task(file_count=1, api_key="keyA")
+        task = tm.get_task(task_id)  # 不传 api_key
+        assert task is not None
+
+    def test_get_task_status_with_wrong_api_key_returns_none(self, tm):
+        """get_task_status 错误 api_key 返回 None"""
+        task_id = tm.create_task(file_count=1, api_key="keyA")
+        tm.mark_processing(task_id)
+        status = tm.get_task_status(task_id, api_key="keyB")
+        assert status is None
+
+    def test_mark_cancelled_with_wrong_api_key_fails(self, tm):
+        """错误 api_key 不能取消他人任务"""
+        task_id = tm.create_task(file_count=1, api_key="keyA")
+        # keyB 尝试取消 keyA 的任务 -> 失败
+        assert tm.mark_cancelled(task_id, api_key="keyB") is False
+        # 任务仍为 pending
+        task = tm.get_task(task_id, api_key="keyA")
+        assert task["status"] == "pending"
+
+    def test_mark_cancelled_with_correct_api_key_succeeds(self, tm):
+        """正确 api_key 能取消自己的任务"""
+        task_id = tm.create_task(file_count=1, api_key="keyA")
+        assert tm.mark_cancelled(task_id, api_key="keyA") is True
+        task = tm.get_task(task_id, api_key="keyA")
+        assert task["status"] == "cancelled"

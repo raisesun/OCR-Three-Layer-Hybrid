@@ -94,8 +94,8 @@ def create_task_router(
         set_log_context(api_key=f"{api_key[:8]}...", task_id=task_id)
         task_manager.record_api_call(api_key, f"GET /api/v1/task/{task_id}")
 
-        # 查询任务
-        status = task_manager.get_task_status(task_id)
+        # 查询任务（校验归属，防止越权）
+        status = task_manager.get_task_status(task_id, api_key=api_key)
         if not status:
             raise HTTPException(
                 status_code=404,
@@ -124,8 +124,8 @@ def create_task_router(
         set_log_context(api_key=f"{api_key[:8]}...", task_id=task_id)
         task_manager.record_api_call(api_key, f"POST /api/v1/task/{task_id}/cancel")
 
-        # 检查任务是否存在
-        task = task_manager.get_task(task_id)
+        # 检查任务是否存在（校验归属，防止越权）
+        task = task_manager.get_task(task_id, api_key=api_key)
         if not task:
             raise HTTPException(
                 status_code=404,
@@ -133,10 +133,10 @@ def create_task_router(
             )
 
         # 原子取消：SQL WHERE 守卫保证不会覆盖已完成/已取消的任务
-        success = task_manager.mark_cancelled(task_id)
+        success = task_manager.mark_cancelled(task_id, api_key=api_key)
         if not success:
             # 取消失败，重新读取最新状态以返回准确的错误信息
-            current_task = task_manager.get_task(task_id)
+            current_task = task_manager.get_task(task_id, api_key=api_key)
             current_status = current_task["status"] if current_task else "不存在"
             raise HTTPException(
                 status_code=400,

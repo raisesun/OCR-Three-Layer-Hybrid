@@ -17,12 +17,18 @@
 """
 
 import time
+import uuid
 import asyncio
 import logging
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Depends, Request
+
+from ocr_three_layer_hybrid.config import SUPPORTED_FILE_EXTENSIONS
+
+# 单文件大小上限（与 routes/ocr.py 保持一致）
+MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -50,6 +56,7 @@ def create_debug_routes(
     demo_dir: Path,
     upload_dir: Path,
     task_manager=None,
+    authenticator=None,
 ) -> tuple:
     """创建调试路由
 
@@ -59,12 +66,18 @@ def create_debug_routes(
         demo_dir: demo 目录路径
         upload_dir: 上传目录路径
         task_manager: TaskManager 实例（可选，用于异步任务管理）
+        authenticator: 认证器（可选；若启用则 debug 接口也要求 API Key）
 
     Returns:
         (router, static_mounts)
         static_mounts: [(path, directory, name), ...] 需要挂载的静态文件
     """
-    router = APIRouter(tags=["Debug"])
+    # 若启用了 API Key 认证，debug 接口也要求认证（生产环境双重防护）
+    async def _debug_auth(request: Request):
+        if authenticator is not None and authenticator.is_enabled():
+            authenticator.verify(request)
+
+    router = APIRouter(tags=["Debug"], dependencies=[Depends(_debug_auth)])
     TEMPLATES_DIR = demo_dir / "templates"
 
     # 基线图片目录
@@ -76,6 +89,11 @@ def create_debug_routes(
         Path(SAMPLE_OCR_BASE).resolve(),
         Path(upload_dir).resolve(),
     ]
+
+    # 基线对比/统计面板的并发限制与缓存（防止全量 OCR 占满 CPU）
+    _baseline_lock = asyncio.Lock()
+    _baseline_cache: dict = {}  # {key: (timestamp, response)}
+    _BASELINE_CACHE_TTL = 300  # 缓存 5 分钟
 
     def _validate_path(raw_path: str, *, must_exist: bool = True) -> Path:
         """校验路径是否在允许的目录内，防止路径遍历
@@ -92,7 +110,7 @@ def create_debug_routes(
         """
         resolved = Path(raw_path).resolve()
         if not any(
-            str(resolved).startswith(str(base))
+            resolved.is_relative_to(base)
             for base in _allowed_bases
         ):
             raise HTTPException(
@@ -168,7 +186,7 @@ def create_debug_routes(
         sample_base_resolved = Path(SAMPLE_OCR_BASE).resolve()
 
         # 确保请求的路径在允许的基目录内
-        if not str(base_path).startswith(str(sample_base_resolved)):
+        if not base_path.is_relative_to(sample_base_resolved):
             raise HTTPException(
                 status_code=403,
                 detail=f"路径不允许访问: {base_dir}（必须在 {SAMPLE_OCR_BASE} 内）",
@@ -234,125 +252,165 @@ def create_debug_routes(
     @router.post("/api/baseline/compare")
     async def baseline_compare():
         """全量基线对比"""
-        all_images = baseline_service.get_all_images()
-        start_time = time.time()
-        results = await asyncio.to_thread(ocr_service.process_batch, all_images)
-        total_time = time.time() - start_time
+        # 缓存命中
+        cached = _baseline_cache.get("compare")
+        if cached and (time.time() - cached[0]) < _BASELINE_CACHE_TTL:
+            return cached[1]
 
-        total = len(results)
-        correct = sum(1 for r in results if r.get("is_correct", False))
-        errors = [r for r in results if not r.get("is_correct", False)]
+        # 串行化全量 OCR，防止并发占满 CPU
+        async with _baseline_lock:
+            # double-check（其他请求可能刚算完）
+            cached = _baseline_cache.get("compare")
+            if cached and (time.time() - cached[0]) < _BASELINE_CACHE_TTL:
+                return cached[1]
 
-        type_stats = {}
-        layer_stats = {"rule": 0, "vlm": 0, "llm": 0}
-        for r in results:
-            actual = r.get("classification", {}).get("doc_type", "未知")
-            expected = r.get("expected_type", "")
-            layer = r.get("extraction", {}).get("layer", "none")
-            if expected not in type_stats:
-                type_stats[expected] = {"total": 0, "correct": 0}
-            type_stats[expected]["total"] += 1
-            if r.get("is_correct", False):
-                type_stats[expected]["correct"] += 1
-            if layer in layer_stats:
-                layer_stats[layer] += 1
+            all_images = baseline_service.get_all_images()
+            start_time = time.time()
+            results = await asyncio.to_thread(ocr_service.process_batch, all_images)
+            total_time = time.time() - start_time
 
-        type_accuracy = {}
-        for t, s in type_stats.items():
-            type_accuracy[t] = {
-                "total": s["total"],
-                "correct": s["correct"],
-                "accuracy": round(s["correct"] / s["total"] * 100, 1) if s["total"] > 0 else 0,
+            total = len(results)
+            correct = sum(1 for r in results if r.get("is_correct", False))
+            errors = [r for r in results if not r.get("is_correct", False)]
+
+            type_stats = {}
+            layer_stats = {"rule": 0, "vlm": 0, "llm": 0}
+            for r in results:
+                actual = r.get("classification", {}).get("doc_type", "未知")
+                expected = r.get("expected_type", "")
+                layer = r.get("extraction", {}).get("layer", "none")
+                if expected not in type_stats:
+                    type_stats[expected] = {"total": 0, "correct": 0}
+                type_stats[expected]["total"] += 1
+                if r.get("is_correct", False):
+                    type_stats[expected]["correct"] += 1
+                if layer in layer_stats:
+                    layer_stats[layer] += 1
+
+            type_accuracy = {}
+            for t, s in type_stats.items():
+                type_accuracy[t] = {
+                    "total": s["total"],
+                    "correct": s["correct"],
+                    "accuracy": round(s["correct"] / s["total"] * 100, 1) if s["total"] > 0 else 0,
+                }
+
+            response = {
+                "success": True,
+                "data": {
+                    "total": total,
+                    "correct": correct,
+                    "accuracy": round(correct / total * 100, 1) if total > 0 else 0,
+                    "total_time_s": round(total_time, 2),
+                    "avg_time_ms": round(total_time / total * 1000, 1) if total > 0 else 0,
+                    "type_accuracy": type_accuracy,
+                    "layer_stats": layer_stats,
+                    "errors": [
+                        {
+                            "file_name": e.get("file_name", ""),
+                            "expected": e.get("expected_type", ""),
+                            "actual": e.get("classification", {}).get("doc_type", ""),
+                            "page_status": e.get("page_status", ""),
+                            "route": e.get("classification", {}).get("route", ""),
+                        }
+                        for e in errors
+                    ],
+                },
             }
-
-        return {
-            "success": True,
-            "data": {
-                "total": total,
-                "correct": correct,
-                "accuracy": round(correct / total * 100, 1) if total > 0 else 0,
-                "total_time_s": round(total_time, 2),
-                "avg_time_ms": round(total_time / total * 1000, 1) if total > 0 else 0,
-                "type_accuracy": type_accuracy,
-                "layer_stats": layer_stats,
-                "errors": [
-                    {
-                        "file_name": e.get("file_name", ""),
-                        "expected": e.get("expected_type", ""),
-                        "actual": e.get("classification", {}).get("doc_type", ""),
-                        "page_status": e.get("page_status", ""),
-                        "route": e.get("classification", {}).get("route", ""),
-                    }
-                    for e in errors
-                ],
-            },
-        }
+            _baseline_cache["compare"] = (time.time(), response)
+            return response
 
     # ========== 统计面板 ==========
 
     @router.get("/api/stats/dashboard")
     async def stats_dashboard():
         """统计面板数据"""
-        baseline_stats = baseline_service.get_stats()
-        all_images = baseline_service.get_all_images()
-        start_time = time.time()
-        results = await asyncio.to_thread(ocr_service.process_batch, all_images)
-        total_time = time.time() - start_time
+        # 缓存命中
+        cached = _baseline_cache.get("dashboard")
+        if cached and (time.time() - cached[0]) < _BASELINE_CACHE_TTL:
+            return cached[1]
 
-        total = len(results)
-        correct = sum(1 for r in results if r.get("is_correct", False))
-        vlm_calls = sum(
-            1 for r in results
-            if r.get("classification", {}).get("route") in ("vlm_fallback_required", "vlm_classification")
-        )
+        # 串行化全量 OCR，防止并发占满 CPU
+        async with _baseline_lock:
+            cached = _baseline_cache.get("dashboard")
+            if cached and (time.time() - cached[0]) < _BASELINE_CACHE_TTL:
+                return cached[1]
 
-        type_dist = {}
-        layer_dist = {"rule": 0, "vlm": 0, "llm": 0}
-        timing_list = []
-        for r in results:
-            actual = r.get("classification", {}).get("doc_type", "未知")
-            layer = r.get("extraction", {}).get("layer", "none")
-            t = r.get("timing", {}).get("total_ms", 0)
-            type_dist[actual] = type_dist.get(actual, 0) + 1
-            if layer in layer_dist:
-                layer_dist[layer] += 1
-            if t > 0:
-                timing_list.append(t)
+            baseline_stats = baseline_service.get_stats()
+            all_images = baseline_service.get_all_images()
+            start_time = time.time()
+            results = await asyncio.to_thread(ocr_service.process_batch, all_images)
+            total_time = time.time() - start_time
 
-        timing_buckets = {"0-10ms": 0, "10-50ms": 0, "50-100ms": 0, "100-500ms": 0, "500ms+": 0}
-        for t in timing_list:
-            if t <= 10: timing_buckets["0-10ms"] += 1
-            elif t <= 50: timing_buckets["10-50ms"] += 1
-            elif t <= 100: timing_buckets["50-100ms"] += 1
-            elif t <= 500: timing_buckets["100-500ms"] += 1
-            else: timing_buckets["500ms+"] += 1
+            total = len(results)
+            correct = sum(1 for r in results if r.get("is_correct", False))
+            vlm_calls = sum(
+                1 for r in results
+                if r.get("classification", {}).get("route") in ("vlm_fallback_required", "vlm_classification")
+            )
 
-        return {
-            "success": True,
-            "data": {
-                "kpi": {
-                    "total_images": total,
-                    "accuracy": round(correct / total * 100, 1) if total > 0 else 0,
-                    "avg_time_ms": round(sum(timing_list) / len(timing_list), 1) if timing_list else 0,
-                    "vlm_call_rate": round(vlm_calls / total * 100, 1) if total > 0 else 0,
+            type_dist = {}
+            layer_dist = {"rule": 0, "vlm": 0, "llm": 0}
+            timing_list = []
+            for r in results:
+                actual = r.get("classification", {}).get("doc_type", "未知")
+                layer = r.get("extraction", {}).get("layer", "none")
+                t = r.get("timing", {}).get("total_ms", 0)
+                type_dist[actual] = type_dist.get(actual, 0) + 1
+                if layer in layer_dist:
+                    layer_dist[layer] += 1
+                if t > 0:
+                    timing_list.append(t)
+
+            timing_buckets = {"0-10ms": 0, "10-50ms": 0, "50-100ms": 0, "100-500ms": 0, "500ms+": 0}
+            for t in timing_list:
+                if t <= 10: timing_buckets["0-10ms"] += 1
+                elif t <= 50: timing_buckets["10-50ms"] += 1
+                elif t <= 100: timing_buckets["50-100ms"] += 1
+                elif t <= 500: timing_buckets["100-500ms"] += 1
+                else: timing_buckets["500ms+"] += 1
+
+            response = {
+                "success": True,
+                "data": {
+                    "kpi": {
+                        "total_images": total,
+                        "accuracy": round(correct / total * 100, 1) if total > 0 else 0,
+                        "avg_time_ms": round(sum(timing_list) / len(timing_list), 1) if timing_list else 0,
+                        "vlm_call_rate": round(vlm_calls / total * 100, 1) if total > 0 else 0,
+                    },
+                    "type_distribution": type_dist,
+                    "layer_distribution": layer_dist,
+                    "timing_distribution": timing_buckets,
+                    "baseline_stats": baseline_stats,
                 },
-                "type_distribution": type_dist,
-                "layer_distribution": layer_dist,
-                "timing_distribution": timing_buckets,
-                "baseline_stats": baseline_stats,
-            },
-        }
+            }
+            _baseline_cache["dashboard"] = (time.time(), response)
+            return response
 
     # ========== 图片上传 ==========
 
     @router.post("/api/upload")
     async def upload_image(file: UploadFile = File(...)):
         """上传图片"""
-        suffix = Path(file.filename).suffix if file.filename else ".jpg"
-        safe_name = f"upload_{int(time.time())}{suffix}"
+        # 安全校验：扩展名白名单（防止上传 .html 等构成存储型 XSS）
+        suffix = Path(file.filename).suffix.lower() if file.filename else ""
+        if suffix not in SUPPORTED_FILE_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"文件格式不支持: {file.filename}，仅支持 {', '.join(sorted(SUPPORTED_FILE_EXTENSIONS))}",
+            )
+        # 大小限制
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"文件过大: {file.filename}，单文件最大 20MB",
+            )
+        # UUID 文件名（防枚举）
+        safe_name = f"upload_{uuid.uuid4().hex}{suffix}"
         file_path = upload_dir / safe_name
         with open(file_path, "wb") as f:
-            content = await file.read()
             f.write(content)
         return {
             "success": True,
@@ -376,13 +434,33 @@ def create_debug_routes(
         if not task_manager:
             raise HTTPException(status_code=501, detail="TaskManager 未初始化")
 
-        import uuid
+        # 安全校验：文件数量
+        if len(files) > 500:
+            raise HTTPException(
+                status_code=400,
+                detail=f"文件数量超限：最多 500 个，当前 {len(files)} 个",
+            )
+        if not files:
+            raise HTTPException(status_code=400, detail="未上传任何文件")
+
         saved_files = []
         for f in files:
+            # 校验扩展名
             suffix = Path(f.filename or "").suffix.lower()
+            if suffix not in SUPPORTED_FILE_EXTENSIONS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"文件格式不支持: {f.filename}，仅支持 {', '.join(sorted(SUPPORTED_FILE_EXTENSIONS))}",
+                )
+            # 校验大小
+            content = await f.read()
+            if len(content) > MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"文件过大: {f.filename}，单文件最大 20MB",
+                )
             safe_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}{suffix}"
             file_path = upload_dir / safe_name
-            content = await f.read()
             with open(file_path, "wb") as fp:
                 fp.write(content)
             saved_files.append({
@@ -408,7 +486,7 @@ def create_debug_routes(
 
         from ocr_api.common.task_manager import TaskWorker
         worker = TaskWorker(task_manager, ocr_service)
-        asyncio.create_task(worker.process(task_id, saved_files))
+        task_manager.submit_background(worker.process(task_id, saved_files))
 
         from datetime import datetime
         return {
@@ -446,7 +524,7 @@ def create_debug_routes(
         """查询任务状态（Debug 模式，无需认证）"""
         if not task_manager:
             raise HTTPException(status_code=501, detail="TaskManager 未初始化")
-        status = task_manager.get_task_status(task_id)
+        status = task_manager.get_task_status(task_id, api_key="debug-demo-key")
         if not status:
             raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
         return {"code": 200, "data": status, "message": "success"}
@@ -456,10 +534,10 @@ def create_debug_routes(
         """取消任务（Debug 模式，无需认证）"""
         if not task_manager:
             raise HTTPException(status_code=501, detail="TaskManager 未初始化")
-        task = task_manager.get_task(task_id)
+        task = task_manager.get_task(task_id, api_key="debug-demo-key")
         if not task:
             raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
-        success = task_manager.mark_cancelled(task_id)
+        success = task_manager.mark_cancelled(task_id, api_key="debug-demo-key")
         if not success:
             raise HTTPException(status_code=400, detail="任务状态不允许取消")
         return {
