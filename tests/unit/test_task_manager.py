@@ -326,3 +326,44 @@ class TestSecurityFixesS4S6S8:
         from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCREngine
         engine = PaddleOCREngine(device="cpu")  # 不触发模型加载（延迟初始化）
         assert engine._init_kwargs["text_det_limit_side_len"] == 960
+
+
+class TestQuotaMonthEndCrash:
+    """H21: get_quota 月末 23 点崩溃修复"""
+
+    @pytest.fixture
+    def tm(self):
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
+            db_path = f.name
+        manager = TaskManager(db_path=db_path)
+        yield manager
+        try:
+            os.unlink(db_path)
+        except OSError:
+            pass
+
+    def test_month_end_23_not_crash(self, tm):
+        """H21: 月末 23 点 get_quota 不崩溃，reset_at 为次月1日00:00"""
+        from unittest.mock import patch, MagicMock
+        from datetime import datetime as real_datetime
+        import ocr_api.common.task_manager as tm_mod
+
+        fake_now = real_datetime(2026, 1, 31, 23, 30, 0)  # 1月末 23:30
+        mock_dt = MagicMock()
+        mock_dt.now.return_value = fake_now
+        with patch.object(tm_mod, "datetime", mock_dt):
+            quota = tm.get_quota("test-key")  # 修复前这里抛 ValueError
+        assert quota["api_calls"]["reset_at"].startswith("2026-02-01T00:00")
+
+    def test_year_end_23_not_crash(self, tm):
+        """H21: 跨年 12/31 23 点不崩溃，reset_at 为次年1月1日00:00"""
+        from unittest.mock import patch, MagicMock
+        from datetime import datetime as real_datetime
+        import ocr_api.common.task_manager as tm_mod
+
+        fake_now = real_datetime(2026, 12, 31, 23, 45, 0)  # 12月末 23:45（跨年）
+        mock_dt = MagicMock()
+        mock_dt.now.return_value = fake_now
+        with patch.object(tm_mod, "datetime", mock_dt):
+            quota = tm.get_quota("test-key")
+        assert quota["api_calls"]["reset_at"].startswith("2027-01-01T00:00")

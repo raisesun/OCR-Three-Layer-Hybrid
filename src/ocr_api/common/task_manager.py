@@ -26,7 +26,7 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ocr_api.common.logger import set_log_context, clear_log_context
 
@@ -582,9 +582,7 @@ class TaskManager:
         # 统计本小时调用次数
         hour_start = datetime.now().replace(minute=0, second=0, microsecond=0)
         hour_start_str = hour_start.isoformat()
-        reset_at = hour_start.replace(hour=hour_start.hour + 1 if hour_start.hour < 23 else 0)
-        if reset_at.hour == 0:
-            reset_at = reset_at.replace(day=reset_at.day + 1)
+        reset_at = hour_start + timedelta(hours=1)  # 自动处理跨日/跨月/跨年（修复月末23点 replace(day+1) 越界崩溃）
 
         row = conn.execute(
             "SELECT COUNT(*) as cnt FROM api_usage WHERE api_key = ? AND called_at >= ?",
