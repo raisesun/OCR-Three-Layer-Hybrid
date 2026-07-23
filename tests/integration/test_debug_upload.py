@@ -159,3 +159,25 @@ class TestDebugAsyncUploadSecurity:
         )
         # FastAPI 对 File(...) 必填会返回 422；若绕过则我们的校验返回 400
         assert resp.status_code in (400, 422)
+
+
+class TestPathTraversalGuard:
+    """S3: 路径遍历防护（is_relative_to 替代 startswith）"""
+
+    def test_directories_rejects_sibling_prefix(self, debug_client, auth_headers):
+        """同前缀同级目录 sample-OCR-backup 被拒 403（startswith 会误放行）"""
+        resp = debug_client.get(
+            "/api/directories",
+            headers=auth_headers,
+            params={"parent": "/Users/dongsun/Github/sample-OCR-backup"},
+        )
+        assert resp.status_code == 403
+
+    def test_directories_rejects_dotdot_traversal(self, debug_client, auth_headers):
+        """../ 遍历到白名单外被拒 403"""
+        resp = debug_client.get(
+            "/api/directories",
+            headers=auth_headers,
+            params={"parent": "/Users/dongsun/Github/sample-OCR/../../etc"},
+        )
+        assert resp.status_code == 403

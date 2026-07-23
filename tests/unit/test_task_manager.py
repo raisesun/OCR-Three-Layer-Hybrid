@@ -297,3 +297,32 @@ class TestOwnershipGuard:
         assert tm.mark_cancelled(task_id, api_key="keyA") is True
         task = tm.get_task(task_id, api_key="keyA")
         assert task["status"] == "cancelled"
+
+
+class TestSecurityFixesS4S6S8:
+    """S4/S6/S8 修复验证"""
+
+    def test_create_task_log_masks_api_key(self, tm, caplog):
+        """S4: create_task 日志脱敏，完整 api_key 不入日志"""
+        import logging
+        with caplog.at_level(logging.INFO, logger="ocr_api.common.task_manager"):
+            tm.create_task(file_count=1, api_key="secret-key-12345678")
+        full_log = caplog.text
+        assert "secret-key-12345678" not in full_log  # 完整 key 不入日志
+        assert "secret-k" in full_log  # 前 8 位脱敏出现
+
+    @pytest.mark.asyncio
+    async def test_submit_background_saves_reference(self, tm):
+        """S6: submit_background 保存任务引用防 GC，完成后自动移除"""
+        async def dummy():
+            return 42
+        task = tm.submit_background(dummy())
+        assert task in tm._background_tasks  # 引用已保存（防 GC）
+        await task
+        assert task not in tm._background_tasks  # 完成后自动移除
+
+    def test_ppocr_engine_default_det_side_len_is_960(self):
+        """S8: PaddleOCREngine 默认 text_det_limit_side_len=960"""
+        from ocr_three_layer_hybrid.paddleocr_wrapper import PaddleOCREngine
+        engine = PaddleOCREngine(device="cpu")  # 不触发模型加载（延迟初始化）
+        assert engine._init_kwargs["text_det_limit_side_len"] == 960
