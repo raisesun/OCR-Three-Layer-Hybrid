@@ -430,10 +430,13 @@ class KeywordDocumentClassifier(IDocumentClassifier):
 
     def _detect_contract_page_type(self, full_text: str) -> PageType:
         """合同页面类型识别（购房合同/存量房合同）"""
-        # 签署页特征：合同签订日期、合同签订地址、签字/盖章
-        has_stamp_signals = any(
-            kw in full_text
-            for kw in ["合同签订日期", "合同签订地址", "签字", "盖章", "签章"]
+        # 强信号：签署页独有特征（内容页/首页一般没有）
+        has_strong_stamp = any(
+            kw in full_text for kw in ["合同签订日期", "合同签订地址"]
+        )
+        # 弱信号：通用词（内容页/首页也可能有"签字盖章"条款，不可单独判定 STAMP）
+        has_weak_stamp = any(
+            kw in full_text for kw in ["签字", "盖章", "签章"]
         )
         # 注意：监管协议的签章页也有这些特征，需要排除
         is_fund_supervision = any(
@@ -454,8 +457,10 @@ class KeywordDocumentClassifier(IDocumentClassifier):
             kw in full_text for kw in ["房屋基本情况", "付款方式", "装修价款"]
         )
 
-        # 签署页优先（但要排除监管协议）
-        if has_stamp_signals and not is_fund_supervision:
+        # STAMP 判定：需签署信号且无内容页/首页强特征（避免误伤内容页/首页致数据丢失）
+        # 宁可漏判 STAMP（签署页走提取，不丢数据），不可误判内容页（数据丢失）
+        has_stamp_signals = (has_strong_stamp or has_weak_stamp) and not is_fund_supervision
+        if has_stamp_signals and not (has_content_fields or (has_contract_title and has_first_page_fields)):
             return PageType.STAMP
         elif has_contract_title and has_first_page_fields:
             return PageType.FIRST_PAGE

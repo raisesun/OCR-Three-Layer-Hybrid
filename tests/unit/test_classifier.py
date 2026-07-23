@@ -477,6 +477,22 @@ class TestPageTypeDetection:
         info = classifier.classify("/tmp/contract_stamp.jpg", ocr_texts)
         assert info.doc_type == DocumentType.PURCHASE_CONTRACT_STAMP
 
+    def test_purchase_contract_content_with_stamp_words(self, classifier):
+        """H2: 内容页含'签字盖章'条款应判 CONTENT，不误判 STAMP（防数据丢失）"""
+        ocr_texts = [
+            "商品房买卖合同",
+            "买受人 王五",
+            "出卖人 赵六",
+            "总价款 1000000",
+            "房屋基本情况 住宅",
+            "付款方式 一次性付款",
+            "双方签字盖章后生效",
+        ]
+        info = classifier.classify("/tmp/contract_content_stamp.jpg", ocr_texts)
+        # 修复前：含"签字盖章"->误判STAMP->rule_layer跳过->字段丢失
+        # 修复后：有内容页强特征->判CONTENT，正常提取
+        assert info.doc_type == DocumentType.PURCHASE_CONTRACT_CONTENT
+
 
 class TestOcrSpaceHandling:
     """OCR 空格处理（破碎文本匹配）"""
