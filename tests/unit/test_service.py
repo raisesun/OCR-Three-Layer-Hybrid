@@ -140,7 +140,7 @@ class TestVlmFallbackForPage:
             # Mock pipeline
             mock_pipeline = Mock()
             mock_vlm_layer = Mock()
-            mock_pipeline._get_layer.return_value = mock_vlm_layer
+            mock_pipeline.get_vlm_layer.return_value = mock_vlm_layer
             svc._pipeline = mock_pipeline
             svc._vlm_fallback_handler = None
             return svc
@@ -158,7 +158,7 @@ class TestVlmFallbackForPage:
             fields={"离婚证字号": "L12345", "持证人身份证件号": "340123199001011234"},
             success=True,
         )
-        service._pipeline._get_layer.return_value.extract.return_value = vlm_result
+        service._pipeline.get_vlm_layer.return_value.extract.return_value = vlm_result
 
         result = service._vlm_fallback_for_page(doc_info, ["离婚证字号", "持证人身份证件号"])
         assert result is not None
@@ -168,7 +168,7 @@ class TestVlmFallbackForPage:
     def test_vlm_fallback_no_vlm_layer(self, service):
         """没有 VLM 层时返回 None"""
         doc_info = DocumentInfo(image_path="/tmp/test.jpg", doc_type=DocumentType.UNKNOWN)
-        service._pipeline._get_layer.return_value = None
+        service._pipeline.get_vlm_layer.return_value = None
 
         result = service._vlm_fallback_for_page(doc_info, ["字段A"])
         assert result is None
@@ -176,7 +176,7 @@ class TestVlmFallbackForPage:
     def test_vlm_fallback_exception_returns_none(self, service):
         """VLM 兜底异常时返回 None"""
         doc_info = DocumentInfo(image_path="/tmp/test.jpg", doc_type=DocumentType.UNKNOWN)
-        service._pipeline._get_layer.return_value.extract.side_effect = Exception("VLM 超时")
+        service._pipeline.get_vlm_layer.return_value.extract.side_effect = Exception("VLM 超时")
 
         result = service._vlm_fallback_for_page(doc_info, ["字段A"])
         assert result is None

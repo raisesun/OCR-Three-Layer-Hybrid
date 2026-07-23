@@ -12,9 +12,9 @@
 
 **问题统计**：🔴严重 9 项｜🟠高 21 项｜🟡中 30+ 项｜🟢低 20+ 项
 
-## 修复状态总览（S1-S9 + H1 + H2 + H21 + H3 已修复）
+## 修复状态总览（S1-S9 + H1 + H2 + H21 + H3 + H4部分 已修复）
 
-- **修复提交**：S1-S9 `24879d4`；H1 `031939f`；H2 `5c4eeef`；H21 `d46f4e9`；H3 待提交（分支 `fix/security-s1-s9`，2026-07-22）
+- **修复提交**：S1-S9 `24879d4`；H1 `031939f`；H2 `5c4eeef`；H21 `d46f4e9`；H3 `16018ea`；H4(封装/文档) 待提交（分支 `fix/security-s1-s9`，2026-07-22）
 - **测试结果**：553 passed，1 failed（`test_real_extraction` 需 VLM/Ollama 服务 localhost:8082，环境依赖，非回归）
 - **验证详情**：见文末"验证报告"章节
 
@@ -33,6 +33,7 @@
 | H2 | 合同签章页误判 | ✅ 已修复 | test_purchase_contract_content_with_stamp_words（内容页含签字盖章判CONTENT）|
 | H21 | get_quota 月末23点崩溃 | ✅ 已修复 | TestQuotaMonthEndCrash（月末/跨年23点不崩）|
 | H3 | 单图RULE异常不触发VLM兜底 | ✅ 已修复 | test_vlm_fallback_triggered_on_rule_failure |
+| H4 | 单图/多页VLM兜底不一致 | 🔶 部分修复 | 封装+文档已优化(prompt统一待VLM评估) |
 
 ---
 
@@ -366,6 +367,7 @@ H5-H20、中优先级各项
 | H2 | `test_purchase_contract_content_with_stamp_words`：内容页含"签字盖章"判 CONTENT（修复前误判 STAMP 致数据丢失）；test_classifier 49 项全过 | ✅ 通过 |
 | H21 | `TestQuotaMonthEndCrash`：月末(1/31)23点->2026-02-01T00:00；跨年(12/31)23点->2027-01-01T00:00（修复前 ValueError 崩溃） | ✅ 通过 |
 | H3 | `test_vlm_fallback_triggered_on_rule_failure`：RULE 异常(success=False)触发 fallback_extract（修复前不触发） | ✅ 通过 |
+| H4 | 封装：pipeline 加 `get_vlm_layer()` 公共方法，service 改用（不再访问 `_get_layer` 私有）；文档：vlm_fallback 配置说明对齐实际(GLM-OCR)。**prompt 统一待 VLM 服务+基线样本评估** | 🔶 部分通过 |
 
 ### S9 验证说明
 S9 并发限流用 `asyncio.Lock` 串行化 + 5 分钟缓存。代码审查确认 lock/cache 定义与两接口的 `async with` 包裹正确。并发端到端测试需真实 OCR 服务（`process_batch`），未纳入单元测试；但 `asyncio.Lock` 语义保证同一时刻仅一个全量基线处理，达到防 CPU DoS 目的。

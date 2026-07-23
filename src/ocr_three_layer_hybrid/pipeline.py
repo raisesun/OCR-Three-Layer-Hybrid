@@ -333,6 +333,10 @@ class PlanEPlusPipeline:
         # v2.0: 移除 LLM 层
         return None
 
+    def get_vlm_layer(self):
+        """获取 VLM 层（公共访问器，供 service 层使用，替代访问 _get_layer 私有方法）"""
+        return self.vlm_layer
+
     def get_layer_for_doc_type(self, doc_type: DocumentType) -> ProcessingLayer:
         """获取文档类型对应的默认处理层"""
         return self.layer_routing.get(doc_type, ProcessingLayer.VLM)

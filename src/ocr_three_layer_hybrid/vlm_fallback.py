@@ -12,7 +12,8 @@ Rule层字段级VLM重试（原"第3层"）
 4. 合并VLM结果（只覆盖失败字段）
 
 注意：这不是独立的处理层，而是 Rule 层(2A) 的子步骤。
-当前使用 Qwen2.5-VL-7B (port 8082) 作为VLM服务。
+VLM 服务由 OCRConfig.vlm_fallback_engine 配置决定（生产通过 service 注入 vlm_client）；
+直接实例化默认用 VLMServiceConfig(GLM-OCR, port 8080)。
 """
 
 import json

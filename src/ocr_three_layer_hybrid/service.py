@@ -716,7 +716,7 @@ class OCRService:
             VLM 提取结果，失败返回 None
         """
         try:
-            vlm_layer = self._pipeline._get_layer(ProcessingLayer.VLM)
+            vlm_layer = self._pipeline.get_vlm_layer()
             if vlm_layer is None:
                 return None
 
