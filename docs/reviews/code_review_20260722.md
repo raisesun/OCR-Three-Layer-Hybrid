@@ -12,9 +12,9 @@
 
 **问题统计**：🔴严重 9 项｜🟠高 21 项｜🟡中 30+ 项｜🟢低 20+ 项
 
-## 修复状态总览（S1-S9 + H1 + H2 + H21 + H3 + H4部分 + H5 已修复）
+## 修复状态总览（S1-S9 + H1 + H2 + H21 + H3 + H4部分 + H5 + H8 已修复）
 
-- **修复提交**：S1-S9 `24879d4`；H1 `031939f`；H2 `5c4eeef`；H21 `d46f4e9`；H3 `16018ea`；H4(封装/文档) `ba5b5b5`；H5 待提交（分支 `fix/security-s1-s9`，2026-07-22）
+- **修复提交**：S1-S9 `24879d4`；H1 `031939f`；H2 `5c4eeef`；H21 `d46f4e9`；H3 `16018ea`；H4(封装/文档) `ba5b5b5`；H5 `9a3b7a3`；H8 待提交（分支 `fix/security-s1-s9`，2026-07-22）
 - **测试结果**：555 passed，1 failed（`test_real_extraction` 需 VLM/Ollama 服务 localhost:8082，环境依赖，非回归）
 - **验证详情**：见文末"验证报告"章节
 
@@ -35,6 +35,7 @@
 | H3 | 单图RULE异常不触发VLM兜底 | ✅ 已修复 | test_vlm_fallback_triggered_on_rule_failure |
 | H4 | 单图/多页VLM兜底不一致 | 🔶 部分修复 | 封装+文档已优化(prompt统一待VLM评估) |
 | H5 | position_extractor双实例 | ✅ 已修复 | TestWrapperInjection（复用主引擎wrapper） |
+| H8 | PaddleOCR结果访问不一致 | ✅ 已修复 | 运行时验证+统一防御式访问 |
 
 ---
 
@@ -362,7 +363,7 @@ H5-H20、中优先级各项
 | S5 | `TestUploadSecurity` 4 项：.html→400 / 超 20MB→413 / 合法 jpg→200+UUID名 / .exe→400 | ✅ 通过 |
 | S6 | `test_submit_background_saves_reference`：引用保存防 GC + 完成后自动移除；现有 `test_ocr_async` 间接验证 worker 仍工作 | ✅ 通过 |
 | S7 | `TestDebugAsyncUploadSecurity` 3 项：.html→400 / >500 文件→400 / 空→400|422 | ✅ 通过 |
-| S8 | `test_ppocr_engine_default_det_side_len_is_960`：`_init_kwargs` 值确认 960 | ✅ 通过 |
+| S8 | `test_ppocr_engine_default_det_side_len_is_960`：参数值 960 + 运行时验证(64与960识别一致14条，原64未致检测退化，修复无害) | ✅ 通过 |
 | S9 | 代码审查：`_baseline_lock`+`_baseline_cache`+TTL（:94-96），baseline_compare（:261 `async with`）、stats_dashboard（:334 `async with`），缓存写入（:320/:388） | ✅ 代码确认 |
 | H1 | `test_ocr_called_once_per_page`：2 页 -> run_ocr call_count=2（修复前 3 次）；test_service 29 项全过 | ✅ 通过 |
 | H2 | `test_purchase_contract_content_with_stamp_words`：内容页含"签字盖章"判 CONTENT（修复前误判 STAMP 致数据丢失）；test_classifier 49 项全过 | ✅ 通过 |
@@ -370,6 +371,7 @@ H5-H20、中优先级各项
 | H3 | `test_vlm_fallback_triggered_on_rule_failure`：RULE 异常(success=False)触发 fallback_extract（修复前不触发） | ✅ 通过 |
 | H4 | 封装：pipeline 加 `get_vlm_layer()` 公共方法，service 改用（不再访问 `_get_layer` 私有）；文档：vlm_fallback 配置说明对齐实际(GLM-OCR)。**prompt 统一待 VLM 服务+基线样本评估** | 🔶 部分通过 |
 | H5 | `TestWrapperInjection`：注入 wrapper_getter 复用主引擎 PaddleOCRWrapper（不自建双实例）；无 wrapper 走 fallback 向后兼容 | ✅ 通过 |
+| H8 | 运行时验证 OCRResult 同时支持 .get/.json（数据一致）；PaddleOCREngine.predict 统一为防御式 `res.json if hasattr else res`，三引擎访问一致；真实跑图确认 14 条文本不变 | ✅ 通过 |
 
 ### S9 验证说明
 S9 并发限流用 `asyncio.Lock` 串行化 + 5 分钟缓存。代码审查确认 lock/cache 定义与两接口的 `async with` 包裹正确。并发端到端测试需真实 OCR 服务（`process_batch`），未纳入单元测试；但 `asyncio.Lock` 语义保证同一时刻仅一个全量基线处理，达到防 CPU DoS 目的。

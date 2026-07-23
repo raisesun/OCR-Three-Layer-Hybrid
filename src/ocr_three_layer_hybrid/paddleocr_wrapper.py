@@ -628,13 +628,17 @@ class PaddleOCREngine:
         results = []
 
         for res in output:
-            input_path = res.get(
+            # 防御式访问：兼容 dict 和 OCRResult 对象（H8 统一三引擎访问方式）
+            j = res.json if hasattr(res, "json") else res
+            inner = j.get("res", j) if isinstance(j, dict) else {}
+
+            input_path = inner.get(
                 "input_path",
                 str(input_data) if isinstance(input_data, str) else "ndarray",
             )
-            rec_texts = res.get("rec_texts", []) or []
-            rec_scores = res.get("rec_scores", []) or []
-            rec_polys = res.get("rec_polys", []) or []
+            rec_texts = inner.get("rec_texts", []) or []
+            rec_scores = inner.get("rec_scores", []) or []
+            rec_polys = inner.get("rec_polys", []) or []
 
             # 文本块按区域分组
             grouped_blocks = None
@@ -648,7 +652,7 @@ class PaddleOCREngine:
                 rec_texts=rec_texts,
                 rec_scores=rec_scores,
                 rec_polys=rec_polys,
-                rec_boxes=res.get("rec_boxes"),
+                rec_boxes=inner.get("rec_boxes"),
                 layout_regions=layout_regions,
                 grouped_blocks=grouped_blocks,
                 raw_result={
