@@ -249,8 +249,9 @@ class PlanEPlusPipeline:
             extract_time,
         )
 
-        # Rule层字段级VLM重试（校验失败时触发）
-        if self.vlm_fallback_handler and result.success:
+        # Rule层字段级VLM重试（校验失败或异常时触发）
+        # 注意：不要求 result.success -- RULE 层异常时 success=False 但字段全空，同样需要 VLM 补救（H3 修复）
+        if self.vlm_fallback_handler:
             fallback_start = time.time()
             result = self._apply_vlm_fallback(image_path, result, doc_info)
             fallback_time = time.time() - fallback_start

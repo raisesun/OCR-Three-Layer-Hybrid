@@ -72,6 +72,36 @@ class TestPlanEPlusPipeline:
         assert result.doc_type == DocumentType.PURCHASE_CONTRACT
         assert result.layer == ProcessingLayer.RULE
 
+    def test_vlm_fallback_triggered_on_rule_failure(self):
+        """H3: RULE 层异常(success=False)时也触发 VLM 兜底（修复前要求 success=True 臁底不触发）"""
+        rule_layer = Mock()
+        rule_layer.extract.return_value = ExtractionResult(
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            layer=ProcessingLayer.RULE,
+            fields={},
+            success=False,
+            error_message="RULE层异常",
+        )
+        fallback_handler = Mock()
+        fallback_handler.get_failed_fields.return_value = ["户主姓名"]
+        fallback_handler.fallback_extract.return_value = {"户主姓名": "张三"}
+
+        pipeline = PlanEPlusPipeline(
+            rule_layer=rule_layer,
+            vlm_fallback_handler=fallback_handler,
+        )
+        doc_info = DocumentInfo(
+            image_path="/tmp/hukou.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            ocr_texts=["ocr text"],
+        )
+        result = pipeline.process("/tmp/hukou.jpg", ["ocr text"], doc_info=doc_info)
+
+        # 修复前：success=False 不进 _apply_vlm_fallback，fallback_extract 不被调用
+        # 修复后：触发兜底
+        fallback_handler.fallback_extract.assert_called_once()
+        assert result.fields.get("户主姓名") == "张三"
+
     def test_process_with_mock_llm_layer(self):
         """使用mock LLM层测试购房合同流程（现在购房合同由规则层处理）"""
         # 由于购房合同现在由规则层处理，这个测试改为测试UNKNOWN文档的VLM兜底
