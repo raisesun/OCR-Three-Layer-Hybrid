@@ -12,6 +12,25 @@
 
 **问题统计**：🔴严重 9 项｜🟠高 21 项｜🟡中 30+ 项｜🟢低 20+ 项
 
+## 修复状态总览（S1-S9 + H1 已修复）
+
+- **修复提交**：S1-S9 `24879d4`；H1 待提交（分支 `fix/security-s1-s9`，2026-07-22）
+- **测试结果**：549 passed，1 failed（`test_real_extraction` 需 VLM/Ollama 服务 localhost:8082，环境依赖，非回归）
+- **验证详情**：见文末"验证报告"章节
+
+| 编号 | 问题 | 状态 | 验证方式 |
+|------|------|------|----------|
+| S1 | IDOR 越权 | ✅ 已修复 | 单元测试 TestOwnershipGuard（6 项） |
+| S2 | debug 路由零鉴权 | ✅ 已修复 | 集成测试 TestDebugRouteAuth（2 项） |
+| S3 | 路径遍历 | ✅ 已修复 | 见验证报告 |
+| S4 | API Key 日志泄露 | ✅ 已修复 | 见验证报告 |
+| S5 | 存储型 XSS | ✅ 已修复 | 集成测试 TestUploadSecurity（4 项） |
+| S6 | asyncio.create_task GC | ✅ 已修复 | 见验证报告 |
+| S7 | debug 上传无限制 | ✅ 已修复 | 集成测试 TestDebugAsyncUploadSecurity（3 项） |
+| S8 | text_det_limit_side_len | ✅ 已修复 | 见验证报告 |
+| S9 | baseline/stats DoS | ✅ 已修复 | 见验证报告 |
+| H1 | 多页 OCR 重复两次 | ✅ 已修复 | test_ocr_called_once_per_page（call_count=页数）|
+
 ---
 
 ## 🔴 严重问题（建议立即修复）
@@ -318,3 +337,38 @@ H5-H20、中优先级各项
 4. `src/ocr_three_layer_hybrid/paddleocr_wrapper.py` - text_det_limit_side_len=64、多引擎 API 不一致
 5. `src/ocr_three_layer_hybrid/classifier.py` - 签章页误判（数据丢失）、死代码
 6. `src/ocr_api/ocr/server.py` - 0.0.0.0 绑定、CORS、安全头缺失、认证状态打印错误
+
+---
+
+## 验证报告（2026-07-22）
+
+- **验证方法**：代码审查 + 针对性单元/集成测试 + 全量回归测试
+- **测试结果**：549 passed，1 failed（`test_real_extraction` 需 VLM/Ollama 服务 localhost:8082，环境依赖，非回归）
+- **新增验证测试**：16 项（S1×6 + S2×2 + S3×2 + S4×1 + S5×4 + S6×1 + S7×3 + S8×1 + H1×1）
+
+### 逐项验证结果
+
+| 编号 | 验证方式 | 结果 |
+|------|----------|------|
+| S1 | `TestOwnershipGuard` 6 项：正确/错误/无 api_key 的 get_task、get_task_status、mark_cancelled | ✅ 通过 |
+| S2 | `TestDebugRouteAuth` 2 项：无认证→401 / 带认证→通过 | ✅ 通过 |
+| S3 | `TestPathTraversalGuard` 2 项：`sample-OCR-backup`→403 / `../`遍历→403；代码确认 `is_relative_to` 两处 | ✅ 通过 |
+| S4 | `test_create_task_log_masks_api_key`：caplog 验证完整 key 不入日志，前 8 位脱敏出现 | ✅ 通过 |
+| S5 | `TestUploadSecurity` 4 项：.html→400 / 超 20MB→413 / 合法 jpg→200+UUID名 / .exe→400 | ✅ 通过 |
+| S6 | `test_submit_background_saves_reference`：引用保存防 GC + 完成后自动移除；现有 `test_ocr_async` 间接验证 worker 仍工作 | ✅ 通过 |
+| S7 | `TestDebugAsyncUploadSecurity` 3 项：.html→400 / >500 文件→400 / 空→400|422 | ✅ 通过 |
+| S8 | `test_ppocr_engine_default_det_side_len_is_960`：`_init_kwargs` 值确认 960 | ✅ 通过 |
+| S9 | 代码审查：`_baseline_lock`+`_baseline_cache`+TTL（:94-96），baseline_compare（:261 `async with`）、stats_dashboard（:334 `async with`），缓存写入（:320/:388） | ✅ 代码确认 |
+| H1 | `test_ocr_called_once_per_page`：2 页 -> run_ocr call_count=2（修复前 3 次）；test_service 29 项全过 | ✅ 通过 |
+
+### S9 验证说明
+S9 并发限流用 `asyncio.Lock` 串行化 + 5 分钟缓存。代码审查确认 lock/cache 定义与两接口的 `async with` 包裹正确。并发端到端测试需真实 OCR 服务（`process_batch`），未纳入单元测试；但 `asyncio.Lock` 语义保证同一时刻仅一个全量基线处理，达到防 CPU DoS 目的。
+
+### 未覆盖项（环境依赖，不影响修复正确性判断）
+- **S8 运行时效果**：960 vs 64 对真实 OCR 检测的影响需启动 PaddleOCR 跑实际图片确认（本次仅验证参数值已改为 960）
+- **S9 并发端到端**：需真实 OCR 服务
+- **VLM 相关**：`test_real_extraction` 需 Ollama 服务
+
+### 回归确认
+- 全量 549 测试通过，无功能性回归
+- 唯一失败项 `test_real_extraction` 经 stash 验证 + 改动文件清单确认与本次修复无关（改动不含 `vlm_layer.py`）

@@ -333,6 +333,28 @@ class TestMultiPageTypeInheritance:
         assert second_doc.doc_type == DocumentType.HOUSEHOLD_REGISTER_CONTENT
         assert not second_doc.metadata.get("inherited_from_first_page")
 
+    def test_ocr_called_once_per_page(self, service):
+        """H1: 多页处理每页只 OCR 一次（修复前 3 次/2页，修复后 2 次/2页）"""
+        first_doc = DocumentInfo(
+            image_path="img1.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.95,
+        )
+        service._classifier.classify.return_value = DocumentInfo(
+            image_path="img2.jpg",
+            doc_type=DocumentType.HOUSEHOLD_REGISTER_CONTENT,
+            confidence=0.9,
+        )
+        service._pipeline.process.return_value = ExtractionResult(
+            doc_type=DocumentType.HOUSEHOLD_REGISTER,
+            layer=ProcessingLayer.RULE,
+            fields={},
+            success=True,
+        )
+        service._extract_multi_page_merge(["img1.jpg", "img2.jpg"], first_doc)
+        # 2 页 -> run_ocr 调用 2 次（每页一次）；修复前为 3 次（首页1 + 后续页2）
+        assert service.run_ocr.call_count == 2
+
 
 class TestBuildClassificationDict:
     """测试 _build_classification_dict 静态方法"""

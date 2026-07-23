@@ -394,7 +394,9 @@ class OCRService:
         )
 
         # 2. 所有类型统一走逐页分类 + 提取 + 合并
-        result = self._extract_multi_page_merge(pages_to_process, first_doc_info)
+        result = self._extract_multi_page_merge(
+            pages_to_process, first_doc_info, first_page_ocr_text=first_page_text
+        )
 
         extract_time = time.time() - total_start - classify_time
         total_time = time.time() - total_start
@@ -476,6 +478,7 @@ class OCRService:
         self,
         image_paths: List[str],
         first_page_doc_info: Any,
+        first_page_ocr_text: Optional[str] = None,
     ) -> Any:
         """逐页独立分类 + RULE 提取 + 失败页 VLM 兜底 + 字段合并
 
@@ -515,9 +518,12 @@ class OCRService:
             # === 1. 分类：首页复用，后续页独立分类 ===
             if page_idx == 0:
                 page_doc_info = first_page_doc_info
+                # 首页复用 process_multi_page 已 OCR 的文本，避免重复 OCR
+                ocr_text = first_page_ocr_text if first_page_ocr_text is not None else self.run_ocr(img_path)
             else:
-                ocr_text_for_classify = self.run_ocr(img_path)
-                ocr_texts_for_classify = [ocr_text_for_classify] if ocr_text_for_classify else []
+                # 后续页 OCR 一次，供分类+提取共用（对齐 process_single 模式）
+                ocr_text = self.run_ocr(img_path)
+                ocr_texts_for_classify = [ocr_text] if ocr_text else []
                 page_doc_info = self._classifier.classify(img_path, ocr_texts_for_classify)
 
                 # ★ 方案C：多页协同 - UNKNOWN页从首页继承细分类型 ★
@@ -584,7 +590,7 @@ class OCRService:
                 return None
 
             # === 4. RULE 层提取 ===
-            ocr_text = self.run_ocr(img_path)
+            # === 4. RULE 层提取（复用分类阶段的 ocr_text，不再重复 OCR）===
             ocr_texts = [ocr_text] if ocr_text else []
 
             result = self._pipeline.process(img_path, ocr_texts, doc_info=page_doc_info)
