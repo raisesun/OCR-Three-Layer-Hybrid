@@ -106,7 +106,9 @@ class OCRService:
                     HouseholdPositionExtractor,
                 )
 
-                self._position_extractor = HouseholdPositionExtractor()
+                self._position_extractor = HouseholdPositionExtractor(
+                    wrapper_getter=lambda: self._paddleocr_wrapper
+                )
                 logger.info("位置标注提取器已启用")
             except ImportError as e:
                 logger.warning("位置标注提取器未启用（导入失败）: %s", e)

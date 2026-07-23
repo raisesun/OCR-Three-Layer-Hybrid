@@ -185,3 +185,38 @@ class TestMergeAdjacentItems:
     def test_empty_items(self):
         """空列表"""
         assert self.extractor._merge_adjacent_items([]) == []
+
+
+class TestWrapperInjection:
+    """H5: wrapper 注入复用主引擎 PaddleOCRWrapper"""
+
+    def test_uses_wrapper_when_provided(self):
+        """提供 wrapper_getter 时复用主引擎，不自建 PaddleOCR"""
+        from unittest.mock import Mock, patch
+
+        mock_wrapper = Mock()
+        mock_result = Mock()
+        mock_result.rec_boxes = [[10, 20, 50, 40], [60, 20, 100, 40]]
+        mock_result.rec_texts = ["户主", "张三"]
+        mock_result.rec_scores = [0.95, 0.88]
+        mock_wrapper.run_ocr.return_value = mock_result
+
+        extractor = HouseholdPositionExtractor(wrapper_getter=lambda: mock_wrapper)
+        with patch("PIL.Image.open") as mock_open:
+            mock_img = Mock()
+            mock_img.size = (200, 200)
+            mock_img.__enter__ = Mock(return_value=mock_img)
+            mock_img.__exit__ = Mock(return_value=False)
+            mock_open.return_value = mock_img
+            items, _ = extractor._parse_ocr("/tmp/test.jpg")
+
+        # 验证用 wrapper.run_ocr（复用主引擎），不自建 PaddleOCR
+        mock_wrapper.run_ocr.assert_called_once_with("/tmp/test.jpg")
+        assert len(items) >= 1
+
+    def test_fallback_without_wrapper(self):
+        """无 wrapper 时走 fallback（向后兼容）"""
+        extractor = HouseholdPositionExtractor()
+        assert extractor._wrapper is None
+        assert extractor._wrapper_getter is None
+        assert hasattr(extractor, "_get_ocr")  # fallback 仍存在

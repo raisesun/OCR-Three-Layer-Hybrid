@@ -110,8 +110,15 @@ class HouseholdPositionExtractor:
         r"^[一-鿿]{1,4}\d+号",  # 曹台子74号
     ]
 
-    def __init__(self):
-        self._ocr = None  # 延迟初始化
+    def __init__(self, paddleocr_wrapper=None, wrapper_getter=None):
+        """
+        Args:
+            paddleocr_wrapper: 主引擎 PaddleOCRWrapper（可选，复用避免双实例+配置漂移）
+            wrapper_getter: 延迟获取 wrapper 的 callable（解决 service 延迟初始化时机）
+        """
+        self._wrapper = paddleocr_wrapper
+        self._wrapper_getter = wrapper_getter  # 延迟获取（service._paddleocr_wrapper 创建后才有值）
+        self._ocr = None  # fallback：无 wrapper 时自建 PaddleOCR（向后兼容）
         self._ocr_lock = threading.Lock()  # 线程安全锁
 
     def _get_ocr(self):
@@ -140,11 +147,27 @@ class HouseholdPositionExtractor:
         Returns:
             (items, doc_bounds): 文本项列表 + 文档边界 (min_x, min_y, max_x, max_y) 归一化值
         """
-        ocr = self._get_ocr()
-        results = list(ocr.predict(input=image_path))
-        if not results:
-            return [], (0, 0, 1, 1)
-        r = results[0]
+        # 优先复用主引擎 PaddleOCRWrapper（避免双实例 + 配置漂移）
+        wrapper = self._wrapper_getter() if self._wrapper_getter else self._wrapper
+        if wrapper is not None:
+            ocr_result = wrapper.run_ocr(image_path)
+            if ocr_result is None or ocr_result.rec_boxes is None or len(ocr_result.rec_boxes) == 0:
+                return [], (0, 0, 1, 1)
+            rec_boxes = ocr_result.rec_boxes
+            rec_texts = ocr_result.rec_texts
+            rec_scores = ocr_result.rec_scores
+        else:
+            # fallback：自建 PaddleOCR（向后兼容，测试/独立运行）
+            ocr = self._get_ocr()
+            results = list(ocr.predict(input=image_path))
+            if not results:
+                return [], (0, 0, 1, 1)
+            r = results[0]
+            rec_boxes = r["rec_boxes"]
+            if len(rec_boxes) == 0:
+                return [], (0, 0, 1, 1)
+            rec_texts = r["rec_texts"]
+            rec_scores = r["rec_scores"]
 
         from PIL import Image
 
@@ -152,9 +175,7 @@ class HouseholdPositionExtractor:
             img_w, img_h = pil_img.size
 
         # 文档范围：全部文本的边界框
-        all_boxes = r["rec_boxes"]
-        if len(all_boxes) == 0:
-            return [], (0, 0, 1, 1)
+        all_boxes = rec_boxes
 
         min_x = float(min(b[0] for b in all_boxes))
         min_y = float(min(b[1] for b in all_boxes))
@@ -164,7 +185,7 @@ class HouseholdPositionExtractor:
         doc_h = max(1, max_y - min_y)
 
         items = []
-        for text, box, score in zip(r["rec_texts"], r["rec_boxes"], r["rec_scores"]):
+        for text, box, score in zip(rec_texts, rec_boxes, rec_scores):
             x1, y1, x2, y2 = float(box[0]), float(box[1]), float(box[2]), float(box[3])
             items.append(
                 OcrItem(
