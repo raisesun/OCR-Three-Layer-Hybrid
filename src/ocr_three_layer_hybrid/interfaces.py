@@ -100,8 +100,8 @@ class DocumentInfo:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def should_extract(self) -> bool:
-        """是否需要进行字段提取（封面页、封底页跳过）"""
-        return self.page_type not in [PageType.COVER, PageType.BACK]
+        """是否需要进行字段提取（封面页/封底页/盖章页/附图页跳过）"""
+        return self.page_type not in [PageType.COVER, PageType.BACK, PageType.STAMP, PageType.ATTACHMENT]
 
     def is_content_page(self) -> bool:
         """是否是内容页（核心数据页）"""

@@ -96,9 +96,9 @@ class FieldValidator:
             "char_type": "chinese_name",
         },
         "与户主关系": {
-            "max_len": 5,
-            "pattern": r"^(户主|妻|夫|子|女|长子|长女|次子|二女|孙子|孙女|父|母|兄弟|姐妹|祖父|祖母|外祖父|外祖母|其他)$",
-            "description": "标准亲属关系",
+            "max_len": 6,
+            "pattern": r"^[一-鿿]{1,6}$",  # 放宽为1-6中文（覆盖三子/养子/儿媳/女婿/外孙等，减少不必要VLM兜底）
+            "description": "亲属关系（1-6中文字符）",
         },
         "性别": {
             "pattern": r"^(男|女)$",
