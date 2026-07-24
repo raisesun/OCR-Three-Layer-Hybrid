@@ -97,33 +97,65 @@ class RuleExtractionLayer(IExtractionLayer):
     def can_process(self, doc_info: DocumentInfo) -> bool:
         return doc_info.doc_type in self.supported_doc_types
 
+    # 跳过提取的文档类型（封面/盖章/附图页）
+    _SKIP_TYPES = frozenset([
+        DocumentType.DIVORCE_CERTIFICATE_COVER,
+        DocumentType.DIVORCE_CERTIFICATE_STAMP,
+        DocumentType.MARRIAGE_CERTIFICATE_COVER,
+        DocumentType.MARRIAGE_CERTIFICATE_STAMP,
+        DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP,
+        DocumentType.PURCHASE_CONTRACT_STAMP,
+        DocumentType.STOCK_CONTRACT_STAMP,
+        DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+    ])
+
+    def _is_skip_page(self, doc_type: DocumentType) -> bool:
+        """是否跳过提取（封面/盖章/附图页）"""
+        return doc_type in self._SKIP_TYPES
+
+    def _dispatch_extract(self, full_text: str, key_list: List[str], doc_info: DocumentInfo) -> Dict[str, str]:
+        """按文档类型分派提取逻辑（T6: 降低 extract 圈复杂度，早返回替代 if-elif）"""
+        doc_type = doc_info.doc_type
+        if doc_type in (DocumentType.ID_CARD, DocumentType.ID_CARD_FRONT, DocumentType.ID_CARD_BACK):
+            return self._personal_id_extractor.extract_id_card(full_text, key_list)
+        if doc_type in (DocumentType.MARRIAGE_CERTIFICATE, DocumentType.MARRIAGE_CERTIFICATE_CONTENT):
+            return self._personal_id_extractor.extract_marriage_certificate(full_text, key_list)
+        if doc_type in (DocumentType.DIVORCE_CERTIFICATE, DocumentType.DIVORCE_CERTIFICATE_CONTENT):
+            return self._personal_id_extractor.extract_divorce_certificate(full_text, key_list)
+        if doc_type in (DocumentType.HOUSEHOLD_REGISTER, DocumentType.HOUSEHOLD_REGISTER_COVER, DocumentType.HOUSEHOLD_REGISTER_CONTENT):
+            return self._household_property_extractor.extract_household_register(full_text, key_list, doc_info.image_path)
+        if doc_type in (DocumentType.PROPERTY_CERTIFICATE, DocumentType.PROPERTY_CERTIFICATE_CONTENT):
+            return self._household_property_extractor.extract_property_certificate_content(full_text, key_list)
+        if doc_type == DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE:
+            return self._household_property_extractor.extract_property_certificate_first_page(full_text, key_list)
+        if doc_type == DocumentType.INVOICE:
+            return self._financial_extractor.extract_invoice(full_text, key_list)
+        if doc_type in (DocumentType.PURCHASE_CONTRACT, DocumentType.STOCK_CONTRACT):
+            return self._financial_extractor.extract_contract(full_text, key_list, doc_type)
+        if doc_type in (DocumentType.FUND_SUPERVISION, DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE, DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE):
+            return self._financial_extractor.extract_fund_supervision(full_text, key_list, doc_type)
+        if doc_type == DocumentType.FUND_SUPERVISION_CERTIFICATE:
+            return self._financial_extractor.extract_fund_supervision_certificate(full_text, key_list)
+        if doc_type == DocumentType.DIVORCE_AGREEMENT:
+            return self._agreement_extractor.extract_divorce_agreement(full_text, key_list)
+        if doc_type in (DocumentType.PURCHASE_CONTRACT_FIRST_PAGE, DocumentType.PURCHASE_CONTRACT_CONTENT, DocumentType.STOCK_CONTRACT_FIRST_PAGE, DocumentType.STOCK_CONTRACT_CONTENT):
+            return self._financial_extractor.extract_contract(full_text, key_list, doc_type)
+        if doc_type in (DocumentType.PURCHASE_CONTRACT_STAMP, DocumentType.STOCK_CONTRACT_STAMP, DocumentType.NOTARY_CERTIFICATE, DocumentType.POWER_OF_ATTORNEY):
+            return {k: "" for k in key_list}
+        return {}
+
     def extract(self, doc_info: DocumentInfo, key_list: List[str]) -> ExtractionResult:
+        """规则层字段提取（T6: 重构为预处理 + 跳过检查 + 分派，降低圈复杂度）"""
         import time
 
         start_time = time.time()
 
         try:
             full_text = " ".join(doc_info.ocr_texts)
-
-            # === OCR文本预处理 ===
             full_text = preprocess_text(full_text)
 
-            # === 封面页/盖章页/附图页处理：明确定义不提取 ===
-            if doc_info.doc_type in [
-                # 结婚证
-                DocumentType.DIVORCE_CERTIFICATE_COVER,
-                DocumentType.DIVORCE_CERTIFICATE_STAMP,
-                DocumentType.MARRIAGE_CERTIFICATE_COVER,
-                DocumentType.MARRIAGE_CERTIFICATE_STAMP,
-                # 资金监管协议签章页
-                DocumentType.FUND_SUPERVISION_AGREEMENT_STAMP,
-                # 购房合同/存量房合同签署页
-                DocumentType.PURCHASE_CONTRACT_STAMP,
-                DocumentType.STOCK_CONTRACT_STAMP,
-                # 不动产权证书附图页（明确定义不提取）
-                DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
-            ]:
-                # 封面页和盖章页不需要提取个人信息
+            # 跳过页（封面/盖章/附图）
+            if self._is_skip_page(doc_info.doc_type):
                 return ExtractionResult(
                     doc_type=doc_info.doc_type,
                     layer=ProcessingLayer.RULE,
@@ -134,84 +166,8 @@ class RuleExtractionLayer(IExtractionLayer):
                     error_message="封面页/盖章页，跳过提取",
                 )
 
-            # === 内容页提取 ===
-            if (
-                doc_info.doc_type == DocumentType.ID_CARD
-                or doc_info.doc_type == DocumentType.ID_CARD_FRONT
-            ):
-                fields = self._personal_id_extractor.extract_id_card(full_text, key_list)
-            elif doc_info.doc_type == DocumentType.ID_CARD_BACK:
-                # 身份证背面字段（签发机关+有效期限）由 extract_id_card 统一处理
-                fields = self._personal_id_extractor.extract_id_card(full_text, key_list)
-            elif doc_info.doc_type in [
-                DocumentType.MARRIAGE_CERTIFICATE,
-                DocumentType.MARRIAGE_CERTIFICATE_CONTENT,
-            ]:
-                fields = self._personal_id_extractor.extract_marriage_certificate(full_text, key_list)
-            elif doc_info.doc_type in [
-                DocumentType.DIVORCE_CERTIFICATE,
-                DocumentType.DIVORCE_CERTIFICATE_CONTENT,
-            ]:
-                fields = self._personal_id_extractor.extract_divorce_certificate(full_text, key_list)
-            elif doc_info.doc_type in [
-                DocumentType.HOUSEHOLD_REGISTER,
-                DocumentType.HOUSEHOLD_REGISTER_COVER,
-                DocumentType.HOUSEHOLD_REGISTER_CONTENT,
-            ]:
-                fields = self._household_property_extractor.extract_household_register(
-                    full_text, key_list, doc_info.image_path
-                )
-            elif doc_info.doc_type in [
-                DocumentType.PROPERTY_CERTIFICATE,
-                DocumentType.PROPERTY_CERTIFICATE_CONTENT,
-            ]:
-                # 内容页使用新的提取逻辑（支持表格布局）
-                fields = self._household_property_extractor.extract_property_certificate_content(full_text, key_list)
-            elif doc_info.doc_type == DocumentType.PROPERTY_CERTIFICATE_FIRST_PAGE:
-                # 首页：编号 + 登记日期
-                fields = self._household_property_extractor.extract_property_certificate_first_page(full_text, key_list)
-            elif doc_info.doc_type == DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT:
-                # 附图页：明确定义不提取
-                fields = {k: "" for k in key_list}
-            elif doc_info.doc_type == DocumentType.INVOICE:
-                fields = self._financial_extractor.extract_invoice(full_text, key_list)
-            elif doc_info.doc_type in (
-                DocumentType.PURCHASE_CONTRACT,
-                DocumentType.STOCK_CONTRACT,
-            ):
-                fields = self._financial_extractor.extract_contract(full_text, key_list, doc_info.doc_type)
-            elif doc_info.doc_type in [
-                DocumentType.FUND_SUPERVISION,
-                DocumentType.FUND_SUPERVISION_AGREEMENT_FIRST_PAGE,
-                DocumentType.FUND_SUPERVISION_AGREEMENT_INFO_PAGE,
-            ]:
-                fields = self._financial_extractor.extract_fund_supervision(
-                    full_text, key_list, doc_info.doc_type
-                )
-            elif doc_info.doc_type == DocumentType.FUND_SUPERVISION_CERTIFICATE:
-                fields = self._financial_extractor.extract_fund_supervision_certificate(full_text, key_list)
-            elif doc_info.doc_type == DocumentType.DIVORCE_AGREEMENT:
-                fields = self._agreement_extractor.extract_divorce_agreement(full_text, key_list)
-            elif doc_info.doc_type in [
-                DocumentType.PURCHASE_CONTRACT_FIRST_PAGE,
-                DocumentType.PURCHASE_CONTRACT_CONTENT,
-                DocumentType.STOCK_CONTRACT_FIRST_PAGE,
-                DocumentType.STOCK_CONTRACT_CONTENT,
-            ]:
-                # 合同首页和内容页暂时使用通用合同提取逻辑
-                fields = self._financial_extractor.extract_contract(full_text, key_list, doc_info.doc_type)
-            elif doc_info.doc_type in [
-                DocumentType.PURCHASE_CONTRACT_STAMP,
-                DocumentType.STOCK_CONTRACT_STAMP,
-                DocumentType.NOTARY_CERTIFICATE,
-                DocumentType.POWER_OF_ATTORNEY,
-            ]:
-                # 签署页、公证书、委托书不提取字段
-                fields = {k: "" for k in key_list}
-            else:
-                fields = {}
-
-            # 只保留key_list中请求的字段
+            # 分派提取
+            fields = self._dispatch_extract(full_text, key_list, doc_info)
             filtered_fields = {k: fields.get(k, "") for k in key_list}
 
             return ExtractionResult(
