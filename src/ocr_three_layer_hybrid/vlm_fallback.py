@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 from ocr_three_layer_hybrid.interfaces import DocumentType
 from ocr_three_layer_hybrid.field_validator import FieldValidator
 from ocr_three_layer_hybrid.external_services import VLMClient
-from ocr_three_layer_hybrid.config import VLMServiceConfig
+from ocr_three_layer_hybrid.config import VLMServiceConfig, QwenVLServiceConfig
 from ocr_three_layer_hybrid.json_utils import parse_json_from_response
 
 logger = logging.getLogger(__name__)
@@ -120,7 +120,7 @@ class VLMFieldRetryHandler:
         elif vlm_config:
             self.vlm_client = VLMClient(vlm_config)
         else:
-            self.vlm_client = VLMClient()  # 默认配置
+            self.vlm_client = VLMClient(QwenVLServiceConfig())  # 默认 Qwen2.5-VL-7B（对齐默认 vlm_fallback_engine；GLM-OCR 已不推荐）
 
         self._call_count = 0
         self._total_time = 0.0

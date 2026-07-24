@@ -378,10 +378,20 @@ class VLMExtractionLayer(IExtractionLayer):
 
         # 处理UNKNOWN文档的嵌套格式：{"doc_type": "...", "fields": {...}}
         if "fields" in parsed and isinstance(parsed["fields"], dict):
-            # UNKNOWN文档：VLM返回嵌套格式，直接使用所有字段
+            # UNKNOWN文档：VLM返回嵌套格式，应用 HUKOU_KEY_MAPPINGS 键名映射（H7 修复：原直接复制跳过映射致字段丢失）
             nested_fields = parsed["fields"]
+            # 先按 HUKOU_KEY_MAPPINGS 映射 target_key（如"户主姓名"->"户主"）
+            for target_key in key_list:
+                if target_key in self.HUKOU_KEY_MAPPINGS:
+                    for possible_key in self.HUKOU_KEY_MAPPINGS[target_key]:
+                        if possible_key in nested_fields and nested_fields[possible_key]:
+                            fields[target_key] = str(nested_fields[possible_key])
+                            break
+                elif target_key in nested_fields:
+                    fields[target_key] = str(nested_fields[target_key])
+            # 兜底：未映射的 nested_fields 键直接放入（保留 VLM 原始键，防漏）
             for key, value in nested_fields.items():
-                if value and str(value).strip():
+                if value and str(value).strip() and key not in fields:
                     fields[key] = str(value)
             return fields
 

@@ -99,7 +99,7 @@ class OCRConfig:
     )
     # 说明：
     # - tiered: 分层策略（不推荐，准确率68%，速度66.9秒）
-    # - glm_ocr: GLM-OCR（当前生产环境，27秒/张，准确率66%）
+    # - glm_ocr: GLM-OCR（可选备用，准确率与Qwen相同75%但整体慢35%，默认不用；评估报告 docs/evaluation_report_20260701.md）
     # - ppocr: PP-OCRv6（推荐，41.5秒/张，准确率70%）
     # - paddleocr_vl: PaddleOCR-VL（备用，151秒/张，精度高）
     # - structure_v3: PP-StructureV3（已弃用，性能不稳定）
@@ -107,8 +107,8 @@ class OCRConfig:
     # VLM 引擎配置（支持不同场景使用不同模型）
     # 可选值: "glm_ocr" | "qwen2_5_vl_7b"
     # 说明:
-    # - qwen2_5_vl_7b: Qwen2.5-VL-7B（默认，端口8082，理解能力强，速度快）
-    # - glm_ocr: GLM-OCR（备选，端口8080，速度快但理解能力弱）
+    # - qwen2_5_vl_7b: Qwen2.5-VL-7B（默认推荐，端口8082，准确率75%，整体比GLM-OCR快35%；评估报告 docs/evaluation_report_20260701.md）
+    # - glm_ocr: GLM-OCR（可选备用，端口8080，准确率75%但整体慢35%，默认不用）
 
     # 1. VLM提取层：分类为"未知"时使用
     vlm_extraction_engine: str = "qwen2_5_vl_7b"
