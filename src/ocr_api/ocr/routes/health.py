@@ -37,10 +37,9 @@ def create_health_router(ocr_service=None) -> APIRouter:
         """
         checks = {}
 
-        # 检查 PP-OCR 引擎
+        # 检查 PP-OCR 引擎（检查 ocr_service 注入，非硬编码 ok）
         try:
-            # 简单检查：尝试访问 PaddleOCR wrapper
-            checks["pp_ocr"] = "ok"
+            checks["pp_ocr"] = "ok" if ocr_service is not None else "ocr_service 未注入"
         except Exception as e:
             checks["pp_ocr"] = f"error: {e}"
 

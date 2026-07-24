@@ -73,7 +73,7 @@ from ocr_api.ocr.debug_routes import create_debug_routes
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 PORT = int(os.getenv("OCR_PORT", "8888"))
 HOST = os.getenv("OCR_HOST", "127.0.0.1")  # 默认仅本机；生产需远程访问设 0.0.0.0
-DB_PATH = os.getenv("OCR_DB_PATH", "/tmp/ocr_tasks.db")
+DB_PATH = os.getenv("OCR_DB_PATH", "/tmp/ocr_tasks.db")  # 多用户系统 /tmp 可读，生产建议设 OCR_DB_PATH 到用户目录
 
 
 # ========== 初始化日志 ==========
@@ -151,6 +151,8 @@ def create_app(
     _cors_origins = os.getenv(
         "CORS_ORIGINS", "http://localhost:3000,http://localhost:8080"
     ).split(",")
+    if "*" in _cors_origins:
+        server_logger.warning("[安全] CORS allow_origins 含 *，生产环境不安全（允许任意源）")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_cors_origins,
