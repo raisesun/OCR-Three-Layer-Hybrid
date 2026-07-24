@@ -142,7 +142,7 @@ def create_debug_routes(
             result = await asyncio.to_thread(ocr_service.process_image, str(image_path), req.ocr_text)
             return {"success": True, "data": result}
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail="内部错误")  # 不泄露异常细节
 
     # ========== 批量处理 ==========
 

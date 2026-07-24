@@ -66,6 +66,10 @@ def create_ocr_router(
         task_manager.record_api_call(api_key, "POST /api/v1/ocr/async")
         logger.info("收到 OCR 任务提交请求 | files=%d", len(files))
 
+        # callback_url 安全校验（防 SSRF：仅允许 http/https，未来实现回调时生效）
+        if callback_url and not callback_url.startswith(("http://", "https://")):
+            raise HTTPException(status_code=400, detail="callback_url 必须以 http:// 或 https:// 开头")
+
         # 3. 校验文件数量
         if len(files) > 500:
             raise HTTPException(
@@ -132,7 +136,7 @@ def create_ocr_router(
                     pass
             raise HTTPException(
                 status_code=500,
-                detail=f"文件保存失败: {str(e)}",
+                detail="文件保存失败",  # 不泄露内部异常细节
             )
 
         # 6. 创建任务
