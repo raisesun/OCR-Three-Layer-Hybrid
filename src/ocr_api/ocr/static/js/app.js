@@ -231,19 +231,20 @@ function app() {
                     this.batchDirCurrent = data.data.current_path;
                     this.batchSubdirs = data.data.directories;
                     this.batchDirPath = data.data.current_path;
-                    this.buildBreadcrumb(data.data.current_path);
+                    this.buildBreadcrumb(data.data.current_path, data.data.base_path);
                 }
             } catch (e) {
                 console.error('加载目录失败:', e);
             }
         },
 
-        buildBreadcrumb(currentPath) {
-            const base = '/Users/dongsun/Github/sample-OCR';
+        buildBreadcrumb(currentPath, basePath) {
+            const base = basePath || currentPath;  // T4: 用后端返回的 base_path, 去硬编码
             const relative = currentPath.replace(base, '').replace(/^\//, '');
             const parts = relative ? relative.split('/') : [];
+            const rootName = base.split('/').pop() || 'root';
             this.batchDirBreadcrumb = [
-                { name: 'sample-OCR', path: base },
+                { name: rootName, path: base },
                 ...parts.map((p, i) => ({
                     name: p,
                     path: base + '/' + parts.slice(0, i + 1).join('/'),

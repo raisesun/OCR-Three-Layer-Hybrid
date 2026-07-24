@@ -572,14 +572,10 @@ class PaddleOCREngine:
                 "scores": [rec_scores[i] for i in indices if i < len(rec_scores)],
             }
 
-        # 按区域 order 排序输出
+        # 按区域 y 坐标排序输出（T1: 统一用空间顺序，避免无 order 区域排序错乱）
         result = sorted(
             grouped.values(),
-            key=lambda g: (
-                (0, g["region"].coordinate[1])
-                if g["region"].order is None
-                else (1, g["region"].order)
-            ),
+            key=lambda g: g["region"].coordinate[1],
         )
         return result
 
@@ -950,6 +946,14 @@ class PaddleOCRWrapper:
             OCRResult
         """
         engine_name = engine or self._select_engine(doc_type)
+
+        # T2: 统一大图预处理（PPStructureV3 已有，PaddleOCR/VL 引擎补充，防 OOM）
+        if isinstance(image_path, str) and os.path.exists(image_path):
+            from ocr_three_layer_hybrid.image_preprocessor import ensure_max_size
+            processed = ensure_max_size(image_path, max_side=2000)
+            if processed != image_path:
+                logger.info("[OCR] 图片已预处理（缩放到 2000px 以内）")
+                image_path = processed
 
         if engine_name == "structure_v3":
             ocr_engine = self._get_structure_v3_engine()

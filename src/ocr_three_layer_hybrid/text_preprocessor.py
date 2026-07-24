@@ -134,7 +134,9 @@ class OCRTextPreprocessor:
 
         # 如果超过80%的部分都是单字符，且至少有3个单字符部分，认为是字间空格模式
         ratio = single_char_parts / total
-        if ratio >= 0.8 and single_char_parts >= 3:
+        # H9: 多字段行（>=2 冒号）不执行全空格移除，避免合并字段（运行时验证 0% 触发，防御性）
+        colon_count = line.count("：") + line.count(":")
+        if ratio >= 0.8 and single_char_parts >= 3 and colon_count < 2:
             # 移除所有空格
             return re.sub(r"\s+", "", line)
         else:

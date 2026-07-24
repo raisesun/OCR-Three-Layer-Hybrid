@@ -217,6 +217,7 @@ def create_debug_routes(
             "success": True,
             "data": {
                 "current_path": str(base_path),
+                "base_path": str(sample_base_resolved),  # T4: 返回 base_path 供前端 breadcrumb，去硬编码
                 "parent_path": str(base_path.parent) if str(base_path) != str(sample_base_resolved) else "",
                 "directories": dirs,
             },
