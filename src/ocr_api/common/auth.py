@@ -11,8 +11,10 @@ OCR API 服务 — 认证模块
 """
 
 import os
+import time
 import logging
-from typing import Optional
+import threading
+from typing import Optional, Dict, List
 from fastapi import Request, HTTPException
 
 logger = logging.getLogger(__name__)
@@ -30,20 +32,61 @@ class APIKeyAuthenticator:
         api_key = auth.verify(request)
     """
 
+    # T5: 暴力破解防护配置
+    MAX_FAILED_ATTEMPTS = 5  # 窗口内最大失败次数
+    RATE_LIMIT_WINDOW = 60  # 时间窗口（秒）
+
     def __init__(self, api_keys_env: str = "OCR_API_KEYS"):
         keys_str = os.getenv(api_keys_env, "")
         if keys_str:
             self._api_keys = {k.strip() for k in keys_str.split(",") if k.strip()}
         else:
             self._api_keys = set()
+        # T5: IP 级失败计数（防暴力破解）
+        self._failed_attempts: Dict[str, List[float]] = {}
+        self._rate_lock = threading.Lock()
         logger.info("[Auth] 已加载 %s 个 API Key", len(self._api_keys))
+
+    def _get_client_ip(self, request: Request) -> str:
+        """获取客户端 IP"""
+        return request.client.host if request.client else "unknown"
+
+    def _check_rate_limit(self, request: Request) -> bool:
+        """T5: 检查 IP 是否超限（MAX_FAILED_ATTEMPTS 次/WINDOW 秒锁定）"""
+        ip = self._get_client_ip(request)
+        now = time.time()
+        with self._rate_lock:
+            attempts = self._failed_attempts.get(ip, [])
+            # 清理窗口外的记录
+            attempts = [t for t in attempts if now - t < self.RATE_LIMIT_WINDOW]
+            self._failed_attempts[ip] = attempts
+            if len(attempts) >= self.MAX_FAILED_ATTEMPTS:
+                return False  # 锁定
+        return True
+
+    def _record_failure(self, request: Request):
+        """T5: 记录失败尝试"""
+        ip = self._get_client_ip(request)
+        now = time.time()
+        with self._rate_lock:
+            if ip not in self._failed_attempts:
+                self._failed_attempts[ip] = []
+            self._failed_attempts[ip].append(now)
 
     def verify(self, request: Request) -> str:
         """验证 API Key，返回有效的 Key
 
         Raises:
-            HTTPException: 认证失败时抛出 401
+            HTTPException: 认证失败时抛出 401（或 429 限流）
         """
+        # T5: 暴力破解防护 - 检查 IP 是否被限流
+        if not self._check_rate_limit(request):
+            logger.warning("[Auth] IP %s 认证失败次数过多，限流", self._get_client_ip(request))
+            raise HTTPException(
+                status_code=429,
+                detail={"code": 429, "message": "认证失败次数过多，请稍后再试"},
+            )
+
         auth_header = request.headers.get("Authorization", "")
 
         if not auth_header:
@@ -79,6 +122,7 @@ class APIKeyAuthenticator:
             )
 
         if api_key not in self._api_keys:
+            self._record_failure(request)  # T5: 记录失败尝试（防暴力破解）
             raise HTTPException(
                 status_code=401,
                 detail={

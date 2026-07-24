@@ -7,6 +7,8 @@
 """
 
 import pytest
+from unittest.mock import Mock
+from fastapi import HTTPException
 
 
 class TestAuthMissing:
@@ -92,3 +94,44 @@ class TestAuthSuccess:
         )
         # 404 是因为任务不存在，但认证已通过
         assert resp.status_code == 404
+
+
+class TestRateLimit:
+    """T5: 暴力破解防护（IP 级限流）"""
+
+    def test_rate_limit_after_5_failures(self):
+        """5 次失败后第 6 次返回 429（限流）"""
+        from ocr_api.common.auth import APIKeyAuthenticator
+
+        auth = APIKeyAuthenticator()
+        auth._api_keys = {"valid-key"}
+
+        mock_request = Mock()
+        mock_request.client.host = "127.0.0.1"
+        mock_request.headers = {"Authorization": "Bearer invalid"}
+
+        # 5 次失败（401）
+        for _ in range(5):
+            with pytest.raises(HTTPException) as exc:
+                auth.verify(mock_request)
+            assert exc.value.status_code == 401
+
+        # 第 6 次应 429（限流）
+        with pytest.raises(HTTPException) as exc:
+            auth.verify(mock_request)
+        assert exc.value.status_code == 429
+
+    def test_valid_key_not_limited(self):
+        """有效 key 不受限流影响"""
+        from ocr_api.common.auth import APIKeyAuthenticator
+
+        auth = APIKeyAuthenticator()
+        auth._api_keys = {"valid-key"}
+
+        mock_request = Mock()
+        mock_request.client.host = "127.0.0.1"
+        mock_request.headers = {"Authorization": "Bearer valid-key"}
+
+        for _ in range(10):
+            result = auth.verify(mock_request)
+            assert result == "valid-key"
