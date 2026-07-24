@@ -650,83 +650,88 @@ class TaskWorker:
         total = len(files)
         logger.info("[Worker] 开始处理任务 | files=%d", total)
 
-        # 标记处理中（如果任务已被取消，则 status 不是 pending，返回 False）
-        try:
-            if not self._tm.mark_processing(task_id):
-                logger.info("[Worker] 任务状态非 pending，跳过处理")
-                return
-        except Exception as e:
-            # mark_processing 异常（如 SQLite 锁）不应让任务静默卡在 pending
-            logger.exception("[Worker] mark_processing 异常 | error=%s", e)
-            return
-        start_time = time.time()
-
-        try:
-            for idx, file_info in enumerate(files):
-                # 检查取消标志
-                if self._tm.is_cancelled(task_id):
-                    logger.info("[Worker] 任务已取消 | progress=%d/%d", idx, total)
+        # H15: 信号量限制并发任务数（max_concurrent）
+        async with self._tm._semaphore:
+            # 标记处理中（如果任务已被取消，则 status 不是 pending，返回 False）
+            try:
+                if not self._tm.mark_processing(task_id):
+                    logger.info("[Worker] 任务状态非 pending，跳过处理")
+                    self._tm._cancel_flags.pop(task_id, None)  # H19: 清理取消标志防泄漏
                     return
+            except Exception as e:
+                # mark_processing 异常（如 SQLite 锁）不应让任务静默卡在 pending
+                logger.exception("[Worker] mark_processing 异常 | error=%s", e)
+                self._tm._cancel_flags.pop(task_id, None)  # H19: 清理取消标志防泄漏
+                return
+            start_time = time.time()
 
-                file_name = file_info["file_name"]
-                file_path = file_info["file_path"]
+            try:
+                for idx, file_info in enumerate(files):
+                    # 检查取消标志
+                    if self._tm.is_cancelled(task_id):
+                        logger.info("[Worker] 任务已取消 | progress=%d/%d", idx, total)
+                        self._tm._cancel_flags.pop(task_id, None)  # H19: 清理取消标志防泄漏
+                        return
 
-                file_start = time.time()
-                try:
-                    # 调用 OCRService 处理单张图片（H18: 加超时，防 OCR 挂起致永久 processing）
+                    file_name = file_info["file_name"]
+                    file_path = file_info["file_path"]
+
+                    file_start = time.time()
                     try:
-                        result = await asyncio.wait_for(
-                            asyncio.to_thread(self._ocr.process_single, file_path),
-                            timeout=300,  # 单文件 5 分钟超时
+                        # 调用 OCRService 处理单张图片（H18: 加超时，防 OCR 挂起致永久 processing）
+                        try:
+                            result = await asyncio.wait_for(
+                                asyncio.to_thread(self._ocr.process_single, file_path),
+                                timeout=300,  # 单文件 5 分钟超时
+                            )
+                        except asyncio.TimeoutError:
+                            raise TimeoutError(f"OCR 处理超时（>300s）: {file_name}")
+
+                        # 存储成功结果
+                        result_json = json.dumps(result, ensure_ascii=False)
+                        file_duration_ms = int((time.time() - file_start) * 1000)
+                        self._tm.update_file_result(
+                            task_id=task_id,
+                            file_name=file_name,
+                            status="success",
+                            result_json=result_json,
+                            timing_ms=file_duration_ms,
                         )
-                    except asyncio.TimeoutError:
-                        raise TimeoutError(f"OCR 处理超时（>300s）: {file_name}")
+                        self._tm.increment_processed(task_id)
+                        logger.info(
+                            "[Worker] 文件处理成功 | file=%s | progress=%d/%d | duration_ms=%d",
+                            file_name, idx + 1, total, file_duration_ms,
+                        )
 
-                    # 存储成功结果
-                    result_json = json.dumps(result, ensure_ascii=False)
-                    file_duration_ms = int((time.time() - file_start) * 1000)
-                    self._tm.update_file_result(
-                        task_id=task_id,
-                        file_name=file_name,
-                        status="success",
-                        result_json=result_json,
-                        timing_ms=file_duration_ms,
-                    )
-                    self._tm.increment_processed(task_id)
+                    except Exception as e:
+                        # 存储失败结果
+                        file_duration_ms = int((time.time() - file_start) * 1000)
+                        self._tm.update_file_result(
+                            task_id=task_id,
+                            file_name=file_name,
+                            status="failed",
+                            error_message=str(e),
+                            timing_ms=file_duration_ms,
+                        )
+                        self._tm.increment_processed(task_id)
+                        logger.error(
+                            "[Worker] 文件处理失败 | file=%s | error=%s",
+                            file_name, e,
+                        )
+
+                # 所有文件处理完成
+                total_time_ms = int((time.time() - start_time) * 1000)
+                # 标记完成（如果中途被取消，SQL WHERE 守卫会阻止覆盖，返回 False）
+                if self._tm.mark_completed(task_id, total_time_ms):
                     logger.info(
-                        "[Worker] 文件处理成功 | file=%s | progress=%d/%d | duration_ms=%d",
-                        file_name, idx + 1, total, file_duration_ms,
+                        "[Worker] 任务完成 | total_time_ms=%d", total_time_ms,
+                    )
+                else:
+                    logger.info(
+                        "[Worker] 任务未能标记完成（已被取消/失败）",
                     )
 
-                except Exception as e:
-                    # 存储失败结果
-                    file_duration_ms = int((time.time() - file_start) * 1000)
-                    self._tm.update_file_result(
-                        task_id=task_id,
-                        file_name=file_name,
-                        status="failed",
-                        error_message=str(e),
-                        timing_ms=file_duration_ms,
-                    )
-                    self._tm.increment_processed(task_id)
-                    logger.error(
-                        "[Worker] 文件处理失败 | file=%s | error=%s",
-                        file_name, e,
-                    )
-
-            # 所有文件处理完成
-            total_time_ms = int((time.time() - start_time) * 1000)
-            # 标记完成（如果中途被取消，SQL WHERE 守卫会阻止覆盖，返回 False）
-            if self._tm.mark_completed(task_id, total_time_ms):
-                logger.info(
-                    "[Worker] 任务完成 | total_time_ms=%d", total_time_ms,
-                )
-            else:
-                logger.info(
-                    "[Worker] 任务未能标记完成（已被取消/失败）",
-                )
-
-        except Exception as e:
-            total_time_ms = int((time.time() - start_time) * 1000)
-            self._tm.mark_failed(task_id, str(e))
-            logger.error("[Worker] 任务异常 | error=%s", e)
+            except Exception as e:
+                total_time_ms = int((time.time() - start_time) * 1000)
+                self._tm.mark_failed(task_id, str(e))
+                logger.error("[Worker] 任务异常 | error=%s", e)

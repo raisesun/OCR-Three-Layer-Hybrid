@@ -12,10 +12,10 @@
 
 **问题统计**：🔴严重 9 项｜🟠高 21 项｜🟡中 30+ 项｜🟢低 20+ 项
 
-## 修复状态总览（27 项已修复：S1-S9 + H1-H8 + H10-H14 + H16-H18 + H20 + H21）
+## 修复状态总览（29 项已修复：S1-S9 + H1-H21 除 H9）
 
-- **修复提交**：S1-S9 `24879d4`；H1 `031939f`；H2 `5c4eeef`；H21 `d46f4e9`；H3 `16018ea`；H4(封装/文档) `ba5b5b5`；H5 `9a3b7a3`；H8 `97c3286`；H6 `ae28468`；H7 `dd37b80`；H10 `96c8c5b`；H11/H12/H14/H16/H17/H18/H20 `416569b`；H13 待提交（分支 `fix/security-s1-s9`，2026-07-22）
-- **未修**：H9（字间空格，0%触发暂不修）、H15（信号量未用）、H19（_cancel_flags泄漏）
+- **修复提交**：S1-S9 `24879d4`；H1 `031939f`；H2 `5c4eeef`；H21 `d46f4e9`；H3 `16018ea`；H4(封装/文档) `ba5b5b5`；H5 `9a3b7a3`；H8 `97c3286`；H6 `ae28468`；H7 `dd37b80`；H10 `96c8c5b`；H11/H12/H14/H16/H17/H18/H20 `416569b`；H13 `6e6cfdc`；H15/H19 待提交（分支 `fix/security-s1-s9`，2026-07-22）
+- **未修**：H9（字间空格，0%触发暂不修）
 - **测试结果**：555 passed，1 failed（`test_real_extraction` 需 VLM/Ollama 服务 localhost:8082，环境依赖，非回归）
 - **验证详情**：见文末"验证报告"章节
 
@@ -44,9 +44,11 @@
 | H12 | 临时文件命名冲突 | ✅ 已修复 | 加UUID前缀 |
 | H13 | VLMClient Session线程不安全 | ✅ 已修复 | per-thread Session(threading.local) |
 | H14 | 图像无Decompression Bomb防护 | ✅ 已修复 | MAX_IMAGE_PIXELS+大小检查 |
+| H15 | 并发信号量未用 | ✅ 已修复 | TaskWorker.process加async with semaphore |
 | H16 | 异步上传无总大小限制 | ✅ 已修复 | 累加total_size校验500MB |
 | H17 | 同名文件结果覆盖 | ✅ 已修复 | 存safe_name(唯一)替代原始名 |
 | H18 | 无任务超时机制 | ✅ 已修复 | asyncio.wait_for(300s) |
+| H19 | _cancel_flags内存泄漏 | ✅ 已修复 | 取消点pop清理 |
 | H20 | debug任务跨租户 | ✅ 已修复 | IP隔离替代固定debug-demo-key |
 
 ---
@@ -391,9 +393,11 @@ H5-H20、中优先级各项
 | H12 | 临时文件名加 UUID 前缀（`resized_{uuid}_{filename}`/`enhanced_{uuid}_{filename}`），防同名覆盖 | ✅ 通过 |
 | H13 | VLMClient 改 per-thread Session（`threading.local` + `_get_session`），消除多线程共享 Session 不安全；test_external_services 17项通过 | ✅ 通过 |
 | H14 | `Image.MAX_IMAGE_PIXELS=5000万` + `encode_image_base64` 加 20MB 大小检查（防 Decompression Bomb OOM） | ✅ 通过 |
+| H15 | `TaskWorker.process` 加 `async with self._tm._semaphore`，限制并发任务数（max_concurrent 生效） | ✅ 通过 |
 | H16 | `submit_async_task` 累加 `total_size`，超 500MB 拒绝（防 500×20MB=10GB 入内存） | ✅ 通过 |
 | H17 | `saved_files` 存 `safe_name`（唯一）替代原始名，防同名文件结果覆盖 | ✅ 通过 |
 | H18 | `TaskWorker.process_single` 加 `asyncio.wait_for(300s)` 超时，防 OCR 挂起致永久 processing | ✅ 通过 |
+| H19 | 取消点（mark_processing 失败/处理中取消）pop `_cancel_flags`，防内存泄漏 | ✅ 通过 |
 | H20 | debug 路由用 IP（`f"debug-{host}"`）替代固定 debug-demo-key，隔离 debug 用户 | ✅ 通过 |
 
 ### S9 验证说明

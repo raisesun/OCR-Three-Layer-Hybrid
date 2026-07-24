@@ -11,11 +11,11 @@
 - [x] **H1** 多页OCR重复（性能）/ **H2** 合同签章页误判（数据丢失）/ **H21** get_quota月末崩溃
 - [x] **H3** VLM兜底缺失 / **H5** position_extractor双实例 / **H6** VLM双重解析+模糊匹配 / **H7** HUKOU键名映射嵌套 / **H8** PaddleOCR访问统一
 - [x] **H4部分**（VLM封装/文档，prompt统一待VLM评估）
-- [x] **H10** UPLOAD_DIR泄漏 / **H11** cv2.imwrite检查 / **H12** 临时文件命名 / **H14** Decompression Bomb防护 / **H16** 总大小限制 / **H17** 同名文件覆盖 / **H18** 任务超时 / **H20** debug跨租户
+- [x] **H10** UPLOAD_DIR泄漏 / **H11** cv2.imwrite检查 / **H12** 临时文件命名 / **H13** VLMClient Session线程安全 / **H14** Decompression Bomb防护 / **H15** 信号量生效 / **H16** 总大小限制 / **H17** 同名文件覆盖 / **H18** 任务超时 / **H19** _cancel_flags泄漏 / **H20** debug跨租户
 - [x] GLM-OCR配置调整（默认Qwen，基于评估报告 docs/evaluation_report_20260701.md）
 - [x] 运行时验证：S8(64不退化)/H8(.get可用)/H9(0%触发)/H7(户主丢失已修)
-- 未修：H9(0%触发)/H13(Session线程安全)/H15(信号量未用)/H19(_cancel_flags泄漏)
-- 报告：docs/reviews/code_review_20260722.md | 555测试通过 | 26项已修复
+- 未修：H9(0%触发暂不修)
+- 报告：docs/reviews/code_review_20260722.md | 555测试通过 | 29项已修复
 
 ### Code Review 修复
 - [x] 修复 #1-#38 所有 Code Review 项（CRITICAL/HIGH/MEDIUM）
