@@ -83,6 +83,26 @@ class VLMExtractionLayer(IExtractionLayer):
     def can_process(self, doc_info: DocumentInfo) -> bool:
         return doc_info.doc_type in self.supported_types
 
+    def _extract_vlm_classified_type(self, parsed_response) -> Optional["DocumentType"]:
+        """从 VLM 响应提取分类类型（T7: 从 extract 提取，降低圈复杂度）
+
+        匹配顺序：枚举名 -> 别名 -> startswith -> 精确 value
+        """
+        if not isinstance(parsed_response, dict) or "doc_type" not in parsed_response:
+            return None
+        vlm_doc_type_str = parsed_response["doc_type"]
+        if vlm_doc_type_str in DocumentType.__members__:
+            return DocumentType[vlm_doc_type_str]
+        if vlm_doc_type_str in self.VLM_ALIASES:
+            return self.VLM_ALIASES[vlm_doc_type_str]
+        for alias, dt in self.VLM_ALIASES.items():
+            if vlm_doc_type_str.startswith(alias):
+                return dt
+        for dt in DocumentType:
+            if dt.value == vlm_doc_type_str:
+                return dt
+        return None
+
     def extract(self, doc_info: DocumentInfo, key_list: List[str]) -> ExtractionResult:
         start_time = time.time()
 
@@ -116,55 +136,8 @@ class VLMExtractionLayer(IExtractionLayer):
                 parsed_response if parsed_response is not None else vlm_response, key_list
             )
 
-            # 轻量修复：让UNKNOWN文档的VLM分类结果反馈回系统
-            # 当前UNKNOWN prompt让VLM同时做分类+提取，但VLM返回的doc_type被丢弃。
-            # 这里提取VLM识别的doc_type，记录到结果中（用于日志/监控/后续优化）。
-            # 支持两种格式：枚举名（"PROPERTY_CERTIFICATE"）和中文value（"不动产权证书"）
-            vlm_classified_type = None
-            if isinstance(parsed_response, dict) and "doc_type" in parsed_response:
-                vlm_doc_type_str = parsed_response["doc_type"]
-                # 尝试用枚举名匹配（如 "PROPERTY_CERTIFICATE"）
-                if vlm_doc_type_str in DocumentType.__members__:
-                    vlm_classified_type = DocumentType[vlm_doc_type_str]
-                else:
-                    # VLM 常用名称别名（日常语言 → DocumentType 正式名）
-                    VLM_ALIASES = {
-                        "房产证": DocumentType.PROPERTY_CERTIFICATE,
-                        "不动产权证": DocumentType.PROPERTY_CERTIFICATE,
-                        "附图页": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
-                        "房产分户图": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
-                        "宗地图": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
-                        "身份证正面": DocumentType.ID_CARD_FRONT,
-                        "身份证背面": DocumentType.ID_CARD_BACK,
-                        "身份证反面": DocumentType.ID_CARD_BACK,
-                        "户口本": DocumentType.HOUSEHOLD_REGISTER,
-                        "户口簿": DocumentType.HOUSEHOLD_REGISTER,
-                        "结婚证": DocumentType.MARRIAGE_CERTIFICATE,
-                        "离婚证": DocumentType.DIVORCE_CERTIFICATE,
-                        "购房合同": DocumentType.PURCHASE_CONTRACT,
-                        "商品房合同": DocumentType.PURCHASE_CONTRACT,
-                        "存量房合同": DocumentType.STOCK_CONTRACT,
-                        "二手房合同": DocumentType.STOCK_CONTRACT,
-                        "发票": DocumentType.INVOICE,
-                        "增值税发票": DocumentType.INVOICE,
-                        "资金监管协议": DocumentType.FUND_SUPERVISION,
-                        "监管协议": DocumentType.FUND_SUPERVISION,
-                        "离婚协议": DocumentType.DIVORCE_AGREEMENT,
-                    }
-                    if vlm_doc_type_str in VLM_ALIASES:
-                        vlm_classified_type = VLM_ALIASES[vlm_doc_type_str]
-                    else:
-                        # startswith 匹配（VLM 可能返回带括号说明的长字符串，如"附图页（房产证...）"）
-                        for alias, dt in VLM_ALIASES.items():
-                            if vlm_doc_type_str.startswith(alias):
-                                vlm_classified_type = dt
-                                break
-                    if vlm_classified_type is None:
-                        # 精确匹配 DocumentType 的中文 value（去掉模糊包含匹配 H6：VLM 返回完整名，精确+别名+startswith 已足够）
-                        for dt in DocumentType:
-                            if dt.value == vlm_doc_type_str:
-                                vlm_classified_type = dt
-                                break
+            # VLM 分类（T7: 提取为 _extract_vlm_classified_type 方法，降低 extract 圈复杂度）
+            vlm_classified_type = self._extract_vlm_classified_type(parsed_response)
 
             return ExtractionResult(
                 doc_type=doc_info.doc_type,
@@ -337,6 +310,31 @@ class VLMExtractionLayer(IExtractionLayer):
             VLM返回的原始响应
         """
         return self._client.call(prompt, image_path, max_tokens=1024)
+
+    # VLM 常用名称别名（日常语言 -> DocumentType 正式名，T7: 提升为类常量）
+    VLM_ALIASES: Dict[str, "DocumentType"] = {
+        "房产证": DocumentType.PROPERTY_CERTIFICATE,
+        "不动产权证": DocumentType.PROPERTY_CERTIFICATE,
+        "附图页": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+        "房产分户图": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+        "宗地图": DocumentType.PROPERTY_CERTIFICATE_ATTACHMENT,
+        "身份证正面": DocumentType.ID_CARD_FRONT,
+        "身份证背面": DocumentType.ID_CARD_BACK,
+        "身份证反面": DocumentType.ID_CARD_BACK,
+        "户口本": DocumentType.HOUSEHOLD_REGISTER,
+        "户口簿": DocumentType.HOUSEHOLD_REGISTER,
+        "结婚证": DocumentType.MARRIAGE_CERTIFICATE,
+        "离婚证": DocumentType.DIVORCE_CERTIFICATE,
+        "购房合同": DocumentType.PURCHASE_CONTRACT,
+        "商品房合同": DocumentType.PURCHASE_CONTRACT,
+        "存量房合同": DocumentType.STOCK_CONTRACT,
+        "二手房合同": DocumentType.STOCK_CONTRACT,
+        "发票": DocumentType.INVOICE,
+        "增值税发票": DocumentType.INVOICE,
+        "资金监管协议": DocumentType.FUND_SUPERVISION,
+        "监管协议": DocumentType.FUND_SUPERVISION,
+        "离婚协议": DocumentType.DIVORCE_AGREEMENT,
+    }
 
     # 户口本字段的键名映射（处理VLM可能输出的不同键名）
     HUKOU_KEY_MAPPINGS: Dict[str, List[str]] = {
