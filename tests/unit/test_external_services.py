@@ -100,7 +100,7 @@ class TestVLMClient:
             mock_create_session.return_value = mock_session
 
             client = VLMClient()
-            client._session = mock_session
+            client._local.session = mock_session
             result = client.call("提取姓名", img_path, max_tokens=512)
 
             assert result == '{"姓名": "张三"}'
@@ -124,7 +124,7 @@ class TestVLMClient:
             mock_session.post.return_value = mock_response
 
             client = VLMClient()
-            client._session = mock_session
+            client._local.session = mock_session
             result = client.call("test", img_path)
             assert result == ""
         finally:
@@ -149,7 +149,7 @@ class TestVLMClient:
             mock_session.post.return_value = mock_response
 
             client = VLMClient()
-            client._session = mock_session
+            client._local.session = mock_session
 
             with pytest.raises(requests.exceptions.HTTPError):
                 client.call("test prompt", img_path)
@@ -173,7 +173,7 @@ class TestVLMClient:
 
             config = VLMServiceConfig(base_url="http://test:9999/v1", model_name="test-model")
             client = VLMClient(config)
-            client._session = mock_session
+            client._local.session = mock_session
             client.call("extract name", img_path, max_tokens=256)
 
             # 验证调用参数
@@ -210,7 +210,7 @@ class TestVLMClient:
             mock_session.post.return_value = mock_response
 
             client = VLMClient()
-            client._session = mock_session
+            client._local.session = mock_session
             result = client.call("test", img_path)
             assert result == ""
         finally:
@@ -224,7 +224,7 @@ class TestVLMClientClose:
         """close() 应关闭底层 session"""
         client = VLMClient()
         mock_session = MagicMock()
-        client._session = mock_session
+        client._local.session = mock_session
 
         client.close()
         mock_session.close.assert_called_once()
@@ -233,7 +233,7 @@ class TestVLMClientClose:
         """多次 close() 不报错"""
         client = VLMClient()
         mock_session = MagicMock()
-        client._session = mock_session
+        client._local.session = mock_session
 
         client.close()
         client.close()  # 第二次调用不应报错
@@ -242,7 +242,7 @@ class TestVLMClientClose:
     def test_close_when_session_is_none(self):
         """session 为 None 时 close() 不报错"""
         client = VLMClient()
-        client._session = None
+        client._local.session = None
         # 不应抛出异常
         client.close()
 
@@ -256,5 +256,5 @@ class TestVLMClientClose:
         """退出上下文时关闭 session"""
         with VLMClient() as client:
             mock_session = MagicMock()
-            client._session = mock_session
+            client._local.session = mock_session
         mock_session.close.assert_called_once()

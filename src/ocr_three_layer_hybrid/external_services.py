@@ -14,6 +14,7 @@ v2.1 简化：
 
 import base64
 import logging
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -54,7 +55,7 @@ class VLMClient:
 
     def __init__(self, config: Optional[VLMServiceConfig] = None):
         self.config = config or VLMServiceConfig()
-        self._session = self._create_session()
+        self._local = threading.local()  # H13: per-thread Session（线程安全）
 
     def _create_session(self) -> requests.Session:
         """创建带有重试机制的HTTP会话"""
@@ -75,13 +76,20 @@ class VLMClient:
 
         return session
 
+    def _get_session(self) -> requests.Session:
+        """获取当前线程的 Session（延迟创建，每线程一个，H13 线程安全）"""
+        session = getattr(self._local, "session", None)
+        if session is None:
+            session = self._create_session()
+            self._local.session = session
+        return session
+
     def close(self):
-        """关闭 HTTP 会话，释放连接池资源"""
-        # __init__ 中创建 _session；getattr 默认值防御 __init__ 未完成即析构的场景
-        session = getattr(self, "_session", None)
+        """关闭当前线程的 HTTP 会话（per-thread Session；其他线程的由 GC 清理）"""
+        session = getattr(self._local, "session", None)
         if session is not None:
             session.close()
-            logger.debug("VLMClient HTTP 会话已关闭")
+            logger.debug("VLMClient 当前线程 HTTP 会话已关闭")
 
     def __del__(self):
         """析构时确保关闭 HTTP 会话（安全网）"""
@@ -138,7 +146,7 @@ class VLMClient:
             "max_tokens": max_tokens,
         }
 
-        resp = self._session.post(
+        resp = self._get_session().post(
             f"{self.config.base_url}/chat/completions",
             json=payload,
             timeout=self.config.timeout,
