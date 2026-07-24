@@ -16,8 +16,11 @@ from pathlib import Path
 SUPPORTED_FILE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".pdf"}
 
 # 上传文件目录（统一常量）
-# 优先使用环境变量 OCR_UPLOAD_DIR，否则使用临时目录
-UPLOAD_DIR = Path(os.getenv("OCR_UPLOAD_DIR", tempfile.mkdtemp(prefix="ocr_uploads_")))
+# 优先使用环境变量 OCR_UPLOAD_DIR，否则用固定临时目录（避免每次 import mkdtemp 泄漏 H10）
+_DEFAULT_UPLOAD_DIRNAME = "ocr_uploads"
+UPLOAD_DIR = Path(
+    os.getenv("OCR_UPLOAD_DIR", str(Path(tempfile.gettempdir()) / _DEFAULT_UPLOAD_DIRNAME))
+)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 

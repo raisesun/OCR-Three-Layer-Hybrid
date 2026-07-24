@@ -1,10 +1,19 @@
 # 项目待办事项
 
-## 更新日期：2026-07-09
+## 更新日期：2026-07-23
 
 ---
 
 ## 🔴 高优先级
+
+### 全量代码审查修复（2026-07-22，分支 fix/security-s1-s9）
+- [x] **S1-S9** 安全与正确性（IDOR/鉴权/路径遍历/密钥泄露/XSS/DoS/OCR参数）
+- [x] **H1** 多页OCR重复（性能）/ **H2** 合同签章页误判（数据丢失）/ **H21** get_quota月末崩溃
+- [x] **H3** VLM兜底缺失 / **H5** position_extractor双实例 / **H6** VLM双重解析+模糊匹配 / **H7** HUKOU键名映射嵌套 / **H8** PaddleOCR访问统一
+- [x] **H4部分**（VLM封装/文档，prompt统一待VLM评估）
+- [x] GLM-OCR配置调整（默认Qwen，基于评估报告 docs/evaluation_report_20260701.md）
+- [x] 运行时验证：S8(64不退化)/H8(.get可用)/H9(0%触发)/H7(户主丢失已修)
+- 报告：docs/reviews/code_review_20260722.md | 555测试通过 | 18项已修复
 
 ### Code Review 修复
 - [x] 修复 #1-#38 所有 Code Review 项（CRITICAL/HIGH/MEDIUM）
