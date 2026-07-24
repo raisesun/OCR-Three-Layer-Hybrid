@@ -19,6 +19,7 @@ VLM 服务由 OCRConfig.vlm_fallback_engine 配置决定（生产通过 service 
 import json
 import logging
 import re
+import threading
 import time
 from typing import Dict, List, Optional
 
@@ -124,6 +125,7 @@ class VLMFieldRetryHandler:
 
         self._call_count = 0
         self._total_time = 0.0
+        self._stats_lock = threading.Lock()  # 计数器线程安全（H13 配套）
 
     def get_failed_fields(self, fields: Dict[str, str]) -> List[str]:
         """获取校验失败的字段列表"""
@@ -155,7 +157,8 @@ class VLMFieldRetryHandler:
             return {}
 
         start_time = time.time()
-        self._call_count += 1
+        with self._stats_lock:
+            self._call_count += 1
 
         # 构建Prompt
         prompt = self._build_prompt(doc_type, failed_fields)
@@ -172,7 +175,8 @@ class VLMFieldRetryHandler:
             fields = self._parse_response(response, failed_fields)
 
             call_time = time.time() - start_time
-            self._total_time += call_time
+            with self._stats_lock:
+                self._total_time += call_time
             logger.info(
                 f"[Rule层VLM重试] 完成 | 字段={failed_fields} | "
                 f"结果={fields} | 耗时={call_time:.1f}s"
@@ -181,7 +185,8 @@ class VLMFieldRetryHandler:
 
         except Exception as e:
             call_time = time.time() - start_time
-            self._total_time += call_time
+            with self._stats_lock:
+                self._total_time += call_time
             logger.error("[Rule层VLM重试] 失败: %s | 耗时=%.1fs", e, call_time)
             return {}
 
