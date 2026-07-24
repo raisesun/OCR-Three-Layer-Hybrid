@@ -26,8 +26,18 @@ from .config import VLMServiceConfig
 logger = logging.getLogger(__name__)
 
 
-def encode_image_base64(image_path: str) -> str:
-    """读取图片文件并返回 base64 编码字符串"""
+def encode_image_base64(image_path: str, max_size: int = 20 * 1024 * 1024) -> str:
+    """读取图片文件并返回 base64 编码字符串
+
+    Args:
+        max_size: 文件大小上限（字节），默认 20MB（H14: 防 OOM）
+    Raises:
+        ValueError: 文件超过大小上限
+    """
+    import os
+    file_size = os.path.getsize(image_path)
+    if file_size > max_size:
+        raise ValueError(f"图片过大: {file_size} 字节，超过上限 {max_size}")
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 

@@ -80,7 +80,9 @@ def create_ocr_router(
             )
 
         # 4. 先校验所有文件格式和大小（避免部分保存后校验失败导致文件泄漏）
+        MAX_TOTAL_SIZE = 500 * 1024 * 1024  # 500MB 总大小上限（H16）
         file_data = []
+        total_size = 0
         for f in files:
             # 校验扩展名
             suffix = Path(f.filename or "").suffix.lower()
@@ -97,6 +99,12 @@ def create_ocr_router(
                     status_code=413,
                     detail=f"文件过大: {f.filename}，单文件最大 20MB",
                 )
+            total_size += len(content)
+            if total_size > MAX_TOTAL_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"总大小超限：最大 {MAX_TOTAL_SIZE // 1024 // 1024}MB",
+                )
 
             file_data.append((f, content, suffix))
 
@@ -112,7 +120,7 @@ def create_ocr_router(
                     fp.write(content)
 
                 saved_files.append({
-                    "file_name": f.filename or safe_name,
+                    "file_name": safe_name,  # H17: 存 safe_name（唯一）防同名文件结果覆盖
                     "file_path": str(file_path),
                 })
         except Exception as e:

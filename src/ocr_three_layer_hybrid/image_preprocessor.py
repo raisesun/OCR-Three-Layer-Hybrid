@@ -14,11 +14,16 @@
 """
 
 import os
+import uuid
 import logging
 from pathlib import Path
 from typing import Optional, Tuple
 
 from PIL import Image
+
+# H14: 防 Decompression Bomb（超大图 OOM），设像素上限
+Image.MAX_IMAGE_PIXELS = 50_000_000  # 5000 万像素上限
+
 import numpy as np
 
 try:
@@ -131,9 +136,9 @@ def ensure_max_size(
 
     Path(temp_dir).mkdir(parents=True, exist_ok=True)
 
-    # 生成临时文件名
+    # 生成临时文件名（H12: 加 UUID 前缀防同名覆盖）
     filename = Path(image_path).name
-    temp_path = os.path.join(temp_dir, f"resized_{filename}")
+    temp_path = os.path.join(temp_dir, f"resized_{uuid.uuid4().hex[:8]}_{filename}")
 
     # 缩放图片
     output_path, resized = resize_image(image_path, max_side, temp_path)
@@ -398,10 +403,12 @@ def enhance_image(
             temp_dir = tempfile.gettempdir()
             Path(temp_dir).mkdir(parents=True, exist_ok=True)
             filename = Path(image_path).name
-            output_path = os.path.join(temp_dir, f"enhanced_{filename}")
+            output_path = os.path.join(temp_dir, f"enhanced_{uuid.uuid4().hex[:8]}_{filename}")
 
-        # 保存处理后的图片
-        cv2.imwrite(output_path, enhanced)
+        # 保存处理后的图片（H11: 检查 cv2.imwrite 返回值，失败返回原路径）
+        if not cv2.imwrite(output_path, enhanced):
+            logger.error("图像写入失败: %s，返回原路径", output_path)
+            return image_path
         logger.info("图像增强完成: %s", output_path)
 
         return output_path

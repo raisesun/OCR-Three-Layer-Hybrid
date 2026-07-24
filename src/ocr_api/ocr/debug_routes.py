@@ -425,6 +425,7 @@ def create_debug_routes(
 
     @router.post("/api/debug/ocr/async")
     async def debug_submit_async_task(
+        request: Request,
         files: list[UploadFile] = File(..., description="图片/PDF 文件列表"),
         callback_url: Optional[str] = None,
         priority: str = "normal",
@@ -464,12 +465,12 @@ def create_debug_routes(
             with open(file_path, "wb") as fp:
                 fp.write(content)
             saved_files.append({
-                "file_name": f.filename or safe_name,
+                "file_name": safe_name,  # H17: 存 safe_name（唯一）防同名文件结果覆盖
                 "file_path": str(file_path),
             })
 
-        # 使用固定的 debug API key
-        debug_api_key = "debug-demo-key"
+        # H20: 用客户端 IP 隔离 debug 任务（替代固定 debug-demo-key，防 debug 用户间共享）
+        debug_api_key = f"debug-{request.client.host if request.client else 'local'}"
         task_id = task_manager.create_task(
             file_count=len(saved_files),
             priority=priority,
@@ -503,6 +504,7 @@ def create_debug_routes(
 
     @router.get("/api/debug/tasks")
     async def debug_list_tasks(
+        request: Request,
         status: Optional[str] = Query(None),
         page: int = Query(1, ge=1),
         size: int = Query(10, ge=1, le=100),
@@ -510,7 +512,7 @@ def create_debug_routes(
         """列出任务（Debug 模式，无需认证）"""
         if not task_manager:
             raise HTTPException(status_code=501, detail="TaskManager 未初始化")
-        debug_api_key = "debug-demo-key"
+        debug_api_key = f"debug-{request.client.host if request.client else 'local'}"
         result = task_manager.list_tasks(
             api_key=debug_api_key,
             status_filter=status,
@@ -520,24 +522,26 @@ def create_debug_routes(
         return {"code": 200, "data": result, "message": "success"}
 
     @router.get("/api/debug/task/{task_id}")
-    async def debug_get_task(task_id: str):
+    async def debug_get_task(task_id: str, request: Request):
         """查询任务状态（Debug 模式，无需认证）"""
         if not task_manager:
             raise HTTPException(status_code=501, detail="TaskManager 未初始化")
-        status = task_manager.get_task_status(task_id, api_key="debug-demo-key")
+        debug_api_key = f"debug-{request.client.host if request.client else 'local'}"
+        status = task_manager.get_task_status(task_id, api_key=debug_api_key)
         if not status:
             raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
         return {"code": 200, "data": status, "message": "success"}
 
     @router.post("/api/debug/task/{task_id}/cancel")
-    async def debug_cancel_task(task_id: str):
+    async def debug_cancel_task(task_id: str, request: Request):
         """取消任务（Debug 模式，无需认证）"""
         if not task_manager:
             raise HTTPException(status_code=501, detail="TaskManager 未初始化")
-        task = task_manager.get_task(task_id, api_key="debug-demo-key")
+        debug_api_key = f"debug-{request.client.host if request.client else 'local'}"
+        task = task_manager.get_task(task_id, api_key=debug_api_key)
         if not task:
             raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
-        success = task_manager.mark_cancelled(task_id, api_key="debug-demo-key")
+        success = task_manager.mark_cancelled(task_id, api_key=debug_api_key)
         if not success:
             raise HTTPException(status_code=400, detail="任务状态不允许取消")
         return {

@@ -12,9 +12,10 @@
 
 **问题统计**：🔴严重 9 项｜🟠高 21 项｜🟡中 30+ 项｜🟢低 20+ 项
 
-## 修复状态总览（S1-S9 + H1 + H2 + H21 + H3 + H4部分 + H5 + H6 + H7 + H8 + H10 已修复）
+## 修复状态总览（26 项已修复：S1-S9 + H1-H8 + H10-H12 + H14 + H16-H18 + H20 + H21）
 
-- **修复提交**：S1-S9 `24879d4`；H1 `031939f`；H2 `5c4eeef`；H21 `d46f4e9`；H3 `16018ea`；H4(封装/文档) `ba5b5b5`；H5 `9a3b7a3`；H8 `97c3286`；H6 `ae28468`；H7 `dd37b80`；H10 待提交（分支 `fix/security-s1-s9`，2026-07-22）
+- **修复提交**：S1-S9 `24879d4`；H1 `031939f`；H2 `5c4eeef`；H21 `d46f4e9`；H3 `16018ea`；H4(封装/文档) `ba5b5b5`；H5 `9a3b7a3`；H8 `97c3286`；H6 `ae28468`；H7 `dd37b80`；H10 `96c8c5b`；H11/H12/H14/H16/H17/H18/H20 待提交（分支 `fix/security-s1-s9`，2026-07-22）
+- **未修**：H9（字间空格，0%触发暂不修）、H13（Session线程安全）、H15（信号量未用）、H19（_cancel_flags泄漏）
 - **测试结果**：555 passed，1 failed（`test_real_extraction` 需 VLM/Ollama 服务 localhost:8082，环境依赖，非回归）
 - **验证详情**：见文末"验证报告"章节
 
@@ -39,6 +40,13 @@
 | H6 | VLM双重解析+模糊匹配 | ✅ 已修复 | 复用解析+去掉模糊匹配(VLM返回完整名) |
 | H7 | HUKOU键名映射嵌套不生效 | ✅ 已修复 | 嵌套路径应用HUKOU_KEY_MAPPINGS(Qwen验证户主丢失已修) |
 | H10 | UPLOAD_DIR mkdtemp泄漏 | ✅ 已修复 | 固定路径替代mkdtemp |
+| H11 | cv2.imwrite返回值未检查 | ✅ 已修复 | 检查返回值失败返回原路径 |
+| H12 | 临时文件命名冲突 | ✅ 已修复 | 加UUID前缀 |
+| H14 | 图像无Decompression Bomb防护 | ✅ 已修复 | MAX_IMAGE_PIXELS+大小检查 |
+| H16 | 异步上传无总大小限制 | ✅ 已修复 | 累加total_size校验500MB |
+| H17 | 同名文件结果覆盖 | ✅ 已修复 | 存safe_name(唯一)替代原始名 |
+| H18 | 无任务超时机制 | ✅ 已修复 | asyncio.wait_for(300s) |
+| H20 | debug任务跨租户 | ✅ 已修复 | IP隔离替代固定debug-demo-key |
 
 ---
 
@@ -378,6 +386,13 @@ H5-H20、中优先级各项
 | H6 | 复用解析(消除 line 108/122 双重解析) + 去掉模糊包含匹配(VLM 运行时验证返回完整名"不动产权证书"，精确匹配命中，模糊匹配冗余)；test_vlm_layer 17 项通过 | ✅ 通过 |
 | H7 | Qwen2.5-VL-7B 运行时验证：UNKNOWN 户口本 VLM 返回嵌套 `{"fields":{"户主姓名":"赵荣"}}`，原嵌套路径跳过 HUKOU_KEY_MAPPINGS 致 `fields["户主"]`空；修复后嵌套路径应用映射，`fields["户主"]="赵荣"` ✅ | ✅ 通过 |
 | H10 | UPLOAD_DIR 改固定路径 `gettempdir()/ocr_uploads`（静态常量 `_DEFAULT_UPLOAD_DIRNAME`，不写死字符串），消除每次 import `mkdtemp` 泄漏；test_config 15项通过 | ✅ 通过 |
+| H11 | `cv2.imwrite` 检查返回值，失败返回原路径并记日志 | ✅ 通过 |
+| H12 | 临时文件名加 UUID 前缀（`resized_{uuid}_{filename}`/`enhanced_{uuid}_{filename}`），防同名覆盖 | ✅ 通过 |
+| H14 | `Image.MAX_IMAGE_PIXELS=5000万` + `encode_image_base64` 加 20MB 大小检查（防 Decompression Bomb OOM） | ✅ 通过 |
+| H16 | `submit_async_task` 累加 `total_size`，超 500MB 拒绝（防 500×20MB=10GB 入内存） | ✅ 通过 |
+| H17 | `saved_files` 存 `safe_name`（唯一）替代原始名，防同名文件结果覆盖 | ✅ 通过 |
+| H18 | `TaskWorker.process_single` 加 `asyncio.wait_for(300s)` 超时，防 OCR 挂起致永久 processing | ✅ 通过 |
+| H20 | debug 路由用 IP（`f"debug-{host}"`）替代固定 debug-demo-key，隔离 debug 用户 | ✅ 通过 |
 
 ### S9 验证说明
 S9 并发限流用 `asyncio.Lock` 串行化 + 5 分钟缓存。代码审查确认 lock/cache 定义与两接口的 `async with` 包裹正确。并发端到端测试需真实 OCR 服务（`process_batch`），未纳入单元测试；但 `asyncio.Lock` 语义保证同一时刻仅一个全量基线处理，达到防 CPU DoS 目的。

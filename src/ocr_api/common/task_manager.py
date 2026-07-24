@@ -673,11 +673,14 @@ class TaskWorker:
 
                 file_start = time.time()
                 try:
-                    # 调用 OCRService 处理单张图片
-                    result = await asyncio.to_thread(
-                        self._ocr.process_single,
-                        file_path,
-                    )
+                    # 调用 OCRService 处理单张图片（H18: 加超时，防 OCR 挂起致永久 processing）
+                    try:
+                        result = await asyncio.wait_for(
+                            asyncio.to_thread(self._ocr.process_single, file_path),
+                            timeout=300,  # 单文件 5 分钟超时
+                        )
+                    except asyncio.TimeoutError:
+                        raise TimeoutError(f"OCR 处理超时（>300s）: {file_name}")
 
                     # 存储成功结果
                     result_json = json.dumps(result, ensure_ascii=False)
