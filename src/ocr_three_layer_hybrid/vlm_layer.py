@@ -104,22 +104,23 @@ class VLMExtractionLayer(IExtractionLayer):
             # 调用VLM（直接传递图片路径）
             vlm_response = self._call_vlm(prompt, doc_info.image_path)
 
-            # 解析响应
-            fields = self._parse_json_response(vlm_response, key_list)
-
-            # 轻量修复：让UNKNOWN文档的VLM分类结果反馈回系统
-            # 当前UNKNOWN prompt让VLM同时做分类+提取，但VLM返回的doc_type被丢弃。
-            # 这里提取VLM识别的doc_type，记录到结果中（用于日志/监控/后续优化）。
-            # 支持两种格式：枚举名（"PROPERTY_CERTIFICATE"）和中文value（"不动产权证书"）
-            # 支持两种响应格式：dict 或 markdown 代码块字符串（```json ... ```）
-            vlm_classified_type = None
-            # 解析 VLM 响应（支持 dict 或 markdown 代码块字符串）
-            parsed_response = None
+            # 解析响应（解析一次，复用给 fields 提取和分类逻辑，避免双重解析 H6）
             if isinstance(vlm_response, dict):
                 parsed_response = vlm_response
             elif isinstance(vlm_response, str):
                 from ocr_three_layer_hybrid.json_utils import parse_json_from_response
                 parsed_response = parse_json_from_response(vlm_response)
+            else:
+                parsed_response = None
+            fields = self._parse_json_response(
+                parsed_response if parsed_response is not None else vlm_response, key_list
+            )
+
+            # 轻量修复：让UNKNOWN文档的VLM分类结果反馈回系统
+            # 当前UNKNOWN prompt让VLM同时做分类+提取，但VLM返回的doc_type被丢弃。
+            # 这里提取VLM识别的doc_type，记录到结果中（用于日志/监控/后续优化）。
+            # 支持两种格式：枚举名（"PROPERTY_CERTIFICATE"）和中文value（"不动产权证书"）
+            vlm_classified_type = None
             if isinstance(parsed_response, dict) and "doc_type" in parsed_response:
                 vlm_doc_type_str = parsed_response["doc_type"]
                 # 尝试用枚举名匹配（如 "PROPERTY_CERTIFICATE"）
@@ -159,17 +160,11 @@ class VLMExtractionLayer(IExtractionLayer):
                                 vlm_classified_type = dt
                                 break
                     if vlm_classified_type is None:
-                        # 精确匹配 DocumentType 的中文 value
+                        # 精确匹配 DocumentType 的中文 value（去掉模糊包含匹配 H6：VLM 返回完整名，精确+别名+startswith 已足够）
                         for dt in DocumentType:
                             if dt.value == vlm_doc_type_str:
                                 vlm_classified_type = dt
                                 break
-                        # 模糊匹配：VLM 返回的字串与 DocumentType value 相互包含
-                        if vlm_classified_type is None:
-                            for dt in DocumentType:
-                                if vlm_doc_type_str in dt.value or dt.value in vlm_doc_type_str:
-                                    vlm_classified_type = dt
-                                    break
 
             return ExtractionResult(
                 doc_type=doc_info.doc_type,
