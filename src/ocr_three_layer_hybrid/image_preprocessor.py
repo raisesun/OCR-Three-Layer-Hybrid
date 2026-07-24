@@ -91,7 +91,11 @@ def resize_image(
                 output_path = f"{base}_resized{ext}"
 
             # 保存图片
-            img_resized.save(output_path, quality=quality, optimize=True)
+            # 按输出格式选保存参数（quality 仅对 JPEG 有效，非 JPEG 用 compress_level）
+            save_kwargs = {"optimize": True}
+            if output_path.lower().endswith((".jpg", ".jpeg")):
+                save_kwargs["quality"] = quality
+            img_resized.save(output_path, **save_kwargs)
 
             logger.info("图片已保存到: %s", output_path)
 

@@ -62,8 +62,10 @@ def setup_logging(level: str = "INFO", log_file: Optional[str] = None):
         handlers.append(file_handler)
 
     logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+    # 避免重复添加 handler（重复调用 setup_logging 致日志重复输出 N 倍）
     for h in handlers:
-        logger.addHandler(h)
+        if h not in logger.handlers:
+            logger.addHandler(h)
 
     logger.info("日志系统初始化完成 (level=%s, file=%s)", level, log_file or "无")
 
@@ -755,11 +757,6 @@ class OCRService:
                 result = self.process_single(file_path, text)
                 actual_type = result["classification"]["doc_type"]
                 is_correct = actual_type == expected
-
-                # 附属页面特殊处理
-                if not is_correct and page_status == "附属页面":
-                    if result["classification"].get("vlm_result") == "附属页面":
-                        is_correct = True
 
                 results.append(
                     {

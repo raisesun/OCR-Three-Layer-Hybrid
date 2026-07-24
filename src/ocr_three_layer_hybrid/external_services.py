@@ -127,6 +127,10 @@ class VLMClient:
             raise FileNotFoundError(f"图片不存在: {image_path}")
 
         image_b64 = encode_image_base64(image_path)
+        # 根据扩展名推断 MIME（避免硬编码 image/jpeg 对 PNG/BMP 等解码异常）
+        import mimetypes
+        mime, _ = mimetypes.guess_type(image_path)
+        mime = mime or "image/jpeg"
 
         payload = {
             "model": self.config.model_name,
@@ -137,7 +141,7 @@ class VLMClient:
                         {"type": "text", "text": prompt},
                         {
                             "type": "image_url",
-                            "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"},
+                            "image_url": {"url": f"data:{mime};base64,{image_b64}"},
                         },
                     ],
                 }

@@ -75,7 +75,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         ],
     }
 
-    # === 阶段1.5: 标准证件备选强信号（需要组合匹配） ===
+    # === 阶段1.5: 标准证件备选强信号（已废弃类属性，实际用 _check_backup_signals 内 BACKUP_SIGNALS_CONFIG 局部变量） ===
     # 当主强信号未命中时，使用备选强信号
     BACKUP_CERTIFICATE_SIGNALS: Dict[DocumentType, Dict[str, Any]] = {
         DocumentType.MARRIAGE_CERTIFICATE: {
@@ -196,7 +196,7 @@ class KeywordDocumentClassifier(IDocumentClassifier):
         初始化分类器
 
         Args:
-            custom_rules: 自定义关键词规则（保留兼容性，暂不使用）
+            custom_rules: 已废弃（保留参数兼容性，不使用）；实际分类用内置规则
         """
         pass
 

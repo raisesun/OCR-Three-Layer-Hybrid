@@ -146,13 +146,11 @@ class RuleExtractionLayer(IExtractionLayer):
             elif doc_info.doc_type in [
                 DocumentType.MARRIAGE_CERTIFICATE,
                 DocumentType.MARRIAGE_CERTIFICATE_CONTENT,
-                DocumentType.MARRIAGE_CERTIFICATE_STAMP,
             ]:
                 fields = self._personal_id_extractor.extract_marriage_certificate(full_text, key_list)
             elif doc_info.doc_type in [
                 DocumentType.DIVORCE_CERTIFICATE,
                 DocumentType.DIVORCE_CERTIFICATE_CONTENT,
-                DocumentType.DIVORCE_CERTIFICATE_STAMP,
             ]:
                 fields = self._personal_id_extractor.extract_divorce_certificate(full_text, key_list)
             elif doc_info.doc_type in [

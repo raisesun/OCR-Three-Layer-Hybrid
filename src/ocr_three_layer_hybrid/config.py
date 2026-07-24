@@ -46,7 +46,7 @@ class VLMServiceConfig:
     model_name: str = "GLM-OCR-Q8_0.gguf"
     model_path: str = field(default_factory=lambda: os.getenv("GLM_OCR_MODEL_PATH", "./models/GLM-OCR-GGUF"))
     timeout: float = 120.0
-    api_key: str = "not-needed"
+    api_key: str = "not-needed"  # 死配置（VLMClient 从未用，保留兼容性）
 
 
 @dataclass
@@ -71,7 +71,7 @@ class QwenVLServiceConfig:
     model_name: str = "qwen2.5-vl-7b"
     model_path: str = field(default_factory=lambda: os.getenv("QWEN_VLM_MODEL_PATH", "./models/Qwen2.5-VL-7B"))
     timeout: float = 120.0
-    api_key: str = "not-needed"
+    api_key: str = "not-needed"  # 死配置（VLMClient 从未用，保留兼容性）
 
 
 @dataclass

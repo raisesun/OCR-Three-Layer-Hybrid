@@ -5,12 +5,13 @@
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 
-# 默认基线文件路径
-DEFAULT_BASELINE_FILE = "/Users/dongsun/Github/sample-OCR/baseline_v3/baseline_8cases.json"
+# 默认基线文件路径（支持环境变量覆盖）
+DEFAULT_BASELINE_FILE = os.getenv("OCR_BASELINE_FILE", "/Users/dongsun/Github/sample-OCR/baseline_v3/baseline_8cases.json")
 
 
 class BaselineService:

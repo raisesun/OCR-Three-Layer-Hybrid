@@ -17,6 +17,7 @@
 """
 
 import time
+import os
 import uuid
 import asyncio
 import logging
@@ -81,7 +82,7 @@ def create_debug_routes(
     TEMPLATES_DIR = demo_dir / "templates"
 
     # 基线图片目录
-    SAMPLE_OCR_DIR = Path("/Users/dongsun/Github/sample-OCR")
+    SAMPLE_OCR_DIR = Path(os.getenv("OCR_SAMPLE_DIR", "/Users/dongsun/Github/sample-OCR"))
     SAMPLE_OCR_BASE = str(SAMPLE_OCR_DIR)
 
     # 允许访问的目录白名单（resolved 路径）
