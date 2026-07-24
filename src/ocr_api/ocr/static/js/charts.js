@@ -40,9 +40,9 @@ function destroyChart(id) {
  * 渲染基线对比图表
  */
 function renderCompareCharts() {
-    const app = document.querySelector('[x-data]').__x;
-    if (!app) return;
-    const data = app.$data.compareResult;
+    const el = document.querySelector('[x-data]');
+    if (!el || !window.Alpine) return;
+    const data = Alpine.$data(el).compareResult;
     if (!data) return;
 
     const typeAccuracy = data.type_accuracy || {};
@@ -92,9 +92,9 @@ function renderCompareCharts() {
  * 渲染统计面板图表
  */
 function renderDashboardCharts() {
-    const app = document.querySelector('[x-data]').__x;
-    if (!app) return;
-    const data = app.$data.dashboardData;
+    const el = document.querySelector('[x-data]');
+    if (!el || !window.Alpine) return;
+    const data = Alpine.$data(el).dashboardData;
     if (!data) return;
 
     // 1. 文档类型分布饼图

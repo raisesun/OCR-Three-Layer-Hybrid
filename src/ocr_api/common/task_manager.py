@@ -573,6 +573,9 @@ class TaskManager:
             "INSERT INTO api_usage (api_key, endpoint, called_at) VALUES (?, ?, ?)",
             (api_key, endpoint, now),
         )
+        # 清理 7 天前的 api_usage（防表无限增长）
+        cutoff = (datetime.now() - timedelta(days=7)).isoformat()
+        conn.execute("DELETE FROM api_usage WHERE called_at < ?", (cutoff,))
         conn.commit()
 
     def get_quota(self, api_key: str) -> Dict[str, Any]:
